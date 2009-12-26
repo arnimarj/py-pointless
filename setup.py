@@ -13,7 +13,7 @@ setup(name = 'Pointless Python API',
 
 	ext_modules = [
 		Extension('pointless',
-			include_dirs = [ '../include/', '../pointless/include', '/usr/include' ],
+			include_dirs = ['./include', '/usr/include' ],
 			library_dirs = ['/usr/lib' ],
 
 			sources = [
