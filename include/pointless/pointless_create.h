@@ -1,0 +1,89 @@
+#ifndef __POINTLESS__CREATE__H__
+#define __POINTLESS__CREATE__H__
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <limits.h>
+#include <stdint.h>
+#include <assert.h>
+
+#include <pointless/bitutils.h>
+#include <pointless/custom_sort.h>
+
+#include <pointless/pointless_defs.h>
+#include <pointless/pointless_dynarray.h>
+#include <pointless/pointless_create_cache.h>
+#include <pointless/pointless_value.h>
+#include <pointless/pointless_reader.h>
+#include <pointless/pointless_hash_table.h>
+
+// creation
+void pointless_create_begin(pointless_create_t* c);
+void pointless_create_end(pointless_create_t* c);
+int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, const char** error);
+int pointless_create_output_and_end_b(pointless_create_t* c, void** buf, size_t* buflen, const char** error);
+
+// set the root
+void pointless_create_set_root(pointless_create_t* c, uint32_t root);
+
+// inline-values
+uint32_t pointless_create_i32(pointless_create_t* c, int32_t v);
+uint32_t pointless_create_u32(pointless_create_t* c, uint32_t v);
+uint32_t pointless_create_float(pointless_create_t* c, float v);
+uint32_t pointless_create_null(pointless_create_t* c);
+
+uint32_t pointless_create_boolean_true(pointless_create_t* c);
+uint32_t pointless_create_boolean_false(pointless_create_t* c);
+uint32_t pointless_create_empty_slot(pointless_create_t* c);
+
+// unicode constructors, using different sources
+uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* s, const char** error);
+uint32_t pointless_create_unicode_ucs2(pointless_create_t* c, uint16_t* s, const char** error);
+uint32_t pointless_create_unicode_ascii(pointless_create_t* c, const char* s, const char** error);
+
+// bitvectors
+uint32_t pointless_create_bitvector(pointless_create_t* c, void* v, uint32_t n_bits);
+
+// vectors, buffer owned by library
+uint32_t pointless_create_vector_value(pointless_create_t* c);
+uint32_t pointless_create_vector_i8(pointless_create_t* c);
+uint32_t pointless_create_vector_u8(pointless_create_t* c);
+uint32_t pointless_create_vector_i16(pointless_create_t* c);
+uint32_t pointless_create_vector_u16(pointless_create_t* c);
+uint32_t pointless_create_vector_i32(pointless_create_t* c);
+uint32_t pointless_create_vector_u32(pointless_create_t* c);
+uint32_t pointless_create_vector_float(pointless_create_t* c);
+
+uint32_t pointless_create_vector_value_append(pointless_create_t* c, uint32_t vector, uint32_t v);
+uint32_t pointless_create_vector_i8_append(pointless_create_t* c, uint32_t vector, int8_t v);
+uint32_t pointless_create_vector_u8_append(pointless_create_t* c, uint32_t vector, uint8_t v);
+uint32_t pointless_create_vector_i16_append(pointless_create_t* c, uint32_t vector, int16_t v);
+uint32_t pointless_create_vector_u16_append(pointless_create_t* c, uint32_t vector, uint16_t v);
+uint32_t pointless_create_vector_i32_append(pointless_create_t* c, uint32_t vector, int32_t v);
+uint32_t pointless_create_vector_u32_append(pointless_create_t* c, uint32_t vector, uint32_t v);
+uint32_t pointless_create_vector_float_append(pointless_create_t* c, uint32_t vector, float v);
+
+void pointless_create_vector_value_set(pointless_create_t* c, uint32_t vector, uint32_t i, uint32_t v);
+
+uint32_t pointless_create_vector_u32_transfer(pointless_create_t* c, uint32_t vector, uint32_t* v, uint32_t n);
+uint32_t pointless_create_vector_value_transfer(pointless_create_t* c, uint32_t vector, uint32_t* v, uint32_t n);
+
+// vectors, buffer owned by caller
+uint32_t pointless_create_vector_i8_owner(pointless_create_t* c, int8_t* items, uint32_t n_items);
+uint32_t pointless_create_vector_u8_owner(pointless_create_t* c, uint8_t* items, uint32_t n_items);
+uint32_t pointless_create_vector_i16_owner(pointless_create_t* c, int16_t* items, uint32_t n_items);
+uint32_t pointless_create_vector_u16_owner(pointless_create_t* c, uint16_t* items, uint32_t n_items);
+uint32_t pointless_create_vector_i32_owner(pointless_create_t* c, int32_t* items, uint32_t n_items);
+uint32_t pointless_create_vector_u32_owner(pointless_create_t* c, uint32_t* items, uint32_t n_items);
+uint32_t pointless_create_vector_float_owner(pointless_create_t* c, float* items, uint32_t n_items);
+
+// sets
+uint32_t pointless_create_set(pointless_create_t* c);
+uint32_t pointless_create_set_add(pointless_create_t* c, uint32_t s, uint32_t k);
+
+// maps
+uint32_t pointless_create_map(pointless_create_t* c);
+uint32_t pointless_create_map_add(pointless_create_t* c, uint32_t m, uint32_t k, uint32_t v);
+
+#endif
