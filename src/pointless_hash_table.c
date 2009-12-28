@@ -100,7 +100,7 @@ uint32_t pointless_hash_table_probe_ext(pointless_t* p, uint32_t value_hash, poi
 	return pointless_hash_table_probe_priv(p, value_hash, 0, n_buckets, hash_vector, key_vector, cb, user, error);
 }
 
-int pointless_hash_table_populate(uint32_t* hash_vector, uint32_t* keys_vector, uint32_t* values_vector, uint32_t n_keys, uint32_t* hash_serialize, uint32_t* keys_serialize, uint32_t* values_serialize, uint32_t n_buckets, uint32_t empty_slot_handle, const char** error)
+int pointless_hash_table_populate(pointless_create_t* c, uint32_t* hash_vector, uint32_t* keys_vector, uint32_t* values_vector, uint32_t n_keys, uint32_t* hash_serialize, uint32_t* keys_serialize, uint32_t* values_serialize, uint32_t n_buckets, uint32_t empty_slot_handle, const char** error)
 {
 	uint32_t j;
 
@@ -135,6 +135,7 @@ int pointless_hash_table_populate(uint32_t* hash_vector, uint32_t* keys_vector, 
 
 	assert(n_buckets > n_keys);
 
+	int32_t cmp;
 	uint32_t value_hash, perturb, bucket, i, mask = n_buckets - 1;
 
 	for (j = 0; j < n_keys; j++) {
@@ -158,6 +159,19 @@ int pointless_hash_table_populate(uint32_t* hash_vector, uint32_t* keys_vector, 
 				break;
 			}
 
+			// perhaps, we have an item, which is equal to ours
+			if (hash_serialize[bucket] == hash_vector[j]) {
+				cmp = pointless_cmp_create(c, keys_serialize[bucket], keys_vector[j], error);
+
+				if (*error)
+					return 0;
+
+				if (cmp == 0) {
+					*error = "there are duplicate keys in the set/map";
+					return 0;
+				}
+			}
+
 			// probe on
 			i = (i << 2) + i + perturb + 1;
 			perturb >>= 5;
@@ -165,36 +179,4 @@ int pointless_hash_table_populate(uint32_t* hash_vector, uint32_t* keys_vector, 
 	}
 
 	return 1;
-}
-
-uint32_t pointless_hash_table_probe_populate(pointless_create_t* c, uint32_t value_hash, uint32_t value, uint32_t n_buckets, uint32_t* hash_vector, uint32_t* key_vector, const char** error)
-{
-	uint32_t bucket, perturb = value_hash, i = value_hash, mask = n_buckets - 1;
-	int32_t cmp;
-
-	while (1) {
-		bucket = i & mask;
-
-		if (cv_value_type(key_vector[bucket]) == POINTLESS_EMPTY_SLOT)
-			return POINTLESS_HASH_TABLE_PROBE_MISS;
-
-		if (hash_vector[bucket] == value_hash) {
-			cmp = pointless_cmp_create(c, value, key_vector[bucket], error);
-
-			if (*error)
-				return POINTLESS_HASH_TABLE_PROBE_ERROR;
-
-			if (cmp == 0)
-				return bucket;
-		}
-
-		// probe on
-		i = (i << 2) + i + perturb + 1;
-		perturb >>= 5;
-	}
-
-	assert(0);
-
-	*error = "pointless_hash_table_probe_populate(): internal error";
-	return POINTLESS_HASH_TABLE_PROBE_ERROR;
 }

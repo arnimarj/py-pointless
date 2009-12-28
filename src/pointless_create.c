@@ -120,28 +120,12 @@ static int pointless_hash_table_create(pointless_create_t* c, uint32_t hash_tabl
 	}
 
 	// populate the arrays
-	if (!pointless_hash_table_populate(hash_vector, keys_vector_ptr, values_vector_ptr, n_keys, hash_serialize, keys_serialize, values_serialize, n_buckets, empty_slot_handle, error))
+	if (!pointless_hash_table_populate(c, hash_vector, keys_vector_ptr, values_vector_ptr, n_keys, hash_serialize, keys_serialize, values_serialize, n_buckets, empty_slot_handle, error))
 		goto cleanup;
 
 	// hash vector no longer needed
 	free(hash_vector);
 	hash_vector = 0;
-
-	// do an experimental probe, to make sure there are no duplicate keys
-	for (i = 0; i < n_buckets; i++) {
-		if (keys_serialize[i] == empty_slot_handle)
-			continue;
-
-		uint32_t bucket = pointless_hash_table_probe_populate(c, hash_serialize[i], keys_serialize[i], n_buckets, hash_serialize, keys_serialize, error);
-
-		if (bucket == POINTLESS_HASH_TABLE_PROBE_ERROR)
-			goto cleanup;
-
-		if (bucket != i) {
-			*error = "there are duplicate keys in the set/map";
-			goto cleanup;
-		}
-	}
 
 	// our serialize vector handles
 	uint32_t sh = 0, sk = 0, sv = 0;
@@ -777,6 +761,7 @@ static int pointless_vector_check_hashable(pointless_create_t* c, uint32_t vecto
 
 static int pointless_create_output_and_end_(pointless_create_t* c, pointless_create_cb_t* cb, const char** error)
 {
+
 	// return value
 	int retval = 1;
 

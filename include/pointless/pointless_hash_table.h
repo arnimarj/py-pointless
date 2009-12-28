@@ -17,8 +17,7 @@ typedef struct {
 uint32_t pointless_hash_compute_n_buckets(uint32_t n_items);
 uint32_t pointless_hash_table_probe(pointless_t* p, uint32_t value_hash, pointless_value_t* value, uint32_t n_buckets, uint32_t* hash_vector, pointless_value_t* key_vector, const char** error);
 uint32_t pointless_hash_table_probe_ext(pointless_t* p, uint32_t value_hash, pointless_eq_cb cb, void* user, uint32_t n_buckets, uint32_t* hash_vector, pointless_value_t* key_vector, const char** error);
-int pointless_hash_table_populate(uint32_t* hash_vector, uint32_t* keys_vector, uint32_t* values_vector, uint32_t n_keys, uint32_t* hash_serialize, uint32_t* keys_serialize, uint32_t* values_serialize, uint32_t n_buckets, uint32_t empty_slot_handle, const char** error);
-uint32_t pointless_hash_table_probe_populate(pointless_create_t* c, uint32_t value_hash, uint32_t value, uint32_t n_buckets, uint32_t* hash_vector, uint32_t* key_vector, const char** error);
+int pointless_hash_table_populate(pointless_create_t* c, uint32_t* hash_vector, uint32_t* keys_vector, uint32_t* values_vector, uint32_t n_keys, uint32_t* hash_serialize, uint32_t* keys_serialize, uint32_t* values_serialize, uint32_t n_buckets, uint32_t empty_slot_handle, const char** error);
 
 void pointless_hash_table_probe_hash_init(pointless_t* p, uint32_t value_hash, uint32_t n_buckets, pointless_hash_iter_state_t* state);
 uint32_t pointless_hash_table_probe_hash(pointless_t* p, uint32_t* hash_vector, pointless_value_t* key_vector, pointless_hash_iter_state_t* state, uint32_t* bucket_out);
