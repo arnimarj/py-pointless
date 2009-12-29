@@ -389,9 +389,51 @@ static int pointless_serialize_vector_priv(pointless_create_t* c, uint32_t vecto
 	if (!(cb->write)(&n_items, sizeof(n_items), cb->user, error))
 		return 0;
 
-	for (i = 0; i < n_items; i++) {
+	// classify vector
+	int is_uncompressed = cv_value_type(vector) == POINTLESS_VECTOR_VALUE || cv_value_type(vector) == POINTLESS_VECTOR_VALUE_HASHABLE;
+	int is_compressed   = !is_uncompressed && cv_is_compressed_vector(vector);
+	int is_native       = !is_uncompressed && !is_compressed;
+
+	assert(is_uncompressed + is_compressed + is_native == 1);
+
+	// if we have a native vector, we can write it in a single write call
+	if (is_native) {
+		w = cv_priv_vector_at(vector)->vector._data;
+
+		switch (cv_value_type(vector)) {
+			case POINTLESS_VECTOR_I8:
+				w_len = sizeof(int8_t);
+				break;
+			case POINTLESS_VECTOR_U8:
+				w_len = sizeof(uint8_t);
+				break;
+			case POINTLESS_VECTOR_I16:
+				w_len = sizeof(int16_t);
+				break;
+			case POINTLESS_VECTOR_U16:
+				w_len = sizeof(uint16_t);
+				break;
+			case POINTLESS_VECTOR_I32:
+				w_len = sizeof(int32_t);
+				break;
+			case POINTLESS_VECTOR_U32:
+				w_len = sizeof(uint32_t);
+				break;
+			case POINTLESS_VECTOR_FLOAT:
+				w_len = sizeof(float);
+				break;
+			default:
+				assert(0);
+				break;
+		}
+
+		if (!(cb->write)(w, w_len * n_items, cb->user, error))
+			return 0;
+	}
+
+	for (i = 0; i < n_items && !is_native; i++) {
 		// uncompressed value vector
-		if (cv_value_type(vector) == POINTLESS_VECTOR_VALUE || cv_value_type(vector) == POINTLESS_VECTOR_VALUE_HASHABLE) {
+		if (is_uncompressed) {
 			// WARNING: we are using a pointer to a dynamic array, so during its scope, we must
 			//          not touch the original array, c->values in this case
 			uint32_t* items = (uint32_t*)cv_priv_vector_at(vector)->vector._data;
@@ -399,7 +441,9 @@ static int pointless_serialize_vector_priv(pointless_create_t* c, uint32_t vecto
 			w = &value.v;
 			w_len = sizeof(value.v);
 		// if vector was value based, but is now compressed, we must typecast all values
-		} else if (cv_is_compressed_vector(vector)) {
+		} else {
+			assert(is_compressed);
+
 			// WARNING: we are using a pointer to a dynamic array, so during its scope, we must
 			//          not touch the original array, c->values in this case
 
@@ -451,48 +495,6 @@ static int pointless_serialize_vector_priv(pointless_create_t* c, uint32_t vecto
 						w_len = 0;
 						break;
 				}
-			}
-		// native value vectors
-		} else {
-			switch (cv_value_type(vector)) {
-				case POINTLESS_VECTOR_I8:
-					value.i8 = ((int8_t*)cv_priv_vector_at(vector)->vector._data)[i];
-					w = &value.i8;
-					w_len = sizeof(value.i8);
-					break;
-				case POINTLESS_VECTOR_U8:
-					value.u8 = ((uint8_t*)cv_priv_vector_at(vector)->vector._data)[i];
-					w = &value.u8;
-					w_len = sizeof(value.u8);
-					break;
-				case POINTLESS_VECTOR_I16:
-					value.i16 = ((int16_t*)cv_priv_vector_at(vector)->vector._data)[i];
-					w = &value.i16;
-					w_len = sizeof(value.i16);
-					break;
-				case POINTLESS_VECTOR_U16:
-					value.u16 = ((uint16_t*)cv_priv_vector_at(vector)->vector._data)[i];
-					w = &value.u16;
-					w_len = sizeof(value.u16);
-					break;
-				case POINTLESS_VECTOR_I32:
-					value.i32 = ((int32_t*)cv_priv_vector_at(vector)->vector._data)[i];
-					w = &value.i32;
-					w_len = sizeof(value.i32);
-					break;
-				case POINTLESS_VECTOR_U32:
-					value.u32 = ((uint32_t*)cv_priv_vector_at(vector)->vector._data)[i];
-					w = &value.u32;
-					w_len = sizeof(value.u32);
-					break;
-				case POINTLESS_VECTOR_FLOAT:
-					value.f = ((float*)cv_priv_vector_at(vector)->vector._data)[i];
-					w = &value.f;
-					w_len = sizeof(value.f);
-					break;
-				default:
-					assert(0);
-					break;
 			}
 		}
 
