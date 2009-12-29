@@ -383,7 +383,6 @@ static int pointless_serialize_vector_priv(pointless_create_t* c, uint32_t vecto
 		pointless_value_t v;
 	} value;
 
-	void* w = 0;
 	size_t w_len = 0;
 
 	if (!(cb->write)(&n_items, sizeof(n_items), cb->user, error))
@@ -398,8 +397,6 @@ static int pointless_serialize_vector_priv(pointless_create_t* c, uint32_t vecto
 
 	// if we have a native vector, we can write it in a single write call
 	if (is_native) {
-		w = cv_priv_vector_at(vector)->vector._data;
-
 		switch (cv_value_type(vector)) {
 			case POINTLESS_VECTOR_I8:
 				w_len = sizeof(int8_t);
@@ -427,78 +424,71 @@ static int pointless_serialize_vector_priv(pointless_create_t* c, uint32_t vecto
 				break;
 		}
 
-		if (!(cb->write)(w, w_len * n_items, cb->user, error))
+		if (!(cb->write)(cv_priv_vector_at(vector)->vector._data, w_len * n_items, cb->user, error))
 			return 0;
 	}
+
+	uint32_t* items = (uint32_t*)cv_priv_vector_at(vector)->vector._data;
 
 	for (i = 0; i < n_items && !is_native; i++) {
 		// uncompressed value vector
 		if (is_uncompressed) {
 			// WARNING: we are using a pointer to a dynamic array, so during its scope, we must
 			//          not touch the original array, c->values in this case
-			uint32_t* items = (uint32_t*)cv_priv_vector_at(vector)->vector._data;
 			value.v = pointless_create_to_read_value(c, items[i], n_priv_vectors);
-			w = &value.v;
 			w_len = sizeof(value.v);
-		// if vector was value based, but is now compressed, we must typecast all values
 		} else {
+			// if vector was value based, but is now compressed, we must typecast all values
 			assert(is_compressed);
 
 			// WARNING: we are using a pointer to a dynamic array, so during its scope, we must
 			//          not touch the original array, c->values in this case
 
-			// get the value
-			uint32_t* items = (uint32_t*)cv_priv_vector_at(vector)->vector._data;
-
-			if (cv_value_type(vector) == POINTLESS_VECTOR_FLOAT) {
-				assert(cv_value_type(items[i]) == POINTLESS_FLOAT);
-				value.f = cv_float_at(items[i]);
-				w = &value.f;
-				w_len = sizeof(value.f);
-			} else {
-				assert(cv_value_type(items[i]) == POINTLESS_I32 || cv_value_type(items[i]) == POINTLESS_U32);
-
-				switch (cv_value_type(vector)) {
-					case POINTLESS_VECTOR_I8:
-						value.i8 = (int8_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
-						w = &value.i8;
-						w_len = sizeof(value.i8);
-						break;
-					case POINTLESS_VECTOR_U8:
-						value.u8 = (uint8_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
-						w = &value.u8;
-						w_len = sizeof(value.u8);
-						break;
-					case POINTLESS_VECTOR_I16:
-						value.i16 = (int16_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
-						w = &value.i16;
-						w_len = sizeof(value.i16);
-						break;
-					case POINTLESS_VECTOR_U16:
-						value.u16 = (uint16_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
-						w = &value.u16;
-						w_len = sizeof(value.u16);
-						break;
-					case POINTLESS_VECTOR_I32:
-						value.i32 = (int32_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
-						w = &value.i32;
-						w_len = sizeof(value.i32);
-						break;
-					case POINTLESS_VECTOR_U32:
-						value.u32 = (uint32_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
-						w = &value.u32;
-						w_len = sizeof(value.u32);
-						break;
-					default:
-						assert(0);
-						w = 0;
-						w_len = 0;
-						break;
-				}
+			// translate the value
+			switch (cv_value_type(vector)) {
+				case POINTLESS_VECTOR_I8:
+					assert(cv_value_type(items[i]) == POINTLESS_I32 || cv_value_type(items[i]) == POINTLESS_U32);
+					value.i8 = (int8_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
+					w_len = sizeof(value.i8);
+					break;
+				case POINTLESS_VECTOR_U8:
+					assert(cv_value_type(items[i]) == POINTLESS_I32 || cv_value_type(items[i]) == POINTLESS_U32);
+					value.u8 = (uint8_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
+					w_len = sizeof(value.u8);
+					break;
+				case POINTLESS_VECTOR_I16:
+					assert(cv_value_type(items[i]) == POINTLESS_I32 || cv_value_type(items[i]) == POINTLESS_U32);
+					value.i16 = (int16_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
+					w_len = sizeof(value.i16);
+					break;
+				case POINTLESS_VECTOR_U16:
+					assert(cv_value_type(items[i]) == POINTLESS_I32 || cv_value_type(items[i]) == POINTLESS_U32);
+					value.u16 = (uint16_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
+					w_len = sizeof(value.u16);
+					break;
+				case POINTLESS_VECTOR_I32:
+					assert(cv_value_type(items[i]) == POINTLESS_I32 || cv_value_type(items[i]) == POINTLESS_U32);
+					value.i32 = (int32_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
+					w_len = sizeof(value.i32);
+					break;
+				case POINTLESS_VECTOR_U32:
+					assert(cv_value_type(items[i]) == POINTLESS_I32 || cv_value_type(items[i]) == POINTLESS_U32);
+					value.u32 = (uint32_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
+					w_len = sizeof(value.u32);
+					break;
+				case POINTLESS_VECTOR_FLOAT:
+					assert(cv_value_type(items[i]) == POINTLESS_FLOAT);
+					value.f = cv_float_at(items[i]);
+					w_len = sizeof(value.f);
+					break;
+				default:
+					assert(0);
+					w_len = 0;
+					break;
 			}
 		}
 
-		if (!(cb->write)(w, w_len, cb->user, error))
+		if (!(cb->write)(&value, w_len, cb->user, error))
 			return 0;
 	}
 
