@@ -303,32 +303,6 @@ static PyMappingMethods PyPointlessMap_as_mapping = {
 	(objobjargproc)0,                     /*mp_ass_subscript*/
 };
 
-static PyObject* PyPointlessMap_has_key(PyPointlessMap* m, PyObject *key)
-{
-	const char* error = 0;
-	uint32_t hash = pyobject_hash(key, &error);
-
-	if (error) {
-		PyErr_Format(PyExc_ValueError, "pointless hash error: %s", error);
-		return 0;
-	}
-
-	pointless_value_t* k = 0;
-	pointless_value_t* v = 0;
-
-	pointless_reader_map_lookup_ext(&m->pp->p, m->v, hash, PyPointlessMap_eq_cb, (void*)key, &k, &v, &error);
-
-	if (error) {
-		PyErr_Format(PyExc_ValueError, "pointless map query error: %s", error);
-		return 0;
-	}
-
-	if (k == 0)
-		Py_RETURN_FALSE;
-	else
-		Py_RETURN_TRUE;
-}
-
 static PyObject* PyPointlessMap_get(PyPointlessMap* m, PyObject* args)
 {
 	PyObject* key;
@@ -431,15 +405,15 @@ static PyObject* PyPointlessMap_items(PyPointlessMap* m)
 
 
 static PyMethodDef PyPointlessMap_methods[] = {
-	{"__contains__", (PyCFunction)PyPointlessMap_has_key,      METH_O | METH_COEXIST, ""},
-	{"__getitem__",  (PyCFunction)PyPointlessMap_subscript,    METH_O | METH_COEXIST, ""},
-	{"get",          (PyCFunction)PyPointlessMap_get,          METH_VARARGS, ""},
-	{"keys",         (PyCFunction)PyPointlessMap_keys,         METH_NOARGS, ""},
-	{"items",        (PyCFunction)PyPointlessMap_items,        METH_NOARGS, ""},
-	{"values",       (PyCFunction)PyPointlessMap_values,       METH_NOARGS, ""},
-	{"iterkeys",     (PyCFunction)PyPointlessMap_iterkeys,     METH_NOARGS, ""},
-	{"itervalues",   (PyCFunction)PyPointlessMap_itervalues,   METH_NOARGS, ""},
-	{"iteritems",    (PyCFunction)PyPointlessMap_iteritems,    METH_NOARGS, ""},
+	{"__contains__", (PyCFunction)PyPointlessMap_contains,    METH_O | METH_COEXIST, ""},
+	{"__getitem__",  (PyCFunction)PyPointlessMap_subscript,   METH_O | METH_COEXIST, ""},
+	{"get",          (PyCFunction)PyPointlessMap_get,         METH_VARARGS, ""},
+	{"keys",         (PyCFunction)PyPointlessMap_keys,        METH_NOARGS, ""},
+	{"items",        (PyCFunction)PyPointlessMap_items,       METH_NOARGS, ""},
+	{"values",       (PyCFunction)PyPointlessMap_values,      METH_NOARGS, ""},
+	{"iterkeys",     (PyCFunction)PyPointlessMap_iterkeys,    METH_NOARGS, ""},
+	{"itervalues",   (PyCFunction)PyPointlessMap_itervalues,  METH_NOARGS, ""},
+	{"iteritems",    (PyCFunction)PyPointlessMap_iteritems,   METH_NOARGS, ""},
 	{NULL, NULL}
 };
 
