@@ -172,7 +172,7 @@ class TestPrimVector(unittest.TestCase):
 		tt_a = 0.0
 		tt_b = 0.0
 
-		for i in xrange(100):
+		for i in xrange(10):
 			# generate projection with indices in the range [i_min, i_max[
 			i_min = random.randint(0, 1000)
 			i_max = random.randint(i_min, i_min + 60000)
