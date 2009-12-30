@@ -2,9 +2,7 @@
 
 import sys, random, unittest, types
 
-from common import ImportPointlessExt
-
-pointless = ImportPointlessExt()
+from common import pointless
 
 def RandomPrimVector(n, tc, pointless):
 	ranges = {

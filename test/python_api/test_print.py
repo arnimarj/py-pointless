@@ -3,9 +3,7 @@
 import cStringIO, unittest, types
 
 from test_serialize import SimpleSerializeTestCases
-from common import ImportPointlessExt
-
-pointless = ImportPointlessExt()
+from common import pointless
 
 def PythonPrint(pointless, p, out):
 	def pointless_print_rec(v, stack):

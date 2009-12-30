@@ -4,12 +4,14 @@ import sys, unittest
 
 from test_primvector import TestPrimVector
 from test_print import TestPrint
+from test_cmp import TestCmp
 
 def print_usage_exit():
 	s =  'usage: ./main.py OPTIONS\n'
 	s += '\n'
 	s += '      --prim-vector\n'
 	s += '      --pointless-print\n'
+	s += '      --pointless-cmp\n'
 	sys.exit(s)
 
 def main():
@@ -22,6 +24,8 @@ def main():
 		sub_suites.append(TestPrimVector)
 	elif sys.argv[1] == '--pointless-print':
 		sub_suites.append(TestPrint)
+	elif sys.argv[1] == '--pointless-cmp':
+		sub_suites.append(TestCmp)
 	else:
 		print_usage_exit()
 
