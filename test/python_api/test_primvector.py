@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import time, random, unittest
+import sys, random, unittest, types
 
 from common import ImportPointlessExt
 
@@ -32,6 +32,8 @@ class TestPrimVector(unittest.TestCase):
 		t = ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']
 
 		for tc in t:
+			sys.stdout.write('.')
+			sys.stdout.flush()
 			r = range(0, 10) if tc != 'f' else [0.0, 1.0, 2.0, 3.0]
 			v = pointless.PointlessPrimVector(tc, r)
 			self.assert_(v.typecode == tc)
@@ -49,6 +51,9 @@ class TestPrimVector(unittest.TestCase):
 
 		# legal values, and their output, plus an iterator based creation, and item-by-item comparison
 		for v_type, v_min, v_max in int_info:
+			sys.stdout.write('.')
+			sys.stdout.flush()
+
 			v = pointless.PointlessPrimVector(v_type)
 			v.append(v_min)
 			v.append(0)
@@ -111,10 +116,10 @@ class TestPrimVector(unittest.TestCase):
 		def close_enough(v_a, v_b):
 			return (abs(v_a - v_b) < 0.001)
 
-		tt_a = 0.0
-		tt_b = 0.0
-
 		for i in xrange(100):
+			sys.stdout.write('.')
+			sys.stdout.flush()
+
 			for tc, i_min, i_max in i_limits:
 				for n_min in [0, 1000, 10000, 10000]:
 					n = random.randint(0, n_min)
@@ -124,14 +129,8 @@ class TestPrimVector(unittest.TestCase):
 
 					pr_v = pointless.PointlessPrimVector(tc, py_v)
 
-					t_0 = time.time()
 					py_v.sort()
-					t_1 = time.time()
 					pr_v.sort()
-					t_2 = time.time()
-
-					tt_a += t_1 - t_0
-					tt_b += t_2 - t_1
 
 					self.assert_(len(py_v) == len(pr_v))
 					self.assert_(all(a == b for a, b in zip(py_v, pr_v)))
@@ -140,20 +139,11 @@ class TestPrimVector(unittest.TestCase):
 					random.shuffle(py_v)
 					pr_v = pointless.PointlessPrimVector('f', py_v)
 
-					t_0 = time.time()
 					py_v.sort()
-					t_1 = time.time()
 					pr_v.sort()
-					t_2 = time.time()
-
-					tt_a += t_1 - t_0
-					tt_b += t_2 - t_1
 
 					self.assert_(len(py_v) == len(pr_v))
 					self.assert_(all(close_enough(a, b) for a, b in zip(py_v, pr_v)))
-
-		print
-		print '     prim sort %.2fx faster' % (tt_a / tt_b,)
 
 	def testProjSort(self):
 		# pure python projection sort
@@ -169,10 +159,10 @@ class TestPrimVector(unittest.TestCase):
 		random.seed(0)
 
 		# run some number of iterations
-		tt_a = 0.0
-		tt_b = 0.0
-
 		for i in xrange(10):
+			sys.stdout.write('.')
+			sys.stdout.flush()
+
 			# generate projection with indices in the range [i_min, i_max[
 			i_min = random.randint(0, 1000)
 			i_max = random.randint(i_min, i_min + 60000)
@@ -189,25 +179,28 @@ class TestPrimVector(unittest.TestCase):
 			if i_max < 2**7:
 				tc.append('i8')
 
+			sys.stdout.write('.')
+			sys.stdout.flush()
+
 			# create an equivalent primary vector projection, using any of the possible primitive range types
 			# since it is important to test them all
 			tc = random.choice(tc)
 			pp_proj = pointless.PointlessPrimVector(tc, py_proj)
+
+			sys.stdout.write('.')
+			sys.stdout.flush()
 
 			# create 1 to 16 value vectors
 			n_attributes = random.randint(1, 16)
 			pp_vv = [RandomPrimVector(i_max, None, pointless) for i in xrange(n_attributes)]
 			py_vv = [list(pp_vv[i]) for i in xrange(n_attributes)]
 
-			# run both python and pointless projection sorts
-			t_0 = time.time()
-			my_proj_sort(py_proj, py_vv)
-			t_1 = time.time()
-			pp_proj.sort_proj(*pp_vv)
-			t_2 = time.time()
+			sys.stdout.write('.')
+			sys.stdout.flush()
 
-			tt_a += t_1 - t_0
-			tt_b += t_2 - t_1
+			# run both python and pointless projection sorts
+			my_proj_sort(py_proj, py_vv)
+			pp_proj.sort_proj(*pp_vv)
 
 			self.assert_(len(py_proj) == len(pp_proj))
 
@@ -222,9 +215,6 @@ class TestPrimVector(unittest.TestCase):
 
 					self.assert_(False)
 
-		print
-		print '     proj sort %.2fx faster' % (tt_a / tt_b,)
-
 	def testSerialize(self):
 		random.seed(0)
 
@@ -235,6 +225,9 @@ class TestPrimVector(unittest.TestCase):
 
 			for i in xrange(1000):
 				n_random.append(random.randint(101, 100000))
+
+			sys.stdout.write('.')
+			sys.stdout.flush()
 
 			for n in n_random:
 				v_in = RandomPrimVector(n, tc, pointless)
@@ -274,6 +267,9 @@ class TestPrimVector(unittest.TestCase):
 
 		# we do multiple iterations
 		for i in xrange(100):
+			sys.stdout.write('.')
+			sys.stdout.flush()
+
 			# select type and range
 			v_type, v_min, v_max = random.choice(v_info)
 
