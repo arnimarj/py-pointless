@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, randomw
+import sys, random
 
 def ImportPointlessExt():
 	p = sys.path

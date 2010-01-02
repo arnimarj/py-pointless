@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import unittest, itertools
+import unittest, itertools, sys
 
 from test_serialize import AllBitvectorTestCases
 from common import pointless, VectorSlices
@@ -14,8 +14,39 @@ class TestCmp(unittest.TestCase):
 		self.fname_b = 'pointless_cmp_b.map'
 		self.fname_c = 'pointless_cmp_c.map'
 
+	def _cmp_prog_header(self, n, N):
+		if N > 10 ** 6:
+			sys.stdout.write('[%i -> %.2fM]' % (n, float(N) / 1000000))
+		elif N > 10 ** 3:
+			sys.stdout.write('[%i -> %.2fK]' % (n, float(N) / 1000))
+		else:
+			sys.stdout.write('[%i -> %i]' % (n, N))
+
+		sys.stdout.flush()
+
+	def _cmp_prog(self, i):
+		if i > 0 and i % 100 == 0:
+			sys.stdout.write('.')
+
+			if i % 1000 == 0:
+				sys.stdout.write('%iK' % (i // 1000,))
+
+			sys.stdout.flush()
+
+	def _prog_prog_footer(self):
+		sys.stdout.write(' ')
+		sys.stdout.flush()
+
 	def _testPythonCmp(self, values):
-		for (v_a, v_b) in itertools.product(values, values):
+		n = len(values)
+		N = n ** 2
+
+		self._cmp_prog_header(n, N)
+
+		for i, (v_a, v_b) in enumerate(itertools.product(values, values)):
+
+			self._cmp_prog(i)
+
 			pointless.serialize(v_a, self.fname_a)
 			pointless.serialize(v_b, self.fname_b)
 
@@ -40,9 +71,19 @@ class TestCmp(unittest.TestCase):
 			del p_a
 			del p_b
 
+		self._prog_prog_footer()
+
 	def _testTotalOrder(self, values):
+		n = len(values)
+		N = n ** 3
+
+		self._cmp_prog_header(n, N)
+
 		# we're testing, for each 3-combination of values
-		for (v_a, v_b, v_c) in itertools.product(values, values, values):
+		for i, (v_a, v_b, v_c) in enumerate(itertools.product(values, values, values)):
+
+			self._cmp_prog(i)
+
 			# write the values out
 			pointless.serialize(v_a, self.fname_a)
 			pointless.serialize(v_b, self.fname_b)
@@ -79,6 +120,8 @@ class TestCmp(unittest.TestCase):
 			del p_b
 			del p_c
 
+		self._prog_prog_footer()
+
 	NUMBERS        = [-1000, -100, 0, 100, 1.0, -1.0, 0.0, False, True]
 	NONE           = [None]
 	STRINGS        = ['hello world', u'Hello world', u'Hello world', '', u'']
@@ -113,4 +156,3 @@ class TestCmp(unittest.TestCase):
 		# all in one soup, just to test total-order
 		values = self.NUMBERS + self.NONE + self.STRINGS + self.VECTORS + self.SLICED_VECTORS + self.BITVECTORS
 		self._testTotalOrder(values)
-
