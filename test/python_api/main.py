@@ -5,6 +5,7 @@ import sys, unittest
 from test_primvector import TestPrimVector
 from test_print import TestPrint
 from test_cmp import TestCmp
+from test_set_map import TestSetMap
 
 def print_usage_exit():
 	s =  'usage: ./main.py OPTIONS\n'
@@ -12,6 +13,7 @@ def print_usage_exit():
 	s += '      --prim-vector\n'
 	s += '      --pointless-print\n'
 	s += '      --pointless-cmp\n'
+	s += '      --pointless-set-map\n'
 	sys.exit(s)
 
 def main():
@@ -26,6 +28,8 @@ def main():
 		sub_suites.append(TestPrint)
 	elif sys.argv[1] == '--pointless-cmp':
 		sub_suites.append(TestCmp)
+	elif sys.argv[1] == '--pointless-set-map':
+		sub_suites.append(TestSetMap)
 	else:
 		print_usage_exit()
 

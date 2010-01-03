@@ -3,9 +3,6 @@
 
 import sys, types, random, cStringIO, time, unittest, operator
 
-
-
-
 def test_serialize(pointless):
 	fname = 'test_serialize.map'
 
@@ -21,95 +18,9 @@ def test_serialize(pointless):
 		del p
 
 
-def test_set_contains(pointless):
-	def list_to_tuple_rec(i):
-		if type(i) == types.ListType:
-			return tuple(map(list_to_tuple_rec, i))
-		else:
-			return i
 
-	fname_a = 'test_set_contains_a.map'
-	fname_b = 'test_set_contains_b.map'
-	fname_c = 'test_set_contains_c.map'
 
-	vectors = [
-		[], [[]], [[], []],
-		[[[], False], False, False, False],
-		[0], ['hello world'],
-		[0, u'hello'], ['hello world', (1, 2, 3)],
-		[False, True, 1.0, -1.0, 0.0, 1, 200],
-		[0, 1, 2, 3, 4],
-		['a', 'b', 'c', ['d', 'e', 1.0]],
-		[None, [None]],
-		[range(10), range(100), range(1000), [range(10), ['asdf'] * 10]],
-		[[0]], [[-1]], [[-1.0, 0.0]], [[0, False]], [[0, True]],
-		[range(10, -100, -1), [[range(10)]]]
-	]
 
-	for test_i, v in enumerate(vectors):
-		#print 'TEST: set.contains() %i' % (test_i + 1,)
-		vv = list_to_tuple_rec(v)
-		pointless.serialize(set(vv), fname_a)
-		root_a = pointless.Pointless(fname_a).GetRoot()
-
-		for i in v:
-			ii = list_to_tuple_rec(i)
-
-			pointless.serialize(i, fname_b)
-			root_b = pointless.Pointless(fname_b).GetRoot()
-
-			pointless.serialize(ii, fname_c)
-			root_c = pointless.Pointless(fname_c).GetRoot()
-
-			if ii not in root_a:
-				raise PointlessTestFailure('set.contains() failure A')
-
-			if root_b not in root_a:
-				raise PointlessTestFailure('set.contains() failure B')
-
-			if root_c not in root_a:
-				raise PointlessTestFailure('set.contains() failure C')
-
-			del root_b
-			del root_c
-
-		del root_a
-
-def test_map(pointless):
-	# maps
-	maps = [
-		{1: 0},
-		{2: 'asdf'},
-		{'asdf':2},
-		{1:2, 2:3, 4:4, 'asdf': 123, (1,2):[4,5,'hello world']}
-	]
-
-	maps[3][(1,2)].append(maps)
-
-	fname = 'test_map.map'
-
-	for test_i, m in enumerate(maps):
-		#print 'TEST: map.contains()'
-
-		pointless.serialize(m, fname)
-		root_a = pointless.Pointless(fname).GetRoot()
-
-		# simple for now
-		for k in m.iterkeys():
-			if k not in root_a:
-				raise PointlessTestFailure('map.contains() failure A')
-
-			v_m = m[k]
-			v_a = root_a[k]
-
-			c = pointless.pointless_cmp(v_m, v_a)
-
-			if c != 0:
-				#print type(v_m), v_m
-				#print type(v_a), v_a
-				raise PointlessTestFailure('map.contains() failure B')
-
-		del root_a
 
 def test_set_performance(pointless):
 	#print 'INFO: set performance test'
@@ -179,20 +90,6 @@ def test_vector_slice(pointless):
 
 		if c != 0:
 			raise PointlessTestFailure('slice comparison of arrays failure')
-
-def test_bitvector_cmp(pointless):
-	fname = 'test_bitvector_cmp.map'
-
-	for i, py in enumerate(BITVECTORS(pointless)):
-		pointless.serialize(py, fname)
-		po = pointless.Pointless(fname).GetRoot()
-
-		c = pointless.pointless_cmp(py, po)
-
-		if c != 0:
-			raise PointlessTestFailure('bitvector comparison failed, case %i' % (i,))
-
-		del po
 
 def test_map_unicode_str_lookup(pointless):
 	v = {
