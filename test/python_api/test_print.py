@@ -68,7 +68,7 @@ class TestPrint(unittest.TestCase):
 		fname = 'test_print.map'
 
 		# for each simple test case
-		for v in SimpleSerializeTestCases(pointless):
+		for v in SimpleSerializeTestCases():
 			# serialize it
 			pointless.serialize(v, fname)
 			# load it

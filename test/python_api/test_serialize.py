@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
-import random
+import unittest, random
 
-def SimpleSerializeTestCases(pointless):
+from common import pointless
+
+def SimpleSerializeTestCases():
 	# 1) deep vector
 	yield [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
 
@@ -34,11 +36,11 @@ def SimpleSerializeTestCases(pointless):
 	yield set([0, 0.0, 1.0, 1, True])
 
 	# 9) bitvectors
-	for bv in AllBitvectorTestCases(pointless):
+	for bv in AllBitvectorTestCases():
 		yield bv
 
 # all cases for bitvectors
-def AllBitvectorTestCases(pointless):
+def AllBitvectorTestCases():
 	return [
 		# case 0) all-0
 		pointless.PointlessBitvector([0] * 1000),
@@ -59,3 +61,16 @@ def AllBitvectorTestCases(pointless):
 		pointless.PointlessBitvector([0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1])
 	]
 
+from common import pointless
+
+class TestSerialize(unittest.TestCase):
+	def testSetSerialize(self):
+		fname = 'test_serialize.map'
+
+		for v in SimpleSerializeTestCases():
+			pointless.serialize(v, fname)
+			p = pointless.Pointless(fname)
+			root = p.GetRoot()
+
+			del root
+			del p

@@ -2,6 +2,7 @@
 
 import sys, unittest
 
+from test_serialize import TestSerialize
 from test_primvector import TestPrimVector
 from test_print import TestPrint
 from test_cmp import TestCmp
@@ -10,6 +11,7 @@ from test_set_map import TestSetMap
 def print_usage_exit():
 	s =  'usage: ./main.py OPTIONS\n'
 	s += '\n'
+	s += '      --pointless-serialize\n'
 	s += '      --prim-vector\n'
 	s += '      --pointless-print\n'
 	s += '      --pointless-cmp\n'
@@ -22,7 +24,9 @@ def main():
 
 	sub_suites = [ ]
 
-	if sys.argv[1] == '--prim-vector':
+	if sys.argv[1] == '--pointless-serialize':
+		sub_suites.append(TestSerialize)
+	elif sys.argv[1] == '--prim-vector':
 		sub_suites.append(TestPrimVector)
 	elif sys.argv[1] == '--pointless-print':
 		sub_suites.append(TestPrint)

@@ -5,6 +5,22 @@ import unittest, types
 from common import pointless
 
 class TestSetMap(unittest.TestCase):
+	def testMapUnicode(self):
+		v = {
+			'abcdef': 1,
+			u'abc': 2
+		}
+
+		fname = 'test_uncode_str_lookup.map'
+
+		pointless.serialize(v, fname)
+		vv = pointless.Pointless(fname).GetRoot()
+
+		for a, b in v.iteritems():
+			self.assert_(a in vv)
+			bb = vv[a]
+			self.assertEquals(b, bb)
+
 	def testMap(self):
 		maps = [
 			{ 1: 0 },

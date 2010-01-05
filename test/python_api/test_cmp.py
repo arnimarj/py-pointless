@@ -127,7 +127,7 @@ class TestCmp(unittest.TestCase):
 	STRINGS        = ['hello world', u'Hello world', u'Hello world', '', u'']
 	VECTORS        = [[0, 1, 2], [], [[]], ['asdf', None, True, False, [0, 1, 2, ['asdf']]], ['a', ['a']]]
 	SLICED_VECTORS = [v_py for (v_py, v_po) in VectorSlices('slice.map')]
-	BITVECTORS     = AllBitvectorTestCases(pointless)
+	BITVECTORS     = AllBitvectorTestCases()
 
 	def testNumbers(self):
 		self._testPythonCmp(self.NUMBERS)

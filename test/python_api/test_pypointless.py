@@ -3,25 +3,6 @@
 
 import sys, types, random, cStringIO, time, unittest, operator
 
-def test_serialize(pointless):
-	fname = 'test_serialize.map'
-
-	for i, v in enumerate(test_serialize_test_cases(pointless)):
-		#print 'TEST: serialize case %i' % (i + 1,), fname
-		pointless.serialize(v, fname)
-		p = pointless.Pointless(fname)
-		root = p.GetRoot()
-
-		# make sure file handle is closed, windows
-		# really doesn't like us writing over open files
-		del root
-		del p
-
-
-
-
-
-
 def test_set_performance(pointless):
 	#print 'INFO: set performance test'
 	fname = 'set_performance.map'
@@ -90,26 +71,6 @@ def test_vector_slice(pointless):
 
 		if c != 0:
 			raise PointlessTestFailure('slice comparison of arrays failure')
-
-def test_map_unicode_str_lookup(pointless):
-	v = {
-		'abcdef': 1,
-		u'abc': 2
-	}
-
-	fname = 'test_uncode_str_lookup.map'
-
-	pointless.serialize(v, fname)
-	vv = pointless.Pointless(fname).GetRoot()
-
-	for a, b in v.iteritems():
-		if a not in vv:
-			raise PointlessTestFailure('key not found in map, as it should')
-
-		bb = vv[a]
-
-		if b != bb:
-			raise PointlessTestFailure('map values do not match')
 
 def test_serialize_leak(pointless):
 	fname = 'test_serialize_leak.map'
