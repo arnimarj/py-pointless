@@ -1,11 +1,10 @@
 #include <pointless/pointless_reader.h>
 
-int pointless_open_(pointless_t* p, void* buf, uint64_t buflen, const char** error)
+static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, const char** error)
 {
 	// our header
 	if (buflen < sizeof(pointless_header_t)) {
 		*error = "header missing";
-		pointless_close(p);
 		return 0;
 	}
 
@@ -21,7 +20,6 @@ int pointless_open_(pointless_t* p, void* buf, uint64_t buflen, const char** err
 
 	if (buflen < mandatory_size) {
 		*error = "file is too small to hold offset vectors";
-		pointless_close(p);
 		return 0;
 	}
 
@@ -37,35 +35,8 @@ int pointless_open_(pointless_t* p, void* buf, uint64_t buflen, const char** err
 	p->heap_ptr = (void*)(p->map_offsets + p->header->n_map);
 
 	// let us validate the damn thing
-	if (!pointless_validate(p, error)) {
-		pointless_close(p);
-		return 0;
-	}
-
-	return 1;
+	return pointless_validate(p, error);
 }
-
-/*
-int pointless_open_m(pointless_t* p, void* buf, uint64_t buflen, const char** error)
-{
-	p->fd = 0;
-	p->fd_len = 0;
-	p->fd_ptr = 0;
-
-	p->buf = 0;
-	p->buflen = 0;
-
-	int i = pointless_open_(p, buf, buflen, error);
-
-	if (i) {
-		p->buf = buf;
-		p->buflen = buflen;
-	}
-
-	return i;
-
-}
-*/
 
 int pointless_open_f(pointless_t* p, const char* fname, const char** error)
 {
@@ -102,7 +73,7 @@ int pointless_open_f(pointless_t* p, const char* fname, const char** error)
 		return 0;
 	}
 
-	if (!pointless_open_(p, p->fd_ptr, p->fd_len, error)) {
+	if (!pointless_init(p, p->fd_ptr, p->fd_len, error)) {
 		pointless_close(p);
 		return 0;
 	}
