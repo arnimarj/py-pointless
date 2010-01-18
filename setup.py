@@ -1,21 +1,34 @@
 import os, sys
 from distutils.core import setup, run_setup, Extension
 
-setup(name = 'Pointless Python API',
-	version = '1.0',
+setup(
+	name = 'pointless',
+	version = '0.1',
 	maintainer = 'Arni Mar Jonsson',
 	maintainer_email = 'arnimarj@gmail.com',
-	description = 'Pointless Python/C API',
 	url = 'http://code.google.com/p/py-pointless/',
+
+	classifiers = [
+		'Development Status :: 4 - Beta',
+		'Environment :: Other Environment',
+		'Intended Audience :: Developers',
+		'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
+		'Operating System :: POSIX',
+		'Programming Language :: C',
+		'Programming Language :: Python',
+		'Programming Language :: Python :: 2.6',
+		'Topic :: Database',
+		'Topic :: Software Development :: Libraries'
+	],
+
+	description = 'A read-only relocatable data structure for JSON like data, with C and Python APIs',
+	# long_description = 
 
 	packages = ['pointless'],
 	package_dir = {'pointless': ''},
 
 	ext_modules = [
 		Extension('pointless',
-			include_dirs = ['./include', '/usr/include' ],
-			library_dirs = ['/usr/lib' ],
-
 			sources = [
 				# python stuff
 				'pointless.c',
@@ -56,9 +69,9 @@ setup(name = 'Pointless Python API',
 				'src/pointless_validate_hash_table.c',
 			],
 
-			#extra_compile_args = ['-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O2', '-DNDEBUG'],
-			extra_compile_args = ['-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O0'],
-			extra_link_args = ['-Bstatic', '-lJudy', '-Bdynamic', '-lm', '-liconv']
+			extra_compile_args = ['-I./include', '-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O2', '-DNDEBUG'],
+			# extra_compile_args = ['-I./include', '-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O0'],
+			extra_link_args = ['-Bstatic', '-lJudy', '-Bdynamic', '-lm']#, '-liconv']
 		)
 	]
 )
