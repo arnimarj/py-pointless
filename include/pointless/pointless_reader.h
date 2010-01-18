@@ -21,9 +21,6 @@
 #include <pointless/pointless_reader_utils.h>
 
 int pointless_open_f(pointless_t* p, const char* fname, const char** error);
-//int pointless_open_m(pointless_t* p, void* buf, size_t buflen, const char** error);
 void pointless_close(pointless_t* p);
-
-// NOTE: pointless_open_m() fill free() buf on close(), after a successful open()
 
 #endif

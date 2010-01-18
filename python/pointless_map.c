@@ -199,7 +199,7 @@ static uint32_t PyPointlessMap_eq_cb(pointless_t* p, pointless_value_t* v, void*
 	return pypointless_cmp_eq(p, v, (PyObject*)user, error);
 }
 
-static int PyPointlessMap_contains(PyPointlessMap* m, PyObject* key)
+static int PyPointlessMap_contains_(PyPointlessMap* m, PyObject* key)
 {
 	const char* error = 0;
 	uint32_t hash = pyobject_hash(key, &error);
@@ -220,6 +220,16 @@ static int PyPointlessMap_contains(PyPointlessMap* m, PyObject* key)
 	}
 
 	return (k != 0);
+}
+
+static PyObject* PyPointlessMap_contains(PyPointlessMap* m, PyObject* k)
+{
+	int i = PyPointlessMap_contains_(m, k);
+
+	if (i == -1)
+		return 0;
+
+	return PyBool_FromLong(i);
 }
 
 static PyObject* PyPointlessMap_iterkeys(PyPointlessMap* m)
@@ -403,7 +413,6 @@ static PyObject* PyPointlessMap_items(PyPointlessMap* m)
 	return PyPointlessMap_to_list(m, PyPointlessMap_LIST_TYPE_ITEMS);
 }
 
-
 static PyMethodDef PyPointlessMap_methods[] = {
 	{"__contains__", (PyCFunction)PyPointlessMap_contains,    METH_O | METH_COEXIST, ""},
 	{"__getitem__",  (PyCFunction)PyPointlessMap_subscript,   METH_O | METH_COEXIST, ""},
@@ -418,14 +427,14 @@ static PyMethodDef PyPointlessMap_methods[] = {
 };
 
 static PySequenceMethods PyPointlessMap_as_sequence = {
-	0,                                   /* sq_length */
-	0,                                   /* sq_concat */
-	0,                                   /* sq_repeat */
-	0,                                   /* sq_item */
-	0,                                   /* sq_slice */
-	0,                                   /* sq_ass_item */
-	0,                                   /* sq_ass_slice */
-	(objobjproc)PyPointlessMap_contains, /* sq_contains */
+	0,                       /* sq_length */
+	0,                       /* sq_concat */
+	0,                       /* sq_repeat */
+	0,                       /* sq_item */
+	0,                       /* sq_slice */
+	0,                       /* sq_ass_item */
+	0,                       /* sq_ass_slice */
+	(objobjproc)PyPointlessMap_contains_, /* sq_contains */
 };
 
 PyTypeObject PyPointlessMapType = {
