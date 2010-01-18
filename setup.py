@@ -1,5 +1,12 @@
-import os, sys
-from distutils.core import setup, run_setup, Extension
+import sys
+from distutils.core import setup, Extension
+
+extra_compile_args = ['-I./include', '-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O2', '-DNDEBUG'],
+# extra_compile_args = ['-I./include', '-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O0'],
+extra_link_args = ['-Bstatic', '-lJudy', '-Bdynamic', '-lm']
+
+if sys.platform == 'cygwin':
+	extra_link_args += ['-liconv']
 
 setup(
 	name = 'pointless',
@@ -70,9 +77,8 @@ setup(
 				'src/pointless_validate_hash_table.c',
 			],
 
-			extra_compile_args = ['-I./include', '-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O2', '-DNDEBUG'],
-			# extra_compile_args = ['-I./include', '-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O0'],
-			extra_link_args = ['-Bstatic', '-lJudy', '-Bdynamic', '-lm', '-liconv']
+			extra_compile_args = extra_compile_args,
+			extra_link_args = extra_link_args
 		)
 	]
 )
