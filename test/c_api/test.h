@@ -36,4 +36,8 @@ static uint32_t create_special_d_3(pointless_create_t* c);
 void create_special_d(pointless_create_t* c);
 void query_special_d(pointless_t* p);
 
+// performance tests
+void create_1M_set(pointless_create_t* c);
+void query_1M_set(pointless_t* p);
+
 #endif

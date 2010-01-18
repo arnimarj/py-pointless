@@ -52,7 +52,12 @@ static void print_usage_exit()
 {
 	fprintf(stderr, "usage: ./pointless_util OPTIONS\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "   --unit-test | --measure-load-time pointless.map | --test-hash | --dump-file pointless.map | --re-create fname_in fname_out)\n");
+	fprintf(stderr, "   --unit-test\n");
+	fprintf(stderr, "   --performance-test\n");
+	fprintf(stderr, "   --measure-load-time pointless.map\n");
+	fprintf(stderr, "   --test-hash\n");
+	fprintf(stderr, "   --dump-file pointless.map\n");
+	fprintf(stderr, "   --re-create pointless_in.map pointless_out.map\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -86,11 +91,19 @@ static void run_unit_test()
 	print_map("special_d.map");
 }
 
+static void run_performance_test()
+{
+	create_wrapper("set_1M.map", create_1M_set);
+	query_wrapper("set_1M.map", query_1M_set);
+}
+
 int main(int argc, char** argv)
 {
 	if (argc == 2) {
 		if (strcmp(argv[1], "--unit-test") == 0)
 			run_unit_test();
+		else if (strcmp(argv[1], "--test-performance") == 0)
+			run_performance_test();
 		else if (strcmp(argv[1], "--test-hash") == 0)
 			validate_hash_semantics();
 		else
