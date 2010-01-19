@@ -251,7 +251,7 @@ static void pointless_print_set(pointless_debug_state_t* state, pointless_value_
 			sort_state.error = state->error;
 
 			// sort keys
-			if (!bentley_sort((int)n_keys, pv_cmp, pv_swap, (void*)&sort_state)) {
+			if (!bentley_sort_((int)n_keys, pv_cmp, pv_swap, (void*)&sort_state)) {
 				free(keys);
 				return;
 			}
@@ -331,7 +331,7 @@ static void pointless_print_map(pointless_debug_state_t* state, pointless_value_
 			sort_state.error = state->error;
 
 			// sort keys
-			if (!bentley_sort((int)n_keys, pv_cmp, pv_swap, (void*)&sort_state)) {
+			if (!bentley_sort_((int)n_keys, pv_cmp, pv_swap, (void*)&sort_state)) {
 				free(keys);
 				free(values);
 				return;

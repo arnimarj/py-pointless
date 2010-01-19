@@ -704,38 +704,38 @@ static int pointless_vector_check_hashable_rec(pointless_create_t* c, uint32_t v
 
 		// outside vector
 		if (cv_is_outside_vector(v)) {
-			if (bm_is_set(outside_vector_bitmask, ii))
+			if (bm_is_set_(outside_vector_bitmask, ii))
 				return 0;
 
-			bm_set(outside_vector_bitmask, ii);
+			bm_set_(outside_vector_bitmask, ii);
 
 			for (i = 0; i < cv_outside_vector_at(v)->n_items; i++) {
 				uint32_t cc = ((uint32_t*)cv_outside_vector_at(v)->items)[i];
 
 				if (!pointless_vector_check_hashable_rec(c, cc, priv_vector_bitmask, outside_vector_bitmask, depth + 1)) {
-					bm_reset(outside_vector_bitmask, ii);
+					bm_reset_(outside_vector_bitmask, ii);
 					return 0;
 				}
 			}
 
-			bm_reset(outside_vector_bitmask, ii);
+			bm_reset_(outside_vector_bitmask, ii);
 		// private vector
 		} else {
-			if (bm_is_set(priv_vector_bitmask, ii))
+			if (bm_is_set_(priv_vector_bitmask, ii))
 				return 0;
 
-			bm_set(priv_vector_bitmask, ii);
+			bm_set_(priv_vector_bitmask, ii);
 
 			for (i = 0; i < pointless_dynarray_n_items(&cv_priv_vector_at(v)->vector); i++) {
 				uint32_t cc = pointless_dynarray_ITEM_AT(uint32_t, &cv_priv_vector_at(v)->vector, i);
 
 				if (!pointless_vector_check_hashable_rec(c, cc, priv_vector_bitmask, outside_vector_bitmask, depth + 1)) {
-					bm_reset(priv_vector_bitmask, ii);
+					bm_reset_(priv_vector_bitmask, ii);
 					return 0;
 				}
 			}
 
-			bm_reset(priv_vector_bitmask, ii);
+			bm_reset_(priv_vector_bitmask, ii);
 		}
 
 		// vector not in a cycle, and all children are hashable
@@ -1575,7 +1575,7 @@ static int pointless_bitvector_is_all_1(void* v, uint32_t n_bits)
 	uint32_t i;
 
 	for (i = 0; i < n_bits; i++)
-		if (!bm_is_set(v, i))
+		if (!bm_is_set_(v, i))
 			return 0;
 
 	return 1;
@@ -1586,7 +1586,7 @@ static int pointless_bitvector_is_all_0(void* v, uint32_t n_bits)
 	uint32_t i;
 
 	for (i = 0; i < n_bits; i++)
-		if (bm_is_set(v, i))
+		if (bm_is_set_(v, i))
 			return 0;
 
 	return 1;
@@ -1598,7 +1598,7 @@ static int pointless_bitvector_is_01(void* v, uint32_t n_bits, uint32_t* n_bits_
 
 	for (i = 0; i < n_bits; i++) {
 		// (0|1) -> 1 good
-		if (bm_is_set(v, i)) {
+		if (bm_is_set_(v, i)) {
 			n_1 += 1;
 		// 0 -> 0 good
 		// 1 -> 0 bad
@@ -1621,7 +1621,7 @@ static int pointless_bitvector_is_10(void* v, uint32_t n_bits, uint32_t* n_bits_
 
 	for (i = 0; i < n_bits; i++) {
 		// (0|1) -> 0 good
-		if (!bm_is_set(v, i)) {
+		if (!bm_is_set_(v, i)) {
 			n_0 += 1;
 		// 1 -> 1 good
 		// 0 -> 1 bad
@@ -1665,8 +1665,8 @@ uint32_t pointless_create_bitvector(pointless_create_t* c, void* v, uint32_t n_b
 
 		// yes, this is hacky, might cause problems with bitfield semantics in GCC
 		for (i = 0; i < n_bits; i++) {
-			if (bm_is_set(v, i))
-				bm_set((void*)&value.data.data_u32, i + 5);
+			if (bm_is_set_(v, i))
+				bm_set_((void*)&value.data.data_u32, i + 5);
 		}
 	// a bit worse, 01 or 10
 	} else {

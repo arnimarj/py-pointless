@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-void bm_set(void* bitmask, uint64_t bit_index);
-void bm_reset(void* bitmask, uint64_t bit_index);
-unsigned char bm_is_set(void* bitmask, uint64_t bit_index);
+void bm_set_(void* bitmask, uint64_t bit_index);
+void bm_reset_(void* bitmask, uint64_t bit_index);
+unsigned char bm_is_set_(void* bitmask, uint64_t bit_index);
 
 #endif

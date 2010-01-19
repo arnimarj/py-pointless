@@ -78,24 +78,24 @@ static uint32_t pointless_validate_pass_cb(pointless_t* p, pointless_value_t* v,
 	switch (v->type) {
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-			if (bm_is_set(state->vector, v->data.data_u32))
+			if (bm_is_set_(state->vector, v->data.data_u32))
 				return POINTLESS_WALK_MOVE_UP;
 
-			bm_set(state->vector, v->data.data_u32);
+			bm_set_(state->vector, v->data.data_u32);
 
 			break;
 		case POINTLESS_SET_VALUE:
-			if (bm_is_set(state->set, v->data.data_u32))
+			if (bm_is_set_(state->set, v->data.data_u32))
 				return POINTLESS_WALK_MOVE_UP;
 
-			bm_set(state->set, v->data.data_u32);
+			bm_set_(state->set, v->data.data_u32);
 
 			break;
 		case POINTLESS_MAP_VALUE_VALUE:
-			if (bm_is_set(state->map, v->data.data_u32))
+			if (bm_is_set_(state->map, v->data.data_u32))
 				return POINTLESS_WALK_MOVE_UP;
 
-			bm_set(state->map, v->data.data_u32);
+			bm_set_(state->map, v->data.data_u32);
 
 			break;
 	}
@@ -116,7 +116,7 @@ static uint32_t pointless_validate_pass_cb(pointless_t* p, pointless_value_t* v,
 		if (v->type == POINTLESS_VECTOR_VALUE_HASHABLE) {
 			uint32_t container_id = pointless_container_id(p, v);
 
-			if (bm_is_set(state->cycle_marker, container_id)) {
+			if (bm_is_set_(state->cycle_marker, container_id)) {
 				state->error = "POINTLESS_VECTOR_VALUE_HASHABLE is in a cycle";
 				return POINTLESS_WALK_STOP; 
 			}

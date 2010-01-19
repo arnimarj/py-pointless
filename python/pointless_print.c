@@ -427,7 +427,7 @@ static PyObject* pypointless_bitvector_str_buffer(void* buffer, uint32_t n_bits)
 	uint32_t i;
 
 	for (i = 0; i < n_bits; i++) {
-		if (bm_is_set(buffer, n_bits - i - 1))
+		if (bm_is_set_(buffer, n_bits - i - 1))
 			 PyString_Concat(&r, one);
 		else
 			PyString_Concat(&r, zero);

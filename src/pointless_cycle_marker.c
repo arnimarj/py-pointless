@@ -295,7 +295,7 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 			pointless_dynarray_pop(&state->stack);
 			//print_depth(depth); printf("  w = stack.pop() (%u)\n", *w_id);
 
-			bm_set(state->cycle_marker, w_id);
+			bm_set_(state->cycle_marker, w_id);
 
 			// component[w] = root[v]
 			Word_t* PValue = 0;

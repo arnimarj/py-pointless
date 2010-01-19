@@ -375,7 +375,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			} else {
 				for (i = 0; i < n_bits; i++) {
 					if (pointless_reader_bitvector_is_set(&bitvector->pointless_pp->p, bitvector->pointless_v, i))
-						bm_set(bits, i);
+						bm_set_(bits, i);
 				}
 
 				handle = pointless_create_bitvector(&state->c, bits, n_bits);

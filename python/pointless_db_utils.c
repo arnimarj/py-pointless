@@ -68,7 +68,7 @@ static void my_swap(int a, int b, void* user)
 	aa[b] = t;
 }
 
-static qsort_cmp pointless_db_utils_get_cmp(uint32_t type)
+static qsort_cmp_ pointless_db_utils_get_cmp(uint32_t type)
 {
 	switch (type) {
 		case POINTLESS_PRIM_VECTOR_TYPE_I8:
@@ -159,10 +159,10 @@ PyObject* pointless_db_array_sort(PyObject* o, PyObject* args)
 	state.array = array;
 	state.key_array = (PyPointlessPrimVector*)PyList_GET_ITEM(key_array, 0);
 
-	qsort_cmp cur_cmp = pointless_db_utils_get_cmp(state.key_array->type);
-	qsort_cmp prev_cmp = 0;
+	qsort_cmp_ cur_cmp = pointless_db_utils_get_cmp(state.key_array->type);
+	qsort_cmp_ prev_cmp = 0;
 
-	bentley_sort((int)pointless_dynarray_n_items(&array->array), cur_cmp, my_swap, (void*)&state);
+	bentley_sort_((int)pointless_dynarray_n_items(&array->array), cur_cmp, my_swap, (void*)&state);
 
 	// sort on remaining keys
 	uint32_t n_array = pointless_dynarray_n_items(&array->array);
@@ -197,7 +197,7 @@ PyObject* pointless_db_array_sort(PyObject* o, PyObject* args)
 			state.offset = lo;
 			state.key_array = cur_key;
 
-			bentley_sort(hi - lo, cur_cmp, my_swap, (void*)&state);
+			bentley_sort_(hi - lo, cur_cmp, my_swap, (void*)&state);
 
 			lo = hi;
 		}

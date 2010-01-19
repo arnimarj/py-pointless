@@ -179,7 +179,7 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 
 			for (i = 0; i < n_bits; i++) {
 				if (pointless_reader_bitvector_is_set(state->p, v, i))
-					bm_set(bits, i);
+					bm_set_(bits, i);
 			}
 
 			handle = pointless_create_bitvector(state->c, bits, n_bits);

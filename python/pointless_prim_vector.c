@@ -764,13 +764,13 @@ static PyObject* PyPointlessPrimVector_sort(PyPointlessPrimVector* self)
 	int n = (int)pointless_dynarray_n_items(&self->array);
 
 	switch (self->type) {
-		case POINTLESS_PRIM_VECTOR_TYPE_I8:    bentley_sort(n, prim_sort_cmp_i8,  prim_sort_swap_i8,  (void*)self); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U8:    bentley_sort(n, prim_sort_cmp_u8,  prim_sort_swap_u8,  (void*)self); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_I16:   bentley_sort(n, prim_sort_cmp_i16, prim_sort_swap_i16, (void*)self); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U16:   bentley_sort(n, prim_sort_cmp_u16, prim_sort_swap_u16, (void*)self); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_I32:   bentley_sort(n, prim_sort_cmp_i32, prim_sort_swap_i32, (void*)self); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U32:   bentley_sort(n, prim_sort_cmp_u32, prim_sort_swap_u32, (void*)self); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_FLOAT: bentley_sort(n, prim_sort_cmp_f,   prim_sort_swap_f,   (void*)self); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_I8:    bentley_sort_(n, prim_sort_cmp_i8,  prim_sort_swap_i8,  (void*)self); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_U8:    bentley_sort_(n, prim_sort_cmp_u8,  prim_sort_swap_u8,  (void*)self); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_I16:   bentley_sort_(n, prim_sort_cmp_i16, prim_sort_swap_i16, (void*)self); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_U16:   bentley_sort_(n, prim_sort_cmp_u16, prim_sort_swap_u16, (void*)self); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_I32:   bentley_sort_(n, prim_sort_cmp_i32, prim_sort_swap_i32, (void*)self); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_U32:   bentley_sort_(n, prim_sort_cmp_u32, prim_sort_swap_u32, (void*)self); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_FLOAT: bentley_sort_(n, prim_sort_cmp_f,   prim_sort_swap_f,   (void*)self); break;
 		default:
 			PyErr_BadInternalCall();
 			return 0;
@@ -992,12 +992,12 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 
 	// now we can sort
 	switch (state.p_t) {
-		case POINTLESS_PRIM_VECTOR_TYPE_I8:  bentley_sort((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_i8,  (void*)&state); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U8:  bentley_sort((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_u8,  (void*)&state); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_I16: bentley_sort((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_i16, (void*)&state); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U16: bentley_sort((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_u16, (void*)&state); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_I32: bentley_sort((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_i32, (void*)&state); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U32: bentley_sort((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_u32, (void*)&state); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_I8:  bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_i8,  (void*)&state); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_U8:  bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_u8,  (void*)&state); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_I16: bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_i16, (void*)&state); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_U16: bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_u16, (void*)&state); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_I32: bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_i32, (void*)&state); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_U32: bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_u32, (void*)&state); break;
 	}
 
 	Py_INCREF(Py_None);

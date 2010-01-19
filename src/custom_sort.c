@@ -1,6 +1,6 @@
 #include <pointless/custom_sort.h>
 
-static int cmp_adapter(int a, int b, qsort_cmp cmp, void* user, int* is_error)
+static int cmp_adapter(int a, int b, qsort_cmp_ cmp, void* user, int* is_error)
 {
 	int c = 0;
 
@@ -10,7 +10,7 @@ static int cmp_adapter(int a, int b, qsort_cmp cmp, void* user, int* is_error)
 	return c;
 }
 
-static int med3(int a, int b, int c, qsort_cmp cmp, void* user)
+static int med3(int a, int b, int c, qsort_cmp_ cmp, void* user)
 {
 	int is_error = 0;
 
@@ -25,7 +25,7 @@ static int med3(int a, int b, int c, qsort_cmp cmp, void* user)
 	return v;
 }
 
-static int bentley_qsort_priv(int a, int n, qsort_cmp cmp_x, qsort_swap swap, void* user)
+static int bentley_qsort_priv(int a, int n, qsort_cmp_ cmp_x, qsort_swap_ swap, void* user)
 {
 	int pm, pl, pn, pa, pb, pc, pd, i, d, r, presorted, is_error;
 
@@ -147,7 +147,7 @@ loop:
 	return 1;
 }
 
-int bentley_sort(int n, qsort_cmp cmp, qsort_swap swap, void* user)
+int bentley_sort_(int n, qsort_cmp_ cmp, qsort_swap_ swap, void* user)
 {
 	return bentley_qsort_priv(0, n, cmp, swap, user);
 }

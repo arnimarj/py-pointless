@@ -470,7 +470,7 @@ static uint32_t pypointless_cmp_bitvector_item_at(pypointless_cmp_value_t* v, ui
 	if (bv->is_pointless)
 		return pointless_reader_bitvector_is_set(&bv->pointless_pp->p, bv->pointless_v, i);
 
-	return (bm_is_set(bv->primitive_bits, i) != 0);
+	return (bm_is_set_(bv->primitive_bits, i) != 0);
 }
 
 static int32_t pypointless_cmp_bitvector(pypointless_cmp_value_t* a, pypointless_cmp_value_t* b, pypointless_cmp_state_t* state)

@@ -120,10 +120,10 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args)
 
 			if (PyBool_Check(obj)) {
 				if (obj == Py_True)
-					bm_set(self->primitive_bits, i);
+					bm_set_(self->primitive_bits, i);
 			} else if ((PyInt_Check(obj) || PyInt_CheckExact(obj)) && (PyInt_AS_LONG(obj) == 0 || PyInt_AS_LONG(obj) == 1)) {
 				if (PyInt_AS_LONG(obj) == 1)
-					bm_set(self->primitive_bits, i);
+					bm_set_(self->primitive_bits, i);
 			} else if (PyLong_Check(obj) || PyLong_CheckExact(obj)) {
 				PY_LONG_LONG v = PyLong_AsLongLong(obj);
 
@@ -131,7 +131,7 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args)
 					PyErr_Clear();
 					is_error = 1;
 				} else if (v == 1) {
-					bm_set(self->primitive_bits, i);
+					bm_set_(self->primitive_bits, i);
 				}
 
 			} else {
@@ -209,9 +209,9 @@ static int PyPointlessBitvector_ass_subscript(PyPointlessBitvector* self, PyObje
 	// we only want 0|1|True|False
 	if (PyBool_Check(value)) {
 		if (value == Py_True)
-			bm_set(self->primitive_bits, i);
+			bm_set_(self->primitive_bits, i);
 		else
-			bm_reset(self->primitive_bits, i);
+			bm_reset_(self->primitive_bits, i);
 
 		return 0;	
 	}
@@ -221,9 +221,9 @@ static int PyPointlessBitvector_ass_subscript(PyPointlessBitvector* self, PyObje
 
 		if (v == 0 || v == 1) {
 			if (v == 1)
-				bm_set(self->primitive_bits, i);
+				bm_set_(self->primitive_bits, i);
 			else
-				bm_reset(self->primitive_bits, i);
+				bm_reset_(self->primitive_bits, i);
 
 			return 0;
 		}
@@ -238,7 +238,7 @@ static uint32_t PyPointlessBitvector_subscript_priv_int(PyPointlessBitvector* se
 	if (self->is_pointless)
 		return pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, i);
 
-	return (bm_is_set(self->primitive_bits, i) != 0);
+	return (bm_is_set_(self->primitive_bits, i) != 0);
 }
 
 static PyObject* PyPointlessBitvector_subscript_priv(PyPointlessBitvector* self, uint32_t i)
@@ -384,7 +384,7 @@ static PyObject* PyPointlessBitvector_append(PyPointlessBitvector* self, PyObjec
 	}
 
 	if (v == Py_True)
-		bm_set(self->primitive_bits, self->primitive_n_bits);
+		bm_set_(self->primitive_bits, self->primitive_n_bits);
 
 	self->primitive_n_bits += 1;
 

@@ -4,7 +4,7 @@ static uint32_t pointless_bitvector_is_set_bits(uint32_t t, pointless_value_data
 {
 	switch (t) {
 		case POINTLESS_BITVECTOR:
-			return (bm_is_set(bits, bit) != 0);
+			return (bm_is_set_(bits, bit) != 0);
 		case POINTLESS_BITVECTOR_0:
 			return 0;
 		case POINTLESS_BITVECTOR_1:
@@ -15,7 +15,7 @@ static uint32_t pointless_bitvector_is_set_bits(uint32_t t, pointless_value_data
 			return (bit < v->bitvector_01_or_10.n_bits_a);
 		case POINTLESS_BITVECTOR_PACKED:
 			// this is quite hacky
-			return (bm_is_set((void*)&v->data_u32, bit + 5) != 0);
+			return (bm_is_set_((void*)&v->data_u32, bit + 5) != 0);
 	}
 
 	assert(0);
@@ -117,7 +117,7 @@ int32_t pointless_bitvector_cmp_bits_buffer(uint32_t n_bits_a, void* bits_a, poi
 	uint32_t i, ba, bb;
 
 	for (i = 0; i < n_bits; i++) {
-		ba = (bm_is_set(bits_a, i) != 0);
+		ba = (bm_is_set_(bits_a, i) != 0);
 		bb = pointless_bitvector_is_set(v_b->type, &v_b->data, buffer_b, i);
 
 		if (ba != bb)
@@ -135,7 +135,7 @@ int32_t pointless_bitvector_cmp_buffer_bits(pointless_value_t* v_a, void* buffer
 
 	for (i = 0; i < n_bits; i++) {
 		ba = pointless_bitvector_is_set(v_a->type, &v_a->data, buffer_a, i);
-		bb = (bm_is_set(bits_b, i) != 0);
+		bb = (bm_is_set_(bits_b, i) != 0);
 
 		if (ba != bb)
 			return SIMPLE_CMP(ba, bb);
