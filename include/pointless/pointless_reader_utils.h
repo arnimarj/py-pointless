@@ -16,8 +16,6 @@ wchar_t* pointless_reader_unicode_value_wchar(pointless_t* p, pointless_value_t*
 #endif
 
 // note: caller must free() the returned buffers
-const char* pointless_reader_unicode_value_utf7_alloc(pointless_t* p, pointless_value_t* v, const char** error);
-const char* pointless_reader_unicode_value_utf8_alloc(pointless_t* p, pointless_value_t* v, const char** error);
 uint16_t* pointless_reader_unicode_value_ucs2_alloc(pointless_t* p, pointless_value_t* v, const char** error);
 
 // vectors

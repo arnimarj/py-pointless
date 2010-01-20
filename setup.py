@@ -5,9 +5,6 @@ extra_compile_args = ['-I./include', '-pedantic', '-std=c99', '-Wall', '-Wno-str
 # extra_compile_args = ['-I./include', '-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O0']
 extra_link_args = ['-Bstatic', '-lJudy', '-Bdynamic', '-lm']
 
-if sys.platform == 'cygwin':
-	extra_link_args += ['-liconv']
-
 setup(
 	name = 'pointless',
 	version = '0.1',

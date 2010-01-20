@@ -126,16 +126,6 @@ wchar_t* pointless_reader_unicode_value_wchar(pointless_t* p, pointless_value_t*
 }
 #endif
 
-const char* pointless_reader_unicode_value_utf7_alloc(pointless_t* p, pointless_value_t* v, const char** error)
-{
-	return pointless_unicode_ucs4_to_utf7(pointless_reader_unicode_value_ucs4(p, v), error);
-}
-
-const char* pointless_reader_unicode_value_utf8_alloc(pointless_t* p, pointless_value_t* v, const char** error)
-{
-	return pointless_unicode_ucs4_to_utf8(pointless_reader_unicode_value_ucs4(p, v), error);
-}
-
 uint16_t* pointless_reader_unicode_value_ucs2_alloc(pointless_t* p, pointless_value_t* v, const char** error)
 {
 	return pointless_unicode_ucs4_to_ucs2(pointless_reader_unicode_value_ucs4(p, v), error);

@@ -95,19 +95,15 @@ static int32_t pointless_validate_unicode_heap(pointless_t* p, pointless_value_t
 	// right, try all the conversions
 	int retval = 1;
 
-	char* utf7 = pointless_unicode_ucs4_to_utf7(s, error);
-	char* utf8 = pointless_unicode_ucs4_to_utf8(s, error);
 	uint16_t* ucs2 = pointless_unicode_ucs4_to_ucs2(s, error);
 
-	if (utf7 == 0 || utf8 == 0 || ucs2 == 0)
+	if (ucs2 == 0)
 		goto cleanup;
 
 	retval = 1;
 
 cleanup:
 
-	free(utf7);
-	free(utf8);
 	free(ucs2);
 
 	return retval;
