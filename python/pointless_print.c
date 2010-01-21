@@ -293,7 +293,6 @@ static PyObject* pypointless_map_str(pointless_t* p, pointless_value_t* v, pypoi
 		if (pointless_is_vector_type(value->type)) {
 			v_slice_i_v = 0;
 			v_slice_n_v = pointless_reader_vector_n_items(p, value);
-			printf("v_slice_n_v: %u\n", v_slice_n_v);
 		}
 
 		s_k = pypointless_str_rec(p, key, state, v_slice_i_k, v_slice_n_k);
