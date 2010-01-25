@@ -9,6 +9,22 @@
 
 #include <pointless/pointless_dynarray.h>
 
+#define ASSERT_CONCAT_(a, b) a##b
+#define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
+/* These can't be used after statements in c89. */
+#ifdef __COUNTER__
+  /* microsoft */
+  #define STATIC_ASSERT(e,m) \
+    enum { ASSERT_CONCAT(static_assert_, __COUNTER__) = 1/(!!(e)) }
+#else
+  /* This can't be used twice on the same line so ensure if using in headers
+   * that the headers are not included twice (by wrapping in #ifndef...#endif)
+   * Note it doesn't cause an issue when used on same line of separate modules
+   * compiled with gcc -combine -fwhole-program.  */
+  #define STATIC_ASSERT(e,m) \
+    enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
+#endif
+
 // POINTLESS_WCHAR_T_IS_4_BYTES
 #if 2147483647 <= WCHAR_MAX && WCHAR_MAX <= 4294967296
 #define POINTLESS_WCHAR_T_IS_4_BYTES
@@ -69,14 +85,13 @@ typedef union {
 	struct {
 		unsigned int n_bits:5;
 		unsigned int bits:27;
-	} bitvector_packed;
+	} __attribute__ ((packed)) bitvector_packed;
 
 	struct {
 		uint16_t n_bits_a;
 		uint16_t n_bits_b;
-	} bitvector_01_or_10;
-} pointless_value_data_t;
-
+	} __attribute__ ((packed)) bitvector_01_or_10;
+} __attribute__ ((packed)) pointless_value_data_t;
 
 // a base value
 typedef struct {
@@ -96,8 +111,12 @@ typedef struct {
 	pointless_value_data_t data;
 } __attribute__ ((packed)) pointless_create_value_t;
 
-// simple comparison macro
+// convenience macros
+#define ICEIL(a, div) (((a) % (div)) ? (((a) / (div)) + 1) : ((a) / (div)))
 #define SIMPLE_CMP(a, b) (((a) == (b)) ? 0 : ((a) < (b) ? -1 : +1))
+#define SIMPLE_MIN(a, b) ((a) < (b) ? (a) : (b))
+#define SIMPLE_MAX(a, b) ((a) > (b) ? (a) : (b))
+
 
 /*
 FILE FORMAT
@@ -129,7 +148,7 @@ typedef struct {
 	uint32_t n_set;
 	uint32_t n_map;
 	uint32_t padding;
-} __attribute__ ((aligned (8))) pointless_header_t;
+} __attribute__ ((aligned (4))) pointless_header_t;
 
 typedef struct {
 	// mmap
@@ -154,14 +173,14 @@ typedef struct {
 	// base heap pointer
 	void* heap_ptr;
 	uint64_t heap_len;
-} __attribute__ ((aligned (8))) pointless_t;
+} pointless_t;
 
 typedef struct {
 	uint32_t n_items;
 	uint32_t padding;
 	pointless_value_t hash_vector;
 	pointless_value_t key_vector;
-} __attribute__ ((aligned (8))) pointless_set_header_t;
+} __attribute__ ((aligned (4))) pointless_set_header_t;
 
 typedef struct {
 	uint32_t n_items;
@@ -169,7 +188,14 @@ typedef struct {
 	pointless_value_t hash_vector;
 	pointless_value_t key_vector;
 	pointless_value_t value_vector;
-} __attribute__ ((aligned (8))) pointless_map_header_t;
+} __attribute__ ((aligned (4))) pointless_map_header_t;
+
+STATIC_ASSERT(sizeof(pointless_value_data_t) == 4, "pointless_value_data_t must be 4 bytes");
+STATIC_ASSERT(sizeof(pointless_value_t) == 8, "pointless_value_t must be 8 bytes");
+STATIC_ASSERT(sizeof(pointless_create_value_t) == 8, "pointless_create_value_t must be 8 bytes");
+STATIC_ASSERT(sizeof(pointless_header_t) == 32, "pointless_header_t must be 8 bytes");
+STATIC_ASSERT(sizeof(pointless_set_header_t) == 24, "pointless_set_header_t must be 8 bytes");
+STATIC_ASSERT(sizeof(pointless_map_header_t) == 32, "pointless_map_header_t must be 8 bytes");
 
 // pointless-owned vector
 typedef struct {
@@ -290,7 +316,7 @@ typedef struct {
 	uint32_t mult;
 	uint32_t x;
 	uint32_t len;
-} __attribute__ ((aligned (8))) pointless_vector_hash_state_t;
+} pointless_vector_hash_state_t;
 
 void pointless_vector_hash_init(pointless_vector_hash_state_t* state, uint32_t len);
 void pointless_vector_hash_next(pointless_vector_hash_state_t* state, uint32_t hash);

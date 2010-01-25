@@ -7,7 +7,6 @@
 #include <assert.h>
 
 #include <pointless/bitutils.h>
-#include <pointless/util.h>
 #include <pointless/custom_sort.h>
 
 #include <pointless/pointless_defs.h>

@@ -10,8 +10,6 @@
 #include <sys/stat.h>
 
 #include <pointless/bitutils.h>
-#include <pointless/util.h>
-
 #include <pointless/pointless_defs.h>
 #include <pointless/pointless_value.h>
 #include <pointless/pointless_unicode_utils.h>

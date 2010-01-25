@@ -6,7 +6,6 @@
 #include <assert.h>
 
 #include <pointless/bitutils.h>
-#include <pointless/util.h>
 
 /*
 We have to perform exhaustive validation when opening a pointless file, since 

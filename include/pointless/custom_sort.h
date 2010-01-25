@@ -3,7 +3,7 @@
 
 #include <assert.h>
 
-#include <pointless/util.h>
+#include <pointless/pointless_defs.h>
 
 typedef int (*qsort_cmp_)(int a, int b, int* c, void* user);
 typedef void (*qsort_swap_)(int a, int b, void* user);
