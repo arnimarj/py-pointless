@@ -63,8 +63,13 @@ int pointless_open_f(pointless_t* p, const char* fname, const char** error)
 		return 0;
 	}
 
-	p->fd_len = s.st_size;
+	if (s.st_size == 0) {
+		*error = "file is empty";
+		pointless_close(p);
+		return 0;
+	}
 
+	p->fd_len = s.st_size;
 	p->fd_ptr = mmap(0, p->fd_len, PROT_READ, MAP_SHARED, fileno(p->fd), 0);
 
 	if (p->fd_ptr == MAP_FAILED) {
