@@ -25,8 +25,15 @@ static PyObject* PyPointless_GetRoot(PyPointless* self)
 	return pypointless_value(self, &self->p.header->root);
 }
 
+static PyObject* PyPointless_sizeof(PyPointless* self)
+{
+	return PyLong_FromUnsignedLongLong(self->p.fd_len);
+}
+
+
 static PyMethodDef PyPointless_methods[] = {
-	{"GetRoot", (PyCFunction)PyPointless_GetRoot, METH_NOARGS,  "get pointless root object" },
+	{"__sizeof__", (PyCFunction)PyPointless_sizeof,  METH_NOARGS, "get size in bytes of backing file or buffer"},
+	{"GetRoot",    (PyCFunction)PyPointless_GetRoot, METH_NOARGS, "get pointless root object" },
 	{NULL}
 };
 
