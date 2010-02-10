@@ -52,7 +52,7 @@ static int PyPointless_init(PyPointless* self, PyObject* args)
 		return -1;
 
 	if (!pointless_open_f(&self->p, fname, &error)) {
-		PyErr_Format(PyExc_IOError, "error opening pointless file: %s", error);
+		PyErr_Format(PyExc_IOError, "error opening [%s]: %s", fname, error);
 		return -1;
 	}
 

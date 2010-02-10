@@ -3,56 +3,32 @@
 typedef struct {
 	pointless_create_t c;   // create-time state
 	int is_error;           // true iff error, python exception is also set
-	PyObject* objects_used; // set, containing the mapping (PyObject* -> create-time-handle)
+	Pvoid_t objects_used;   // PyObject* -> create-time-handle
+
 } pointless_export_state_t;
 
 static uint32_t pointless_export_get_seen(pointless_export_state_t* state, PyObject* py_object)
 {
-	PyObject* key_obj = PyLong_FromVoidPtr(py_object);
-	PyObject* handle_obj = 0;
-	uint32_t handle = POINTLESS_CREATE_VALUE_FAIL;
-
-	if (key_obj == 0) {
-		state->is_error = 1;
-		goto cleanup;
-	}
-
-	handle_obj = PyDict_GetItem(state->objects_used, key_obj);
-
-	if (handle_obj != 0) {
-		assert(PyLong_Check(handle_obj));
-		handle = (uint32_t)PyLong_AsUnsignedLong(handle_obj);
-	}
-
-cleanup:
-
-	Py_XDECREF(key_obj);
-
-	return handle;
+	PWord_t handle = 0;
+	JLG(handle, state->objects_used, (Word_t)py_object);
+	return handle ? (uint32_t)(*handle) : POINTLESS_CREATE_VALUE_FAIL;
 }
 
 static int pointless_export_set_seen(pointless_export_state_t* state, PyObject* py_object, uint32_t handle)
 {
-	PyObject* key_obj = PyLong_FromVoidPtr(py_object);
-	PyObject* handle_obj = PyLong_FromUnsignedLong((unsigned long)handle);
 	int retval = 0;
 
-	if (key_obj == 0 || handle_obj == 0) {
-		state->is_error = 1;
-		goto cleanup;
-	}
+	PWord_t value = 0;
+	JLI(value, state->objects_used, (Word_t)py_object);
 
-	if (PyDict_SetItem(state->objects_used, key_obj, handle_obj) != 0) {
-		state->is_error = 1;
+	if (value == 0)
 		goto cleanup;
-	}
+
+	*value = (Word_t)handle;
 
 	retval = 1;
 
 cleanup:
-
-	Py_XDECREF(key_obj);
-	Py_XDECREF(handle_obj);
 
 	return retval;
 }
@@ -439,11 +415,6 @@ PyObject* pointless_write_object(PyObject* self, PyObject* args)
 
 	pointless_create_begin(&state.c);
 
-	state.objects_used = PyDict_New();
-
-	if (state.objects_used == 0)
-		goto cleanup;
-
 	pointless_export_py(&state, object);
 
 	if (state.is_error)
@@ -464,7 +435,8 @@ cleanup:
 	if (create_end)
 		pointless_create_end(&state.c);
 
-	Py_XDECREF(state.objects_used);
+	Word_t n_bytes_freed = 0;
+	JLFA(n_bytes_freed, state.objects_used);
 
 	Py_XINCREF(retval);
 	return retval;
