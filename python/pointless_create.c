@@ -16,21 +16,14 @@ static uint32_t pointless_export_get_seen(pointless_export_state_t* state, PyObj
 
 static int pointless_export_set_seen(pointless_export_state_t* state, PyObject* py_object, uint32_t handle)
 {
-	int retval = 0;
-
 	PWord_t value = 0;
 	JLI(value, state->objects_used, (Word_t)py_object);
 
 	if (value == 0)
-		goto cleanup;
+		return 0;
 
 	*value = (Word_t)handle;
-
-	retval = 1;
-
-cleanup:
-
-	return retval;
+	return 1;
 }
 
 static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObject* py_object, uint32_t depth)
@@ -68,6 +61,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 
 		// we only do this for container objects
 		if (!pointless_export_set_seen(state, py_object, handle)) {
+			PyErr_NoMemory();
 			state->is_error = 1;
 			handle = POINTLESS_CREATE_VALUE_FAIL;
 			return handle;
@@ -132,6 +126,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 
 		// we only do this for container objects
 		if (!pointless_export_set_seen(state, py_object, handle)) {
+			PyErr_NoMemory();
 			state->is_error = 1;
 			handle = POINTLESS_CREATE_VALUE_FAIL;
 			return handle;
@@ -254,6 +249,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		} else {
 			// we only do this for container objects
 			if (!pointless_export_set_seen(state, py_object, handle)) {
+				PyErr_NoMemory();
 				state->is_error = 1;
 				handle = POINTLESS_CREATE_VALUE_FAIL;
 				return handle;
@@ -283,6 +279,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			}
 
 			if (!pointless_export_set_seen(state, py_object, handle)) {
+				PyErr_NoMemory();
 				state->is_error = 1;
 				handle = POINTLESS_CREATE_VALUE_FAIL;
 				return handle;
@@ -303,6 +300,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			} else {
 				// we only do this for container objects
 				if (!pointless_export_set_seen(state, py_object, handle)) {
+					PyErr_NoMemory();
 					state->is_error = 1;
 					handle = POINTLESS_CREATE_VALUE_FAIL;
 					return handle;
@@ -329,6 +327,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 				} else {
 					// we only do this for container objects
 					if (!pointless_export_set_seen(state, py_object, handle)) {
+						PyErr_NoMemory();
 						state->is_error = 1;
 						handle = POINTLESS_CREATE_VALUE_FAIL;
 						return handle;
