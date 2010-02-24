@@ -1220,7 +1220,6 @@ static int file_align_4(void* user, const char** error)
 		uint8_t v = 0;
 
 		if (fwrite(&v, sizeof(v), 1, f) != 1) {
-			perror("A");
 			*error = "fwrite() failure";
 			return 0;
 		}
@@ -1236,7 +1235,6 @@ static int file_write(void* buf, size_t buflen, void* user, const char** error)
 	FILE* f = (FILE*)user;
 
 	if (fwrite(buf, buflen, 1, f) != 1) {
-		perror("B");
 		*error = "fwrite() failure";
 		return 0;
 	}
@@ -1256,7 +1254,6 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 	sprintf(temp_fname, "pointless.XXXXXX");
 
 	fd = mkstemp(temp_fname);
-	printf("fd: %i\n", fd);
 
 	if (fd == -1) {
 		*error = "error creating temporary file";
