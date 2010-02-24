@@ -853,6 +853,10 @@ static int prim_sort_proj_cmp(int a, int b, int* c, void* user)
 		}
 	}
 
+	// HACK
+	if (*c == 0)
+		*c = SIMPLE_CMP(a, b);
+
 	return 1;
 }
 
@@ -948,7 +952,7 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 
 	for (i = 1; i < state.n; i++) {
 		if (state.v_n[0] != state.v_n[i]) {
-			PyErr_SetString(PyExc_ValueError, "all value vectors must have the same number of items");
+			PyErr_Format(PyExc_ValueError, "all value vectors must have the same number of items (%i, %i)", (int)state.v_n[0], (int)state.v_n[i]);
 			return 0;
 		}
 	}

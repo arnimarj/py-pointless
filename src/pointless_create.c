@@ -1220,6 +1220,7 @@ static int file_align_4(void* user, const char** error)
 		uint8_t v = 0;
 
 		if (fwrite(&v, sizeof(v), 1, f) != 1) {
+			perror("A");
 			*error = "fwrite() failure";
 			return 0;
 		}
@@ -1235,6 +1236,7 @@ static int file_write(void* buf, size_t buflen, void* user, const char** error)
 	FILE* f = (FILE*)user;
 
 	if (fwrite(buf, buflen, 1, f) != 1) {
+		perror("B");
 		*error = "fwrite() failure";
 		return 0;
 	}
@@ -1244,11 +1246,28 @@ static int file_write(void* buf, size_t buflen, void* user, const char** error)
 
 int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, const char** error)
 {
-	FILE* f = fopen(fname, "wb+");
+	// our file descriptors
+	int fd = -1;
+	int fd_exists = 0;
+	FILE* f = 0;
+
+	// create and open a unique file
+	char temp_fname[32];
+	sprintf(temp_fname, "pointless.XXXXXX");
+
+	fd = mkstemp(temp_fname);
+	printf("fd: %i\n", fd);
+
+	if (fd == -1) {
+		*error = "error creating temporary file";
+		goto cleanup;
+	}
+
+	fd_exists = 1;
+	f = fdopen(fd, "w");
 
 	if (f == 0) {
-		pointless_create_end(c);
-		*error = "error creating file";
+		*error = "error attaching to temporary file";
 		return 0;
 	}
 
@@ -1257,34 +1276,57 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 	cb.align_4 = file_align_4;
 	cb.user = (void*)f;
 
-	if (!pointless_create_output_and_end_(c, &cb, error)) {
-		fclose(f);
-		return 0;
-	}
-
-	// TBD: rename trick for atomic file create+write
+	if (!pointless_create_output_and_end_(c, &cb, error))
+		goto cleanup;
 
 	// fflush
 	if (fflush(f) != 0) {
-		fclose(f);
 		*error = "fflush() failure";
-		return 0;
+		goto cleanup;
 	}
 
 	// fsync
-	if (fsync(fileno(f)) != 0) {
-		fclose(f);
+	if (fsync(fd) != 0) {
 		*error = "fsync failure";
-		return 0;
+		goto cleanup;
+	}
+
+	// rename
+	if (rename(temp_fname, fname) != 0) {
+		*error = "error renaming file";
+		goto cleanup;
 	}
 
 	// fclose
 	if (fclose(f) == EOF) {
+		f = 0;
 		*error = "error closing file";
-		return 0;
+		goto cleanup;
 	}
 
+	f = 0;
+
+	// fclose() on fdopen() closes origina handle
+	fd = -1;
+
+	fd_exists = 0;
+
 	return 1;
+
+cleanup:
+
+	pointless_create_end(c);
+
+	if (f)
+		fclose(f);
+
+	if (fd != -1)
+		close(fd);
+
+	if (fd_exists)
+		unlink(temp_fname);
+
+	return 0;
 }
 
 static int dynarray_write(void* buf, size_t buflen, void* user, const char** error)
