@@ -1248,10 +1248,17 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 	int fd = -1;
 	int fd_exists = 0;
 	FILE* f = 0;
+	char* temp_fname = 0;
 
 	// create and open a unique file
-	char temp_fname[32];
-	sprintf(temp_fname, "pointless.XXXXXX");
+	temp_fname = (char*)malloc(strlen(fname) + 32);
+
+	if (temp_fname == 0) {
+		*error = "out of memory";
+		goto cleanup;
+	}
+
+	sprintf(temp_fname, "%s.XXXXXX", fname);
 
 	fd = mkstemp(temp_fname);
 
@@ -1308,11 +1315,16 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 
 	fd_exists = 0;
 
+	free(temp_fname);
+	temp_fname = 0;
+
 	return 1;
 
 cleanup:
 
 	pointless_create_end(c);
+	free(temp_fname);
+	temp_fname = 0;
 
 	if (f)
 		fclose(f);
