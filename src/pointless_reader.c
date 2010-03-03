@@ -50,7 +50,16 @@ int pointless_open_f(pointless_t* p, const char* fname, const char** error)
 	p->fd = fopen(fname, "rb");
 
 	if (p->fd == 0) {
-		*error = "fopen error";
+		switch (errno) {
+			case EINVAL:       *error = "fopen(): EINVAL";       break;
+			case EACCES:       *error = "fopen(): EACCES";       break;
+			case EEXIST:       *error = "fopen(): EEXIST";       break;
+			case EMFILE:       *error = "fopen(): EMFILE";       break;
+			case ENAMETOOLONG: *error = "fopen(): ENAMETOOLONG"; break;
+			case ENFILE:       *error = "fopen(): ENFILE";       break;
+			case ENODEV:       *error = "fopen(): ENODEV";       break;
+			default:           *error = "fopen(): error";        break;
+		}
 		pointless_close(p);
 		return 0;
 	}
