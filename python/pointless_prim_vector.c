@@ -978,14 +978,11 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 			case POINTLESS_PRIM_VECTOR_TYPE_U32: v = ((uint32_t*)state.p_b)[i]; break;
 		}
 
-		if (i == 0)
-			p_min = p_max = v;
-		else {
-			if (v < p_min)
-				p_min = v;
-			if (v > p_max)
-				p_max = v;
-		}
+		if (i == 0 || v < p_min)
+			p_min = v;
+
+		if (i == 0 || v > p_max)
+			p_max = v;
 	}
 
 	// and make sure they are inside the value vector bounds
@@ -1006,6 +1003,11 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 
 	Py_INCREF(Py_None);
 	return Py_None;
+}
+
+static PyObject* PyPointlessPrimVector_sizeof(PyPointlessPrimVector* self)
+{
+	return PyLong_FromSize_t(sizeof(PyPointlessPrimVector) + pointless_dynarray_n_heap_bytes(&self->array));
 }
 
 static PyObject* PyPointlessPrimVector_get_typecode(PyPointlessPrimVector* self, void* closure)
@@ -1040,6 +1042,7 @@ static PyMethodDef PyPointlessPrimVector_methods[] = {
 	{"serialize", (PyCFunction)PyPointlessPrimVector_serialize, METH_NOARGS,  ""},
 	{"sort",      (PyCFunction)PyPointlessPrimVector_sort,      METH_NOARGS,  ""},
 	{"sort_proj", (PyCFunction)PyPointlessPrimVector_sort_proj, METH_VARARGS, ""},
+	{"__sizeof__",(PyCFunction)PyPointlessPrimVector_sizeof,    METH_NOARGS,  ""}, 
 	{NULL, NULL}
 };
 
