@@ -13,6 +13,11 @@ size_t pointless_dynarray_n_items(pointless_dynarray_t* a)
 	return a->n_items;
 }
 
+size_t pointless_dynarray_n_heap_bytes(pointless_dynarray_t* a)
+{
+	return (a->n_alloc * a->item_size);
+}
+
 void pointless_dynarray_pop(pointless_dynarray_t* a)
 {
 	assert(a->n_items > 0);

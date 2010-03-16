@@ -17,6 +17,7 @@ typedef struct {
 
 void pointless_dynarray_init(pointless_dynarray_t* a, size_t item_size);
 size_t pointless_dynarray_n_items(pointless_dynarray_t* a);
+size_t pointless_dynarray_n_heap_bytes(pointless_dynarray_t* a);
 void pointless_dynarray_pop(pointless_dynarray_t* a);
 int pointless_dynarray_push(pointless_dynarray_t* a, void* i);
 void pointless_dynarray_clear(pointless_dynarray_t* a);
