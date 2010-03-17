@@ -669,6 +669,24 @@ static PyObject* PyPointlessPrimVector_append(PyPointlessPrimVector* self, PyObj
 	return PyPointlessPrimVector_append_item(self, obj);
 }
 
+static PyObject* PyPointlessPrimVector_pop(PyPointlessPrimVector* self)
+{
+	size_t n_items = pointless_dynarray_n_items(&self->array);
+
+	if (n_items == 0) {
+		PyErr_SetString(PyExc_IndexError, "pop from empty vector");
+		return 0;
+	}
+
+	PyObject* v = PyPointlessPrimVector_subscript_priv(self, n_items - 1);
+
+	if (v == 0)
+		return 0;
+
+	pointless_dynarray_pop(&self->array);
+	return v;
+}
+
 static PyObject* PyPointlessPrimVector_serialize(PyPointlessPrimVector* self)
 {
 	// the format is: [uint32_t type] [uint32 length] [raw integers]
@@ -1039,6 +1057,7 @@ static PyGetSetDef PyPointlessPrimVector_getsets [] = {
 
 static PyMethodDef PyPointlessPrimVector_methods[] = {
 	{"append",    (PyCFunction)PyPointlessPrimVector_append,    METH_VARARGS, ""},
+	{"pop",       (PyCFunction)PyPointlessPrimVector_pop,       METH_NOARGS,  ""},
 	{"serialize", (PyCFunction)PyPointlessPrimVector_serialize, METH_NOARGS,  ""},
 	{"sort",      (PyCFunction)PyPointlessPrimVector_sort,      METH_NOARGS,  ""},
 	{"sort_proj", (PyCFunction)PyPointlessPrimVector_sort_proj, METH_VARARGS, ""},

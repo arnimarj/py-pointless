@@ -26,6 +26,22 @@ def RandomPrimVector(n, tc, pointless):
 	return pointless.PointlessPrimVector(tc, (random.randint(i_min, i_max) for i in xrange(n)))
 
 class TestPrimVector(unittest.TestCase):
+	def testPop(self):
+		w = pointless.PointlessPrimVector('u32')
+		self.assertRaises(IndexError, w.pop)
+
+		v = list(xrange(1000))
+		w = pointless.PointlessPrimVector('u32', v)
+
+		self.assert_(len(w) == 1000)
+
+		for i in xrange(1000):
+			n = w.pop()
+			self.assert_(n == 1000 - i - 1)
+
+		self.assert_(len(w) == 0)
+		self.assertRaises(IndexError, w.pop)
+
 	def testTypeCode(self):
 		t = ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']
 
