@@ -327,7 +327,7 @@ class TestPrimVector(unittest.TestCase):
 
 					self.assert_(False)
 
-#	def testSerialize(self):
+	def testSerialize(self):
 		random.seed(0)
 
 		tcs = ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']
