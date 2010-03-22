@@ -89,8 +89,6 @@ class TestPrimVector(unittest.TestCase):
 			sys.stdout.write(' | ')
 			sys.stdout.flush()
 
-		print
-
 	def testFastRemove(self):
 		for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
 			for i in xrange(100):
@@ -121,8 +119,6 @@ class TestPrimVector(unittest.TestCase):
 							
 			sys.stdout.write(' | ')
 			sys.stdout.flush()
-
-		print
 
 	def testPop(self):
 		w = pointless.PointlessPrimVector('u32')

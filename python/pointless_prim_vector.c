@@ -780,10 +780,9 @@ static PyObject* PyPointlessPrimVector_remove(PyPointlessPrimVector* self, PyObj
 	if (i == (SIZE_MAX-1))
 		return 0;
 
-	// shift array
-	for (; i < pointless_dynarray_n_items(&self->array) - 1; i++) {
-		// pointless_dynarray_swap(&self->array, i, i + 1);
-	}
+	// shift array (needlessly expensive because of swap)
+	for (; i < pointless_dynarray_n_items(&self->array) - 1; i++)
+		pointless_dynarray_swap(&self->array, i, i + 1);
 
 	// remove last
 	pointless_dynarray_pop(&self->array);
