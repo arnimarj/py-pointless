@@ -687,6 +687,126 @@ static PyObject* PyPointlessPrimVector_pop(PyPointlessPrimVector* self)
 	return v;
 }
 
+static size_t PyPointlessPrimVector_index_f(PyPointlessPrimVector* self, float v)
+{
+	uint32_t i, n = pointless_dynarray_n_items(&self->array);
+	float* a = (float*)(self->array._data);
+
+	for (i = 0; i < n; i++) {
+		if (a[i] == v)
+			return i;
+	}
+
+	return SIZE_MAX;
+}
+
+static size_t PyPointlessPrimVector_index_i(PyPointlessPrimVector* self, int64_t v)
+{
+	uint32_t i, n = pointless_dynarray_n_items(&self->array);
+	void* a = (float*)(self->array._data);
+
+	for (i = 0; i < n; i++) {
+		switch (self->type) {
+			case POINTLESS_PRIM_VECTOR_TYPE_I8:
+				if (((int8_t*)a)[i] == v)
+					return i;
+				break;
+			case POINTLESS_PRIM_VECTOR_TYPE_U8:
+				if (((uint8_t*)a)[i] == v)
+					return i;
+				break;
+			case POINTLESS_PRIM_VECTOR_TYPE_I16:
+				if (((int16_t*)a)[i] == v)
+					return i;
+				break;
+			case POINTLESS_PRIM_VECTOR_TYPE_U16:
+				if (((uint16_t*)a)[i] == v)
+					return i;
+				break;
+			case POINTLESS_PRIM_VECTOR_TYPE_I32:
+				if (((int32_t*)a)[i] == v)
+					return i;
+				break;
+			case POINTLESS_PRIM_VECTOR_TYPE_U32:
+				if (((uint32_t*)a)[i] == v)
+					return i;
+				break;
+		}
+	}
+
+	return SIZE_MAX;
+}
+
+static size_t PyPointlessPrimVector_index_(PyPointlessPrimVector* self, PyObject* args, const char* func)
+{
+	PY_LONG_LONG ii;
+	float ff;
+	size_t i;
+
+	if (self->type == POINTLESS_PRIM_VECTOR_TYPE_FLOAT) {
+		if (!PyArg_ParseTuple(args, "f", &ff))
+			return (SIZE_MAX-1);
+
+		i = PyPointlessPrimVector_index_f(self, ff);
+	} else {
+		if (!PyArg_ParseTuple(args, "L", &ii))
+			return (SIZE_MAX-1);
+
+		i = PyPointlessPrimVector_index_i(self, ii);
+	}
+
+	if (i == SIZE_MAX) {
+		PyErr_Format(PyExc_ValueError, "vector.%s(x): x not in vector", func);
+		return (SIZE_MAX-1);
+	}
+
+	return i;
+}
+
+static PyObject* PyPointlessPrimVector_index(PyPointlessPrimVector* self, PyObject* args)
+{
+	size_t i = PyPointlessPrimVector_index_(self, args, "index");
+
+	if (i == (SIZE_MAX-1))
+		return 0;
+
+	return PyInt_FromSize_t(i);
+}
+
+static PyObject* PyPointlessPrimVector_remove(PyPointlessPrimVector* self, PyObject* args)
+{
+	size_t i = PyPointlessPrimVector_index_(self, args, "remove");
+
+	if (i == (SIZE_MAX-1))
+		return 0;
+
+	// shift array
+	for (; i < pointless_dynarray_n_items(&self->array) - 1; i++) {
+		// pointless_dynarray_swap(&self->array, i, i + 1);
+	}
+
+	// remove last
+	pointless_dynarray_pop(&self->array);
+
+	Py_INCREF(Py_None);
+	return Py_None;	
+}
+
+static PyObject* PyPointlessPrimVector_fast_remove(PyPointlessPrimVector* self, PyObject* args)
+{
+	size_t i = PyPointlessPrimVector_index_(self, args, "fast_remove");
+
+	if (i == (SIZE_MAX-1))
+		return 0;
+
+	// swap with last item and remove last item
+	pointless_dynarray_swap(&self->array, i, pointless_dynarray_n_items(&self->array) - 1);
+	pointless_dynarray_pop(&self->array);
+
+	Py_INCREF(Py_None);
+	return Py_None;	
+}
+
 static PyObject* PyPointlessPrimVector_serialize(PyPointlessPrimVector* self)
 {
 	// the format is: [uint32_t type] [uint32 length] [raw integers]
@@ -1056,12 +1176,15 @@ static PyGetSetDef PyPointlessPrimVector_getsets [] = {
 };
 
 static PyMethodDef PyPointlessPrimVector_methods[] = {
-	{"append",    (PyCFunction)PyPointlessPrimVector_append,    METH_VARARGS, ""},
-	{"pop",       (PyCFunction)PyPointlessPrimVector_pop,       METH_NOARGS,  ""},
-	{"serialize", (PyCFunction)PyPointlessPrimVector_serialize, METH_NOARGS,  ""},
-	{"sort",      (PyCFunction)PyPointlessPrimVector_sort,      METH_NOARGS,  ""},
-	{"sort_proj", (PyCFunction)PyPointlessPrimVector_sort_proj, METH_VARARGS, ""},
-	{"__sizeof__",(PyCFunction)PyPointlessPrimVector_sizeof,    METH_NOARGS,  ""}, 
+	{"append",      (PyCFunction)PyPointlessPrimVector_append,      METH_VARARGS, ""},
+	{"pop",         (PyCFunction)PyPointlessPrimVector_pop,         METH_NOARGS,  ""},
+	{"index",       (PyCFunction)PyPointlessPrimVector_index,       METH_VARARGS,  ""},
+	{"remove",      (PyCFunction)PyPointlessPrimVector_remove,      METH_VARARGS,  ""},
+	{"fast_remove", (PyCFunction)PyPointlessPrimVector_fast_remove, METH_VARARGS,  ""},
+	{"serialize",   (PyCFunction)PyPointlessPrimVector_serialize,   METH_NOARGS,  ""},
+	{"sort",        (PyCFunction)PyPointlessPrimVector_sort,        METH_NOARGS,  ""},
+	{"sort_proj",   (PyCFunction)PyPointlessPrimVector_sort_proj,   METH_VARARGS, ""},
+	{"__sizeof__",  (PyCFunction)PyPointlessPrimVector_sizeof,      METH_NOARGS,  ""}, 
 	{NULL, NULL}
 };
 

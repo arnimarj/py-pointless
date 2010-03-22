@@ -26,6 +26,104 @@ def RandomPrimVector(n, tc, pointless):
 	return pointless.PointlessPrimVector(tc, (random.randint(i_min, i_max) for i in xrange(n)))
 
 class TestPrimVector(unittest.TestCase):
+	def testIndex(self):
+		for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
+			for i in xrange(100):
+				if i > 0 and i % 10 == 0:
+					sys.stdout.write('.')
+
+					if i % 100 == 0:
+						sys.stdout.write(' ')
+
+					sys.stdout.flush()
+
+				v = RandomPrimVector(i, tc, pointless)
+				w = list(v)
+
+				for i in xrange(len(w)):
+					self.assert_(w.index(w[i]) == v.index(w[i]))
+					self.assert_(w.index(v[i]) == v.index(v[i]))
+
+				for i in xrange(1000):
+					if len(w) > 0:
+						self.assert_((i in w) == (i in v))
+
+						if i in w:
+							continue
+
+						self.assertRaises(ValueError, w.index, i)
+						self.assertRaises(ValueError, v.index, i)
+
+			sys.stdout.write(' | ')
+			sys.stdout.flush()
+
+	def testRemove(self):
+		for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
+			for i in xrange(100):
+				if i > 0 and i % 10 == 0:
+					sys.stdout.write('.')
+
+					if i % 100 == 0:
+						sys.stdout.write(' ')
+
+					sys.stdout.flush()
+
+				v = RandomPrimVector(i, tc, pointless)
+				w = list(v)
+
+				for i in xrange(100):
+					if len(w) > 0:
+						V = random.choice(v)
+
+						w.remove(V)
+						v.remove(V)
+						assert(w == list(v))
+
+						V = random.randint(0, 1000)
+
+						if V not in v:
+							self.assertRaises(ValueError, w.remove, V)
+							self.assertRaises(ValueError, v.remove, V)
+							
+
+			sys.stdout.write(' | ')
+			sys.stdout.flush()
+
+		print
+
+	def testFastRemove(self):
+		for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
+			for i in xrange(100):
+				if i > 0 and i % 10 == 0:
+					sys.stdout.write('.')
+
+					if i % 100 == 0:
+						sys.stdout.write(' ')
+
+					sys.stdout.flush()
+
+				v = RandomPrimVector(i, tc, pointless)
+				w = list(v)
+
+				for i in xrange(100):
+					if len(w) > 0:
+						V = random.choice(v)
+
+						w.remove(V)
+						v.fast_remove(V)
+						assert(sorted(w) == sorted(v))
+
+						V = random.randint(0, 1000)
+
+						if V not in v:
+							self.assertRaises(ValueError, w.remove, V)
+							self.assertRaises(ValueError, v.fast_remove, V)
+							
+			sys.stdout.write(' | ')
+			sys.stdout.flush()
+
+		print
+
 	def testPop(self):
 		w = pointless.PointlessPrimVector('u32')
 		self.assertRaises(IndexError, w.pop)
@@ -229,7 +327,7 @@ class TestPrimVector(unittest.TestCase):
 
 					self.assert_(False)
 
-	def testSerialize(self):
+#	def testSerialize(self):
 		random.seed(0)
 
 		tcs = ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']
