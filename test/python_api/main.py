@@ -7,6 +7,7 @@ from test_primvector import TestPrimVector
 from test_print import TestPrint
 from test_cmp import TestCmp
 from test_set_map import TestSetMap
+from test_thread_safe import TestThreadSafe
 
 def print_usage_exit():
 	s =  'usage: ./main.py OPTIONS\n'
@@ -16,6 +17,7 @@ def print_usage_exit():
 	s += '      --pointless-print\n'
 	s += '      --pointless-cmp\n'
 	s += '      --pointless-set-map\n'
+	s += '      --test-thread-safe\n'
 	sys.exit(s)
 
 def main():
@@ -34,6 +36,8 @@ def main():
 		sub_suites.append(TestCmp)
 	elif sys.argv[1] == '--pointless-set-map':
 		sub_suites.append(TestSetMap)
+	elif sys.argv[1] == '--test-thread-safe':
+		sub_suites.append(TestThreadSafe)
 	else:
 		print_usage_exit()
 
