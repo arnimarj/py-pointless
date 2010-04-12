@@ -3,7 +3,9 @@
 static void PyPointless_dealloc(PyPointless* self)
 {
 	if (self->is_open) {
+		Py_BEGIN_ALLOW_THREADS
 		pointless_close(&self->p);
+		Py_END_ALLOW_THREADS
 		self->is_open = 0;
 	}
 
@@ -30,18 +32,17 @@ static PyObject* PyPointless_sizeof(PyPointless* self)
 	return PyLong_FromUnsignedLongLong(self->p.fd_len);
 }
 
-
 static PyMethodDef PyPointless_methods[] = {
 	{"__sizeof__", (PyCFunction)PyPointless_sizeof,  METH_NOARGS, "get size in bytes of backing file or buffer"},
 	{"GetRoot",    (PyCFunction)PyPointless_GetRoot, METH_NOARGS, "get pointless root object" },
 	{NULL}
 };
 
-
 static int PyPointless_init(PyPointless* self, PyObject* args)
 {
 	const char* fname = 0;
 	const char* error = 0;
+	int i = 0;
 
 	if (self->is_open) {
 		pointless_close(&self->p);
@@ -51,7 +52,11 @@ static int PyPointless_init(PyPointless* self, PyObject* args)
 	if (!PyArg_ParseTuple(args, "s", &fname))
 		return -1;
 
-	if (!pointless_open_f(&self->p, fname, &error)) {
+	Py_BEGIN_ALLOW_THREADS
+	i = pointless_open_f(&self->p, fname, &error);
+	Py_END_ALLOW_THREADS
+
+	if (!i) {
 		PyErr_Format(PyExc_IOError, "error opening [%s]: %s", fname, error);
 		return -1;
 	}
@@ -63,7 +68,7 @@ static int PyPointless_init(PyPointless* self, PyObject* args)
 PyTypeObject PyPointlessType = {
 	PyObject_HEAD_INIT(NULL)
 	0,                               /*ob_size*/
-	"pointless.PyPointless",             /*tp_name*/
+	"pointless.PyPointless",         /*tp_name*/
 	sizeof(PyPointless),             /*tp_basicsize*/
 	0,                               /*tp_itemsize*/
 	(destructor)PyPointless_dealloc, /*tp_dealloc*/
