@@ -1,4 +1,4 @@
-#include "../pointless.h"
+#include "../pointless_ext.h"
 
 static void PyPointless_dealloc(PyPointless* self)
 {

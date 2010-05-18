@@ -36,7 +36,7 @@ setup(
 		Extension('pointless',
 			sources = [
 				# python stuff
-				'pointless.c',
+				'pointless_ext.c',
 
 				# pypointless
 				'python/pointless_create.c',

@@ -1,4 +1,4 @@
-#include "../pointless.h"
+#include "../pointless_ext.h"
 
 PyTypeObject PyPointlessBitvectorType;
 PyTypeObject PyPointlessBitvectorIterType;

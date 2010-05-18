@@ -1,4 +1,4 @@
-#include "pointless.h"
+#include "pointless_ext.h"
 
 static PyPointless_CAPI CAPI = {
 	pointless_dynarray_init,

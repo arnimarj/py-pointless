@@ -1,4 +1,4 @@
-#include "../pointless.h"
+#include "../pointless_ext.h"
 
 static PyObject* PyPointlessPrimVector_append_item(PyPointlessPrimVector* self, PyObject* item);
 

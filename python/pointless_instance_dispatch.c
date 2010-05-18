@@ -1,4 +1,4 @@
-#include "../pointless.h"
+#include "../pointless_ext.h"
 
 static PyObject* pointless_int_to_python(int64_t v)
 {

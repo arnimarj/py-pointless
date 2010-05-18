@@ -1,4 +1,4 @@
-#include "../pointless.h"
+#include "../pointless_ext.h"
 
 // a container for either a pointless value, or PyObject*
 typedef struct {

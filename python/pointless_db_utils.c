@@ -1,4 +1,4 @@
-#include "../pointless.h"
+#include "../pointless_ext.h"
 
 static int64_t pointless_prim_vector_int_item_at(PyPointlessPrimVector* v, uint32_t i)
 {

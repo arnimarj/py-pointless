@@ -1,4 +1,4 @@
-#include "../pointless.h"
+#include "../pointless_ext.h"
 
 // yes I know, this is a global variable, but this is a similar trick to avoid cycles
 // as CPython does, since it guarantees that access to these functions is serialized
