@@ -1,5 +1,15 @@
 #include "pointless.h"
 
+static PyPointless_CAPI CAPI = {
+	pointless_dynarray_init,
+	pointless_dynarray_n_items,
+	pointless_dynarray_pop,
+	pointless_dynarray_push,
+	pointless_dynarray_clear,
+	pointless_dynarray_destroy,
+	PyPointlessPrimVector_from_T_vector
+};
+
 static PyMethodDef pointless_methods[] =
 {
 	POINTLESS_FUNC_DEF("serialize",       pointless_write_object),
@@ -86,4 +96,11 @@ initpointless(void)
 	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessMapItemIter",    (PyObject*)&PyPointlessMapItemIterType);
 	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessPrimVector",     (PyObject*)&PyPointlessPrimVectorType);
 	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessPrimVectorIter", (PyObject*)&PyPointlessPrimVectorIterType);
+
+	PyObject* c_api = PyCObject_FromVoidPtrAndDesc(&CAPI, (void*)POINTLESS_API_MAGIC, NULL);
+
+	if (c_api == 0)
+		return;
+
+	TRY_MODULE_ADD_OBJECT(pointless_module, "pointless_CAPI", c_api);
 }

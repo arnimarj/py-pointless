@@ -1330,13 +1330,30 @@ PyTypeObject PyPointlessPrimVectorIterType = {
 	PyPointlessPrimVectorIter_new,                    /*tp_new */
 };
 
-
-PyPointlessPrimVector* PyPointlessPrimVector_from_u32_vector(pointless_dynarray_t* v)
+PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t* v, uint32_t t)
 {
-	// NOTE: we're responsible for 'v' now
-	if (v->item_size != sizeof(uint32_t)) {
+	// NOTE: we're responsible for 'v'
+	size_t s = 0;
+
+	switch (t) {
+		case POINTLESS_PRIM_VECTOR_TYPE_I8:    s = sizeof(int8_t);   break;
+		case POINTLESS_PRIM_VECTOR_TYPE_U8:    s = sizeof(uint8_t);  break;
+		case POINTLESS_PRIM_VECTOR_TYPE_I16:   s = sizeof(int16_t);  break;
+		case POINTLESS_PRIM_VECTOR_TYPE_U16:   s = sizeof(uint16_t); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_I32:   s = sizeof(int32_t);  break;
+		case POINTLESS_PRIM_VECTOR_TYPE_U32:   s = sizeof(uint32_t); break;
+		case POINTLESS_PRIM_VECTOR_TYPE_FLOAT: s = sizeof(float);    break;
+	}
+
+	if (s == 0) {
 		pointless_dynarray_destroy(v);
-		PyErr_SetString(PyExc_ValueError, "illegal vector passed to PyPointlessPrimVector_from_u32_vector()");
+		PyErr_SetString(PyExc_ValueError, "illegal type passed to PyPointlessPrimVector_from_T_vector()");
+		return 0;
+	}
+
+	if (s != v->item_size) {
+		pointless_dynarray_destroy(v);
+		PyErr_SetString(PyExc_ValueError, "illegal vector passed to PyPointlessPrimVector_from_T_vector()");
 		return 0;
 	}
 
@@ -1349,33 +1366,8 @@ PyPointlessPrimVector* PyPointlessPrimVector_from_u32_vector(pointless_dynarray_
 
 	pv = (PyPointlessPrimVector*)PyObject_Init((PyObject*)pv, &PyPointlessPrimVectorType);
 
-	pv->type = POINTLESS_PRIM_VECTOR_TYPE_U32;
+	pv->type = t;
 	pv->array = *v;
-
-	return pv;
-}
-
-PyPointlessPrimVector* PyPointlessPrimVector_from_u32_v(uint32_t* v, uint32_t n)
-{
-	PyPointlessPrimVector* pv = PyObject_New(PyPointlessPrimVector, &PyPointlessPrimVectorType);
-
-	if (pv == 0)
-		return 0;
-
-	pv = (PyPointlessPrimVector*)PyObject_Init((PyObject*)pv, &PyPointlessPrimVectorType);
-
-	pointless_dynarray_init(&pv->array, sizeof(uint32_t));
-	pv->type = POINTLESS_PRIM_VECTOR_TYPE_U32;
-
-	uint32_t i;
-	for (i = 0; i < n; i++) {
-		if (!pointless_dynarray_push(&pv->array, &v[i])) {
-			pointless_dynarray_destroy(&pv->array);
-			Py_DECREF(pv);
-			PyErr_NoMemory();
-			return 0;
-		}
-	}
 
 	return pv;
 }

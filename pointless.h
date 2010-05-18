@@ -10,6 +10,7 @@
 #include <limits.h>
 
 #include <pointless/pointless.h>
+#include <pointless/pointless_dynarray.h>
 
 #define POINTLESS_FUNC_N_DOC(func) PyObject* func(PyObject* o, PyObject* args); extern const char func##_doc[]
 #define POINTLESS_FUNC_DEF(pyfunc, func) { pyfunc, func, METH_VARARGS, func##_doc}
@@ -122,8 +123,8 @@ typedef struct {
 	uint32_t iter_state;
 } PyPointlessPrimVectorIter;
 
-PyPointlessPrimVector* PyPointlessPrimVector_from_u32_vector(pointless_dynarray_t* v);
-PyPointlessPrimVector* PyPointlessPrimVector_from_u32_v(uint32_t* v, uint32_t n);
+
+PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t* v, uint32_t t);
 
 PyPointlessVector* PyPointlessVector_New(PyPointless* pp, pointless_value_t* v, uint32_t slice_i, uint32_t slice_n);
 PyPointlessBitvector* PyPointlessBitvector_New(PyPointless* pp, pointless_value_t* v);
@@ -165,5 +166,28 @@ extern PyTypeObject PyPointlessPrimVectorIterType;
 #define PyPointlessSet_Check(op) PyObject_TypeCheck(op, &PyPointlessSetType)
 #define PyPointlessMap_Check(op) PyObject_TypeCheck(op, &PyPointlessMapType)
 #define PyPointlessPrimVector_Check(op) PyObject_TypeCheck(op, &PyPointlessPrimVectorType)
+
+// C-API
+PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t* v, uint32_t t);
+
+typedef struct {
+	// prim-vector operations
+	void(*primvector_init)(pointless_dynarray_t* a, size_t item_size);
+	size_t(*primvector_n_items)(pointless_dynarray_t* a);
+	void(*primvector_pop)(pointless_dynarray_t* a);
+	int(*primvector_push)(pointless_dynarray_t* a, void* i);
+	void(*primvector_clear)(pointless_dynarray_t* a);
+	void(*primvector_destroy)(pointless_dynarray_t* a);
+
+	// prim-vector object constructors
+	PyPointlessPrimVector*(*primvector_from_vector)(pointless_dynarray_t* v, uint32_t t);
+} PyPointless_CAPI;
+
+#define POINTLESS_API_MAGIC 0xB6D89E08
+
+static PyPointless_CAPI* PyPointlessAPI;
+
+#define PyPointless_IMPORT \
+	(PyPointlessAPI = (PyPointless_CAPI*)PyCObject_Import("pointless", "pointless_CAPI"))
 
 #endif
