@@ -9,6 +9,7 @@ static void PyPointless_dealloc(PyPointless* self)
 		self->is_open = 0;
 	}
 
+	self->allow_print = 0;
 	self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -16,8 +17,10 @@ static PyObject* PyPointless_new(PyTypeObject* type, PyObject* args, PyObject* k
 {
 	PyPointless* self = (PyPointless*)type->tp_alloc(type, 0);
 
-	if (self)
+	if (self) {
+		self->allow_print = 0;
 		self->is_open = 0;
+	}
 
 	return (PyObject*)self;
 }
@@ -38,7 +41,7 @@ static PyMethodDef PyPointless_methods[] = {
 	{NULL}
 };
 
-static int PyPointless_init(PyPointless* self, PyObject* args)
+static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 {
 	const char* fname = 0;
 	const char* error = 0;
@@ -49,8 +52,16 @@ static int PyPointless_init(PyPointless* self, PyObject* args)
 		self->is_open = 0;
 	}
 
-	if (!PyArg_ParseTuple(args, "s", &fname))
+	self->allow_print = 1;
+	PyObject* allow_print = Py_True;
+	static char* kwargs[] = {"filename", "allow_print", 0};
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|O!", kwargs, &fname, &PyBool_Type, &allow_print))
 		return -1;
+
+	if (allow_print == Py_False)
+		self->allow_print = 0;
+
 
 	Py_BEGIN_ALLOW_THREADS
 	i = pointless_open_f(&self->p, fname, &error);

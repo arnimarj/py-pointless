@@ -471,37 +471,40 @@ PyObject* PyPointless_str(PyObject* py_object)
 	}
 
 	// the pointless handle and pointless value
-	pointless_t* p = 0;
+	PyPointless* pp = 0;
 	pointless_value_t* v = 0;
 	uint32_t vector_slice_i = 0;
 	uint32_t vector_slice_n = 0;
 
 	if (PyPointlessBitvector_Check(py_object)) {
 		PyPointlessBitvector* b = (PyPointlessBitvector*)py_object;
-		p = &b->pointless_pp->p;
+		pp = b->pointless_pp;
 		v = b->pointless_v;
 	} else if (PyPointlessVector_Check(py_object)) {
 		PyPointlessVector* vector = (PyPointlessVector*)py_object;
-		p = &vector->pp->p;
+		pp = vector->pp;
 		v = vector->v;
 		vector_slice_i = vector->slice_i;
 		vector_slice_n = vector->slice_n;
 	} else if (PyPointlessSet_Check(py_object)) {
 		PyPointlessSet* s = (PyPointlessSet*)py_object;
-		p = &s->pp->p;
+		pp = s->pp;
 		v = s->v;
 	} else if (PyPointlessMap_Check(py_object)) {
 		PyPointlessMap* m = (PyPointlessMap*)py_object;
-		p = &m->pp->p;
+		pp = m->pp;
 		v = m->v;
 	}
 
-	if (p == 0) {
-		PyErr_SetString(PyExc_ValueError, "internal error in PyPointless_str()");
+	if (pp == 0) {
+		PyErr_SetString(PyExc_ValueError, "internal error in PyPointless_str/repr()");
 		return 0;
 	}
 
-	return pypointless_str_rec(p, v, &state, vector_slice_i, vector_slice_n); 
+	if (!pp->allow_print)
+		return PyString_FromFormat("<%s object at %p>", Py_TYPE(py_object)->tp_name, (void*)py_object);
+
+	return pypointless_str_rec(&pp->p, v, &state, vector_slice_i, vector_slice_n); 
 }
 
 // just hack this for now

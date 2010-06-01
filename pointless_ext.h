@@ -24,6 +24,7 @@ POINTLESS_FUNC_N_DOC(pointless_db_array_sort);
 typedef struct {
 	PyObject_HEAD
 	int is_open;
+	int allow_print;
 	pointless_t p;
 } PyPointless;
 
