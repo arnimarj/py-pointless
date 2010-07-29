@@ -18,7 +18,7 @@
 #include <pointless/pointless_validate.h>
 #include <pointless/pointless_reader_utils.h>
 
-int pointless_open_f(pointless_t* p, const char* fname, const char** error);
+int pointless_open_f(pointless_t* p, const char* fname, int force_ucs2, const char** error);
 void pointless_close(pointless_t* p);
 
 #endif

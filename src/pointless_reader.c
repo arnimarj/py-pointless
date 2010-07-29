@@ -1,6 +1,6 @@
 #include <pointless/pointless_reader.h>
 
-static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, const char** error)
+static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_ucs2, const char** error)
 {
 	// our header
 	if (buflen < sizeof(pointless_header_t)) {
@@ -35,10 +35,13 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, const char
 	p->heap_ptr = (void*)(p->map_offsets + p->header->n_map);
 
 	// let us validate the damn thing
-	return pointless_validate(p, error);
+	pointless_validate_context_t context;
+	context.p = p;
+	context.force_ucs2 = force_ucs2;
+	return pointless_validate(&context, error);
 }
 
-int pointless_open_f(pointless_t* p, const char* fname, const char** error)
+int pointless_open_f(pointless_t* p, const char* fname, int force_ucs2, const char** error)
 {
 	p->fd = 0;
 	p->fd_len = 0;
@@ -87,7 +90,7 @@ int pointless_open_f(pointless_t* p, const char* fname, const char** error)
 		return 0;
 	}
 
-	if (!pointless_init(p, p->fd_ptr, p->fd_len, error)) {
+	if (!pointless_init(p, p->fd_ptr, p->fd_len, force_ucs2, error)) {
 		pointless_close(p);
 		return 0;
 	}

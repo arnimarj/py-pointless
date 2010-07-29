@@ -1263,6 +1263,7 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 	fd = mkstemp(temp_fname);
 
 	if (fd == -1) {
+		fprintf(stderr, "temp_fname: %s\n", temp_fname);
 		*error = "error creating temporary file";
 		goto cleanup;
 	}

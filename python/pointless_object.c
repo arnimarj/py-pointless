@@ -62,9 +62,14 @@ static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 	if (allow_print == Py_False)
 		self->allow_print = 0;
 
+#ifdef Py_UNICODE_WIDE
+	int force_ucs2 = 0;
+#else
+	int force_ucs2 = 1;
+#endif
 
 	Py_BEGIN_ALLOW_THREADS
-	i = pointless_open_f(&self->p, fname, &error);
+	i = pointless_open_f(&self->p, fname, force_ucs2, &error);
 	Py_END_ALLOW_THREADS
 
 	if (!i) {

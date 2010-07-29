@@ -283,7 +283,7 @@ int pointless_recreate(const char* fname_in, const char* fname_out, const char**
 	state.set_r_c_mapping = 0;
 	state.map_r_c_mapping = 0;
 
-	if (!pointless_open_f(&p, fname_in, error))
+	if (!pointless_open_f(&p, fname_in, 0, error))
 		return 0;
 
 	is_p = 1;

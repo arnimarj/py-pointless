@@ -1,6 +1,6 @@
 #include <pointless/pointless_validate.h>
 
-int32_t pointless_validate_inline_invariants(pointless_t* p, pointless_value_t* v, const char** error)
+int32_t pointless_validate_inline_invariants(pointless_validate_context_t* context, pointless_value_t* v, const char** error)
 {
 	switch (v->type) {
 		case POINTLESS_VECTOR_VALUE:
@@ -68,11 +68,11 @@ int32_t pointless_validate_inline_invariants(pointless_t* p, pointless_value_t* 
 	return 1;
 }
 
-int32_t pointless_validate_heap_ref(pointless_t* p, pointless_value_t* v, const char** error)
+int32_t pointless_validate_heap_ref(pointless_validate_context_t* context, pointless_value_t* v, const char** error)
 {
 	switch (v->type) {
 		case POINTLESS_UNICODE:
-			if (v->data.data_u32 >= p->header->n_unicode) {
+			if (v->data.data_u32 >= context->p->header->n_unicode) {
 				*error = "unicode reference out of bounds";
 				return 0;
 			}
@@ -87,28 +87,28 @@ int32_t pointless_validate_heap_ref(pointless_t* p, pointless_value_t* v, const 
 		case POINTLESS_VECTOR_I32:
 		case POINTLESS_VECTOR_U32:
 		case POINTLESS_VECTOR_FLOAT:
-			if (v->data.data_u32 >= p->header->n_vector) {
+			if (v->data.data_u32 >= context->p->header->n_vector) {
 				*error = "vector reference out of bounds";
 				return 0;
 			}
 
 			break;
 		case POINTLESS_BITVECTOR:
-			if (v->data.data_u32 >= p->header->n_bitvector) {
+			if (v->data.data_u32 >= context->p->header->n_bitvector) {
 				*error = "bitvector reference out of bounds";
 				return 0;
 			}
 
 			break;
 		case POINTLESS_SET_VALUE:
-			if (v->data.data_u32 >= p->header->n_set) {
+			if (v->data.data_u32 >= context->p->header->n_set) {
 				*error = "set reference out of bounds";
 				return 0;
 			}
 
 			break;
 		case POINTLESS_MAP_VALUE_VALUE:
-			if (v->data.data_u32 >= p->header->n_map) {
+			if (v->data.data_u32 >= context->p->header->n_map) {
 				*error = "map reference out of bounds";
 				return 0;
 			}

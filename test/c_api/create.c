@@ -26,7 +26,7 @@ void query_wrapper(const char* fname, query_cb cb)
 	pointless_t p;
 	const char* error;
 
-	if (!pointless_open_f(&p, fname, &error)) {
+	if (!pointless_open_f(&p, fname, 0, &error)) {
 		fprintf(stderr, "pointless_open_f() failure: %s\n", error);
 		exit(EXIT_FAILURE);
 	}

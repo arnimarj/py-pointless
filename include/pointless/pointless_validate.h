@@ -44,16 +44,21 @@ Checking all this is pretty expensive, and is done after the first set of tests.
 #include <pointless/pointless_cycle_marker.h>
 #include <pointless/pointless_walk.h>
 
-int32_t pointless_validate(pointless_t* p, const char** error);
+typedef struct {
+	pointless_t* p;
+	int force_ucs2;
+} pointless_validate_context_t;
+
+int32_t pointless_validate(pointless_validate_context_t* context, const char** error);
 
 // checks if the offset vector reference is good, and that the heap data is valid, without
 // checking the children (if any)
-int32_t pointless_validate_heap_ref(pointless_t* p, pointless_value_t* v, const char** error);
+int32_t pointless_validate_heap_ref(pointless_validate_context_t* context, pointless_value_t* v, const char** error);
 
 // checks if the internal invariants of an inline-value hold
-int32_t pointless_validate_inline_invariants(pointless_t* p, pointless_value_t* v, const char** error);
+int32_t pointless_validate_inline_invariants(pointless_validate_context_t* context, pointless_value_t* v, const char** error);
 
 // check heap data
-int32_t pointless_validate_heap_value(pointless_t* p, pointless_value_t* v, const char** error);
+int32_t pointless_validate_heap_value(pointless_validate_context_t* context, pointless_value_t* v, const char** error);
 
 #endif

@@ -55,6 +55,7 @@ static int pointless_validate_map_complicated(pointless_validate_state_t* state,
 */
 
 typedef struct {
+	pointless_validate_context_t* context;
 	uint32_t pass;
 	const char* error;
 	void* cycle_marker;
@@ -102,13 +103,13 @@ static uint32_t pointless_validate_pass_cb(pointless_t* p, pointless_value_t* v,
 
 	// pass-1, basic sanity checks
 	if (state->pass == 1) {
-		if (!pointless_validate_heap_ref(p, v, &state->error))
+		if (!pointless_validate_heap_ref(state->context, v, &state->error))
 			return POINTLESS_WALK_STOP;
 
-		if (!pointless_validate_inline_invariants(p, v, &state->error))
+		if (!pointless_validate_inline_invariants(state->context, v, &state->error))
 			return POINTLESS_WALK_STOP;
 
-		if (!pointless_validate_heap_value(p, v, &state->error))
+		if (!pointless_validate_heap_value(state->context, v, &state->error))
 			return POINTLESS_WALK_STOP;
 	// pass-2, cycle validation
 	} else if (state->pass == 2) {
@@ -127,7 +128,7 @@ static uint32_t pointless_validate_pass_cb(pointless_t* p, pointless_value_t* v,
 	return POINTLESS_WALK_VISIT_CHILDREN;
 }
 
-int pointless_validate(pointless_t* p, const char** error)
+int pointless_validate(pointless_validate_context_t* context, const char** error)
 {
 	// our return value
 	int retval = 0;
@@ -135,12 +136,13 @@ int pointless_validate(pointless_t* p, const char** error)
 	// setup the state
 	pointless_validate_state_t state;
 
+	state.context = context;
 	state.pass = 1;
 	state.error = 0;
 	state.cycle_marker = 0;
-	state.vector = calloc(ICEIL(p->header->n_vector, 8), 1);
-	state.set = calloc(ICEIL(p->header->n_set, 8), 1);
-	state.map = calloc(ICEIL(p->header->n_map, 8), 1);
+	state.vector = calloc(ICEIL(context->p->header->n_vector, 8), 1);
+	state.set = calloc(ICEIL(context->p->header->n_set, 8), 1);
+	state.map = calloc(ICEIL(context->p->header->n_map, 8), 1);
 
 	if (state.vector == 0 || state.set == 0 || state.map == 0) {
 		*error = "out of memory";
@@ -148,25 +150,25 @@ int pointless_validate(pointless_t* p, const char** error)
 	}
 
 	// pass 1
-	pointless_walk(p, pointless_validate_pass_cb, (void*)&state);
+	pointless_walk(context->p, pointless_validate_pass_cb, (void*)&state);
 
 	if (state.error)
 		goto cleanup;
 
 	// it is now safe to perform cycle analysis
-	state.cycle_marker = pointless_cycle_marker(p, error);
+	state.cycle_marker = pointless_cycle_marker(context->p, error);
 
 	if (state.cycle_marker == 0)
 		goto cleanup;
 
 	// reset visited vector
-	memset(state.vector, 0, ICEIL(p->header->n_vector, 8));
-	memset(state.set, 0, ICEIL(p->header->n_set, 8));
-	memset(state.map, 0, ICEIL(p->header->n_map, 8));
+	memset(state.vector, 0, ICEIL(context->p->header->n_vector, 8));
+	memset(state.set, 0, ICEIL(context->p->header->n_set, 8));
+	memset(state.map, 0, ICEIL(context->p->header->n_map, 8));
 
 	// pass 2
 	state.pass = 2;
-	pointless_walk(p, pointless_validate_pass_cb, (void*)&state);
+	pointless_walk(context->p, pointless_validate_pass_cb, (void*)&state);
 
 	if (state.error)
 		goto cleanup;
