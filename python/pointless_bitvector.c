@@ -52,10 +52,11 @@ PyObject* PyPointlessBitvectorIter_new(PyTypeObject* type, PyObject* args, PyObj
 	return (PyObject*)self;
 }
 
-static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args)
+static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args, PyObject* kwds)
 {
 	// cleanup
 	self->is_pointless = 0;
+	self->allow_print = 1;
 
 	Py_XDECREF(self->pointless_pp);
 	self->pointless_pp = 0;
@@ -67,63 +68,88 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args)
 	self->primitive_n_bytes_alloc = 0;
 
 	// parse input
-	PyObject* seq_or_int = 0;
+	static char* kwargs[] = {"size", "sequence", "allow_print", 0};
+	PyObject* size = 0;
+	PyObject* sequence = 0;
+	PyObject* allow_print = Py_True;
 
-	if (!PyArg_ParseTuple(args, "|O", &seq_or_int))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO!", kwargs, &size, &sequence, &PyBool_Type, &allow_print))
 		return -1;
 
-	Py_ssize_t n_items = 0, i;
+	// size xor sequence
+	if ((size != 0) && (sequence!= 0)) {
+		PyErr_SetString(PyExc_TypeError, "only one of size/sequence can be specified");
+		return -1;
+	}
 
+	if (allow_print == Py_False)
+		self->allow_print = 0;
+
+	// determine number of items
+	Py_ssize_t n_items = 0, i;
 	int is_error = 0;
 
-	if (seq_or_int != 0) {
-		if (PyInt_Check(seq_or_int) || PyInt_CheckExact(seq_or_int)) {
-			n_items = (Py_ssize_t)PyInt_AS_LONG(seq_or_int);
-		} else if (PySequence_Check(seq_or_int)) {
-			n_items = PySequence_Size(seq_or_int);
-		} else if (PyLong_Check(seq_or_int) || PyLong_CheckExact(seq_or_int)) {
-			n_items = (Py_ssize_t)PyLong_AsLongLong(seq_or_int);
+	if (size != 0) {
+		if (PyInt_Check(size) || PyInt_CheckExact(size)) {
+			n_items = (Py_ssize_t)PyInt_AS_LONG(size);
+		} else if (PyLong_Check(size) || PyLong_CheckExact(size)) {
+			n_items = (Py_ssize_t)PyLong_AsLongLong(size);
 
-			if (PyErr_Occurred()) {
-				PyErr_Clear();
-				is_error = 1;
-			}
+			if (PyErr_Occurred())
+				return -1;
+		} else {
+			is_error = 1;
 		}
 
 		if (is_error || !(0 <= n_items && n_items <= UINT32_MAX)) {
-			PyErr_SetString(PyExc_ValueError, "we require a sequence or an integer 0 <= i < 2**32");
+			PyErr_SetString(PyExc_ValueError, "size must be an integer 0 <= i < 2**32");
 			return -1;
 		}
+	} else if (sequence) {
+		if (!PySequence_Check(sequence)) {
+			PyErr_SetString(PyExc_ValueError, "sequence must be a sequence");
+			return -1;
+		}
+		n_items = PySequence_Size(sequence);
+
+		if (n_items == -1)
+			return -1;
 	}
 
-	self->is_pointless = 0;
-	self->pointless_pp = 0;
-	self->pointless_v = 0;
 	self->primitive_n_bits = (uint32_t)n_items;
 	self->primitive_bits = 0;
-	self->primitive_n_bytes_alloc = 0;
+	self->primitive_n_bytes_alloc = (uint32_t)ICEIL(n_items, 8);
 
 	if (n_items > 0) {
-		self->primitive_bits = calloc(ICEIL(n_items, 8), 1);
+		self->primitive_bits = calloc(self->primitive_n_bytes_alloc, 1);
 
 		if (self->primitive_bits == 0) {
+			self->primitive_n_bytes_alloc = 0;
 			PyErr_NoMemory();
 			return -1;
 		}
-
-		self->primitive_n_bytes_alloc = (uint32_t)ICEIL(n_items, 8);
 	}
 
-	if (seq_or_int != 0 && PySequence_Check(seq_or_int)) {
-		for (i = 0; i < n_items; i++) {
-			PyObject* obj = PySequence_GetItem(seq_or_int, i);
+	// if we have a sequence
+	is_error = 0;
 
-			if (PyBool_Check(obj)) {
+	if (sequence != 0) {
+		// for each object
+		for (i = 0; i < n_items; i++) {
+			PyObject* obj = PySequence_GetItem(sequence, i);
+
+			// 0) GetItem() failure
+			if (obj == 0) {
+				is_error = 1;
+			// 1) boolean
+			} else if (PyBool_Check(obj)) {
 				if (obj == Py_True)
 					bm_set_(self->primitive_bits, i);
+			// 2) integer (must be 0 or 1)
 			} else if ((PyInt_Check(obj) || PyInt_CheckExact(obj)) && (PyInt_AS_LONG(obj) == 0 || PyInt_AS_LONG(obj) == 1)) {
 				if (PyInt_AS_LONG(obj) == 1)
 					bm_set_(self->primitive_bits, i);
+			// 3) long (must be 0 or 1)
 			} else if (PyLong_Check(obj) || PyLong_CheckExact(obj)) {
 				PY_LONG_LONG v = PyLong_AsLongLong(obj);
 
@@ -133,7 +159,7 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args)
 				} else if (v == 1) {
 					bm_set_(self->primitive_bits, i);
 				}
-
+			// 4) nothong else allowed
 			} else {
 				is_error = 1;
 			}
@@ -143,7 +169,10 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args)
 				self->primitive_n_bits = 0;
 				self->primitive_bits = 0;
 				self->primitive_n_bytes_alloc = 0;
-				PyErr_SetString(PyExc_ValueError, "init sequence must only contain True, False, 0 or 1");
+
+				if (!PyErr_Occurred())
+					PyErr_SetString(PyExc_ValueError, "init sequence must only contain True, False, 0 or 1");
+
 				return -1;
 			}
 		}
@@ -403,6 +432,23 @@ static PyMappingMethods PyPointlessBitvector_as_mapping = {
 	(objobjargproc)PyPointlessBitvector_ass_subscript
 };
 
+PyObject* PyBitvector_repr(PyPointlessBitvector* self)
+{
+	if (!self->allow_print)
+		return PyString_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
+
+	return PyPointless_repr((PyObject*)self);
+}
+
+PyObject* PyBitvector_str(PyPointlessBitvector* self)
+{
+	if (!self->allow_print)
+		return PyString_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
+
+	return PyPointless_str((PyObject*)self);
+}
+
+
 PyTypeObject PyPointlessBitvectorType = {
 	PyObject_HEAD_INIT(NULL)
 	0,                                        /*ob_size*/
@@ -414,13 +460,13 @@ PyTypeObject PyPointlessBitvectorType = {
 	0,                                        /*tp_getattr*/
 	0,                                        /*tp_setattr*/
 	0,                                        /*tp_compare*/
-	PyPointless_repr,                         /*tp_repr*/
+	(reprfunc)PyBitvector_repr,               /*tp_repr*/
 	0,                                        /*tp_as_number*/
 	0,                                        /*tp_as_sequence*/
 	&PyPointlessBitvector_as_mapping,         /*tp_as_mapping*/
 	0,                                        /*tp_hash */
 	0,                                        /*tp_call*/
-	PyPointless_str,                          /*tp_str*/
+	(reprfunc)PyBitvector_str,                /*tp_str*/
 	0,                                        /*tp_getattro*/
 	0,                                        /*tp_setattro*/
 	0,                                        /*tp_as_buffer*/

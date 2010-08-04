@@ -49,6 +49,7 @@ typedef struct {
 typedef struct {
 	PyObject_HEAD
 	int is_pointless;
+	int allow_print;
 
 	// pointless stuff
 	PyPointless* pointless_pp;
@@ -114,6 +115,7 @@ typedef struct {
 
 typedef struct {
 	PyObject_HEAD
+	int allow_print;
 	pointless_dynarray_t array;
 	uint8_t type;
 } PyPointlessPrimVector;

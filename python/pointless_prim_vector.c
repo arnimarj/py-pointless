@@ -38,9 +38,10 @@ PyObject* PyPointlessPrimVectorIter_new(PyTypeObject* type, PyObject* args, PyOb
 	return (PyObject*)self;
 }
 
-PyObject* PyPointlessPrimVector_str(PyObject* self)
+PyObject* PyPointlessPrimVector_str(PyPointlessPrimVector* self)
 {
-	PyPointlessPrimVector* v = (PyPointlessPrimVector*)self;
+	if (!self->allow_print)
+		return PyString_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
 
 	PyObject* vector_s = PyString_FromString("[");
 	PyObject* vector_comma = PyString_FromString(", ");
@@ -51,14 +52,14 @@ PyObject* PyPointlessPrimVector_str(PyObject* self)
 	if (vector_s == 0 || vector_comma == 0 || vector_postfix == 0)
 		goto error;
 
-	uint32_t i, n = pointless_dynarray_n_items(&v->array);
+	uint32_t i, n = pointless_dynarray_n_items(&self->array);
 	void* data = 0;
 	char buffer[1024];
 
 	for (i = 0; i < n; i++) {
-		data = pointless_dynarray_item_at(&v->array, i);
+		data = pointless_dynarray_item_at(&self->array, i);
 
-		switch (v->type) {
+		switch (self->type) {
 			case POINTLESS_PRIM_VECTOR_TYPE_I8:
 				v_s = PyString_FromFormat("%i", (int)(*((int8_t*)data)));
 				break;
@@ -122,7 +123,7 @@ error:
 	return 0;
 }
 
-PyObject* PyPointlessPrimVector_repr(PyObject* self)
+PyObject* PyPointlessPrimVector_repr(PyPointlessPrimVector* self)
 {
 	return PyPointlessPrimVector_str(self);
 }
@@ -224,28 +225,42 @@ static int pointless_get_continuous_buffer(PyObject* buffer_obj, void** buffer, 
 	return 1;
 }
 
-
-static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* args)
+static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* args, PyObject* kwds)
 {
+	// printing enabled by default
+	self->allow_print = 1;
+
 	// clear previous contents
 	pointless_dynarray_clear(&self->array);
 	self->type = 0;
 
 	// parse input
-	PyObject* type_or_buffer_obj = 0;
-	PyObject* obj = 0;
 	const char* type = 0;
+	PyObject* buffer_obj = 0;
+	PyObject* sequence_obj = 0;
+	PyObject* allow_print = 0;
 	uint32_t i;
 
-	if (!PyArg_ParseTuple(args, "O|O", &type_or_buffer_obj, &obj)) {
-		PyErr_SetString(PyExc_ValueError, "we need a buffer, or typecode and optional iterator");
+	static char* kwargs[] = {"type", "buffer", "sequence", "allow_print", 0};
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|sO!OO!", kwargs, &type, &PyBuffer_Type, &buffer_obj, &sequence_obj, &PyBool_Type, &allow_print))
+		return -1;
+
+	if ((type != 0) == (buffer_obj != 0)) {
+		PyErr_SetString(PyExc_TypeError, "exactly one of type/buffer must be specified");
 		return -1;
 	}
 
-	// typecode and optional iterator
-	if (PyString_Check(type_or_buffer_obj)) {
-		type = (const char*)PyString_AS_STRING(type_or_buffer_obj);
+	if (type == 0 && sequence_obj != 0) {
+		PyErr_SetString(PyExc_ValueError, "sequence only allowed if type is specified");
+		return -1;
+	}
 
+	if (allow_print == Py_False)
+		self->allow_print = 0;
+
+	// typecode and (sequence)
+	if (type != 0) {
 		for (i = 0; i < POINTLESS_PRIM_VECTOR_N_TYPES; i++) {
 			if (strcmp(type, pointless_prim_vector_type_map[i].s) == 0) {
 				pointless_dynarray_init(&self->array, pointless_prim_vector_type_map[i].typesize);
@@ -260,8 +275,8 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 		}
 
 		// if we have an iterator, construct the vector from it
-		if (obj) {
-			PyObject* iterator = PyObject_GetIter(obj);
+		if (sequence_obj) {
+			PyObject* iterator = PyObject_GetIter(sequence_obj);
 
 			if (iterator == 0)
 				return -1;
@@ -285,16 +300,13 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 			}
 		}
 	// else a single buffer
-	} else if (obj) {
-		PyErr_SetString(PyExc_ValueError, "second parameter only allowed if first parameter is typecode");
-		return -1;
 	} else {
 		int retval = -1;
 		void* buffer = 0;
 		uint32_t n_buffer = 0;
 		uint32_t must_free = 0;
 
-		if (!pointless_get_continuous_buffer(type_or_buffer_obj, &buffer, &n_buffer, &must_free))
+		if (!pointless_get_continuous_buffer(buffer_obj, &buffer, &n_buffer, &must_free))
 			goto buffer_cleanup;
 
 		// de-serialize the buffer
@@ -1257,13 +1269,13 @@ PyTypeObject PyPointlessPrimVectorType = {
 	0,                                         /*tp_getattr*/
 	0,                                         /*tp_setattr*/
 	0,                                         /*tp_compare*/
-	PyPointlessPrimVector_repr,                /*tp_repr*/
+	(reprfunc)PyPointlessPrimVector_repr,      /*tp_repr*/
 	0,                                         /*tp_as_number*/
 	&PyPointlessPrimVector_as_sequence,        /*tp_as_sequence*/
 	&PyPointlessPrimVector_as_mapping,         /*tp_as_mapping*/
 	0,                                         /*tp_hash */
 	0,                                         /*tp_call*/
-	PyPointlessPrimVector_str,                 /*tp_str*/
+	(reprfunc)PyPointlessPrimVector_str,       /*tp_str*/
 	0,                                         /*tp_getattro*/
 	0,                                         /*tp_setattro*/
 	0,                                         /*tp_as_buffer*/
