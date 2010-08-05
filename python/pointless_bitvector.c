@@ -434,7 +434,7 @@ static PyMappingMethods PyPointlessBitvector_as_mapping = {
 
 PyObject* PyBitvector_repr(PyPointlessBitvector* self)
 {
-	if (!self->allow_print)
+	if (!self->is_pointless && !self->allow_print)
 		return PyString_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
 
 	return PyPointless_repr((PyObject*)self);
@@ -442,7 +442,7 @@ PyObject* PyBitvector_repr(PyPointlessBitvector* self)
 
 PyObject* PyBitvector_str(PyPointlessBitvector* self)
 {
-	if (!self->allow_print)
+	if (!self->is_pointless && !self->allow_print)
 		return PyString_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
 
 	return PyPointless_str((PyObject*)self);
