@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import unittest, itertools, sys
+import itertools, sys
+from twisted.trial import unittest
 
 from test_serialize import AllBitvectorTestCases
 from common import pointless, VectorSlices

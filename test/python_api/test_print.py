@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import cStringIO, unittest, types
+from twisted.trial import unittest
+import cStringIO, types
 
 from test_serialize import SimpleSerializeTestCases
 from common import pointless

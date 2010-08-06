@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # coding=latin-1
 
-import sys, types, random, cStringIO, time, unittest, operator
+from twisted.trial import unittest
+import sys, types, random, cStringIO, time, operator
 
 def test_set_performance(pointless):
 	#print 'INFO: set performance test'

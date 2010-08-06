@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-import unittest, random
-
+import random
+from twisted.trial import unittest
 from common import pointless
 
 def SimpleSerializeTestCases():
@@ -43,22 +43,22 @@ def SimpleSerializeTestCases():
 def AllBitvectorTestCases():
 	return [
 		# case 0) all-0
-		pointless.PointlessBitvector([0] * 1000),
+		pointless.PointlessBitvector(sequence = [0] * 1000),
 
 		# case 1) all-1
-		pointless.PointlessBitvector([1] * 1000),
+		pointless.PointlessBitvector(sequence = [1] * 1000),
 
 		# case 2) 0-1
-		pointless.PointlessBitvector([0] * 400 + [1] * 800),
+		pointless.PointlessBitvector(sequence = [0] * 400 + [1] * 800),
 
 		# case 3) 1-0
-		pointless.PointlessBitvector([1] * 400 + [0] * 800),
+		pointless.PointlessBitvector(sequence = [1] * 400 + [0] * 800),
 
 		# case 4) less than 27 bits
-		pointless.PointlessBitvector([0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1]),
+		pointless.PointlessBitvector(sequence = [0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1]),
 
 		# case 5) a whole bunch of bits
-		pointless.PointlessBitvector([0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1])
+		pointless.PointlessBitvector(sequence = [0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1])
 	]
 
 from common import pointless

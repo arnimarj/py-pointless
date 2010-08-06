@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import unittest, threading, thread, random, sys
+from twisted.trial import unittest
+import threading, thread, random, sys
 
 from common import pointless
 

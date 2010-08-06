@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import unittest, types
+from twisted.trial import unittest
+import types
 
 from common import pointless
 
