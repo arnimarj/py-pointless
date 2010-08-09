@@ -1172,6 +1172,7 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 				return 0;
 			}
 
+			ppv->read_lock += 1;
 		} else if (PyPointlessVector_Check(state.v_p[state.n])) {
 			PyPointlessVector* pv = (PyPointlessVector*)state.v_p[state.n];
 
@@ -1210,6 +1211,7 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 		return 0;
 	}
 
+	self->write_lock += 1;
 	state.p_w = 1;
 	Py_INCREF(self);
 
@@ -1287,7 +1289,7 @@ cleanup:
 		if (state.v_w[state.n]) {
 			if (PyPointlessPrimVector_Check(state.v_p[state.n])) {
 				PyPointlessPrimVector* ppv = (PyPointlessPrimVector*)state.v_p[state.n];
-				ppv->write_lock -= 1;
+				ppv->read_lock -= 1;
 			}
 
 			Py_DECREF(state.v_p[state.n]);
@@ -1536,6 +1538,8 @@ PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t*
 	pv = (PyPointlessPrimVector*)PyObject_Init((PyObject*)pv, &PyPointlessPrimVectorType);
 
 	pv->type = t;
+	pv->read_lock = 0;
+	pv->write_lock = 0;
 	pv->array = *v;
 
 	return pv;
