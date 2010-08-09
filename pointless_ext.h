@@ -116,8 +116,14 @@ typedef struct {
 typedef struct {
 	PyObject_HEAD
 	int allow_print;
+
+	// vector
 	pointless_dynarray_t array;
 	uint8_t type;
+
+	// read/write locks
+	int read_lock;
+	int write_lock;
 } PyPointlessPrimVector;
 
 typedef struct {
@@ -125,7 +131,6 @@ typedef struct {
 	PyPointlessPrimVector* vector;
 	uint32_t iter_state;
 } PyPointlessPrimVectorIter;
-
 
 PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t* v, uint32_t t);
 

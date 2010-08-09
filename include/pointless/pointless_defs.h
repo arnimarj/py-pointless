@@ -307,6 +307,7 @@ typedef struct {
 #define cv_get_unicode(cv) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->unicode_values, cv->data.data_u32)))
 
 // top-level type checkers
+size_t pointless_vector_item_size(uint32_t type);
 int32_t pointless_is_vector_type(uint32_t type);
 int32_t pointless_is_bitvector_type(uint32_t type);
 int32_t pointless_is_integer_type(uint32_t type);

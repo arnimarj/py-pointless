@@ -421,7 +421,7 @@ PyTypeObject PyPointlessVectorType = {
 PyTypeObject PyPointlessVectorIterType = {
 	PyObject_HEAD_INIT(NULL)
 	0,                                            /*ob_size*/
-	"pointless.PyPointlessVectorIter",                /*tp_name*/
+	"pointless.PyPointlessVectorIter",            /*tp_name*/
 	sizeof(PyPointlessVectorIter),                /*tp_basicsize*/
 	0,                                            /*tp_itemsize*/
 	(destructor)PyPointlessVectorIter_dealloc,    /*tp_dealloc*/

@@ -20,8 +20,11 @@ PyObject* PyPointlessPrimVector_new(PyTypeObject* type, PyObject* args, PyObject
 {
 	PyPointlessPrimVector* self = (PyPointlessPrimVector*)type->tp_alloc(type, 0);
 
-	if (self)
+	if (self) {
+		self->read_lock = 0;
+		self->write_lock = 0;
 		pointless_dynarray_init(&self->array, 1);
+	}
 
 	return (PyObject*)self;
 }
@@ -40,6 +43,12 @@ PyObject* PyPointlessPrimVectorIter_new(PyTypeObject* type, PyObject* args, PyOb
 
 PyObject* PyPointlessPrimVector_str(PyPointlessPrimVector* self)
 {
+	// if object has a lock
+	if (((PyPointlessPrimVector*)self)->write_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a write lock: cannot be read");
+		return 0;
+	}
+
 	if (!self->allow_print)
 		return PyString_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
 
@@ -232,6 +241,8 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 
 	// clear previous contents
 	pointless_dynarray_clear(&self->array);
+	self->read_lock = 0;
+	self->write_lock = 0;
 	self->type = 0;
 
 	// parse input
@@ -460,6 +471,12 @@ static PyObject* PyPointlessPrimVector_subscript_priv(PyPointlessPrimVector* sel
 
 static PyObject* PyPointlessPrimVector_subscript(PyPointlessPrimVector* self, PyObject* item)
 {
+	// if object has a lock
+	if (self->write_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a write lock: cannot be read");
+		return 0;
+	}
+
 	// get the index
 	Py_ssize_t i;
 
@@ -471,6 +488,12 @@ static PyObject* PyPointlessPrimVector_subscript(PyPointlessPrimVector* self, Py
 
 static PyObject* PyPointlessPrimVector_item(PyPointlessPrimVector* self, Py_ssize_t i)
 {
+	// if object has a lock
+	if (self->write_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a write lock: cannot be read");
+		return 0;
+	}
+
 	if (!(0 <= i && i < pointless_dynarray_n_items(&self->array))) {
 		PyErr_SetString(PyExc_IndexError, "vector index out of range");
 		return 0;
@@ -481,6 +504,11 @@ static PyObject* PyPointlessPrimVector_item(PyPointlessPrimVector* self, Py_ssiz
 
 static int PyPointlessPrimVector_ass_item(PyPointlessPrimVector* self, Py_ssize_t i, PyObject* v)
 {
+	if (self->write_lock > 0 || self->read_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a read/write lock: cannot be modified");
+		return -1;
+	}
+
 	if (!(0 <= i && i < PyPointlessPrimVector_length(self))) {
 		PyErr_SetString(PyExc_IndexError, "vector index out of range");
 		return -1;
@@ -561,6 +589,12 @@ static PyObject* PyPointlessPrimVector_iter(PyObject* vector)
 		return 0;
 	}
 
+	// if object has a lock
+	if (((PyPointlessPrimVector*)vector)->write_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a write lock: cannot be read");
+		return 0;
+	}
+
 	PyPointlessPrimVectorIter* iter = PyObject_New(PyPointlessPrimVectorIter, &PyPointlessPrimVectorIterType);
 
 	if (iter == 0)
@@ -578,6 +612,12 @@ static PyObject* PyPointlessPrimVector_iter(PyObject* vector)
 
 static PyObject* PyPointlessPrimVectorIter_iternext(PyPointlessPrimVectorIter* iter)
 {
+	// if object has a lock
+	if (iter->vector->write_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a write lock: cannot be read");
+		return 0;
+	}
+
 	// iterator already reached end
 	if (iter->vector == 0)
 		return 0;
@@ -678,11 +718,21 @@ static PyObject* PyPointlessPrimVector_append(PyPointlessPrimVector* self, PyObj
 		return 0;
 	}
 
+	if (self->write_lock > 0 || self->read_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a read/write lock: cannot be modified");
+		return 0;
+	}
+
 	return PyPointlessPrimVector_append_item(self, obj);
 }
 
 static PyObject* PyPointlessPrimVector_pop(PyPointlessPrimVector* self)
 {
+	if (self->write_lock > 0 || self->read_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a read/write lock: cannot be modified");
+		return 0;
+	}
+
 	size_t n_items = pointless_dynarray_n_items(&self->array);
 
 	if (n_items == 0) {
@@ -777,6 +827,11 @@ static size_t PyPointlessPrimVector_index_(PyPointlessPrimVector* self, PyObject
 
 static PyObject* PyPointlessPrimVector_index(PyPointlessPrimVector* self, PyObject* args)
 {
+	if (self->write_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a write lock: cannot be read");
+		return 0;
+	}
+
 	size_t i = PyPointlessPrimVector_index_(self, args, "index");
 
 	if (i == (SIZE_MAX-1))
@@ -787,6 +842,11 @@ static PyObject* PyPointlessPrimVector_index(PyPointlessPrimVector* self, PyObje
 
 static PyObject* PyPointlessPrimVector_remove(PyPointlessPrimVector* self, PyObject* args)
 {
+	if (self->write_lock > 0 || self->read_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a read/write lock: cannot be modified");
+		return 0;
+	}
+
 	size_t i = PyPointlessPrimVector_index_(self, args, "remove");
 
 	if (i == (SIZE_MAX-1))
@@ -805,6 +865,11 @@ static PyObject* PyPointlessPrimVector_remove(PyPointlessPrimVector* self, PyObj
 
 static PyObject* PyPointlessPrimVector_fast_remove(PyPointlessPrimVector* self, PyObject* args)
 {
+	if (self->write_lock > 0 || self->read_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a read/write lock: cannot be modified");
+		return 0;
+	}
+
 	size_t i = PyPointlessPrimVector_index_(self, args, "fast_remove");
 
 	if (i == (SIZE_MAX-1))
@@ -820,6 +885,11 @@ static PyObject* PyPointlessPrimVector_fast_remove(PyPointlessPrimVector* self, 
 
 static PyObject* PyPointlessPrimVector_serialize(PyPointlessPrimVector* self)
 {
+	if (self->write_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a write lock: cannot be read");
+		return 0;
+	}
+
 	// the format is: [uint32_t type] [uint32 length] [raw integers]
 	// the length param is redundant, but gives a fair sanity check
 
@@ -910,19 +980,42 @@ static int prim_sort_cmp_f(int a, int b, int* c, void* user)
 
 static PyObject* PyPointlessPrimVector_sort(PyPointlessPrimVector* self)
 {
-	int n = (int)pointless_dynarray_n_items(&self->array);
+	if (self->write_lock > 0 || self->read_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a read/write lock: cannot be modified");
+		return 0;
+	}
 
-	switch (self->type) {
-		case POINTLESS_PRIM_VECTOR_TYPE_I8:    bentley_sort_(n, prim_sort_cmp_i8,  prim_sort_swap_i8,  (void*)self); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U8:    bentley_sort_(n, prim_sort_cmp_u8,  prim_sort_swap_u8,  (void*)self); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_I16:   bentley_sort_(n, prim_sort_cmp_i16, prim_sort_swap_i16, (void*)self); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U16:   bentley_sort_(n, prim_sort_cmp_u16, prim_sort_swap_u16, (void*)self); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_I32:   bentley_sort_(n, prim_sort_cmp_i32, prim_sort_swap_i32, (void*)self); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U32:   bentley_sort_(n, prim_sort_cmp_u32, prim_sort_swap_u32, (void*)self); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_FLOAT: bentley_sort_(n, prim_sort_cmp_f,   prim_sort_swap_f,   (void*)self); break;
-		default:
-			PyErr_BadInternalCall();
-			return 0;
+	// lock
+	self->write_lock += 1;
+	int bad = 0;
+	Py_INCREF(self);
+	Py_BEGIN_ALLOW_THREADS
+
+	{
+		int n = (int)pointless_dynarray_n_items(&self->array);
+
+		switch (self->type) {
+			case POINTLESS_PRIM_VECTOR_TYPE_I8:    bentley_sort_(n, prim_sort_cmp_i8,  prim_sort_swap_i8,  (void*)self); break;
+			case POINTLESS_PRIM_VECTOR_TYPE_U8:    bentley_sort_(n, prim_sort_cmp_u8,  prim_sort_swap_u8,  (void*)self); break;
+			case POINTLESS_PRIM_VECTOR_TYPE_I16:   bentley_sort_(n, prim_sort_cmp_i16, prim_sort_swap_i16, (void*)self); break;
+			case POINTLESS_PRIM_VECTOR_TYPE_U16:   bentley_sort_(n, prim_sort_cmp_u16, prim_sort_swap_u16, (void*)self); break;
+			case POINTLESS_PRIM_VECTOR_TYPE_I32:   bentley_sort_(n, prim_sort_cmp_i32, prim_sort_swap_i32, (void*)self); break;
+			case POINTLESS_PRIM_VECTOR_TYPE_U32:   bentley_sort_(n, prim_sort_cmp_u32, prim_sort_swap_u32, (void*)self); break;
+			case POINTLESS_PRIM_VECTOR_TYPE_FLOAT: bentley_sort_(n, prim_sort_cmp_f,   prim_sort_swap_f,   (void*)self); break;
+			default:
+				bad = 1;
+				break;
+		}
+	}
+
+	// unlock
+	Py_END_ALLOW_THREADS
+	Py_DECREF(self);
+	self->write_lock -= 1;
+
+	if (bad) {
+		PyErr_BadInternalCall();
+		return 0;
 	}
 
 	Py_INCREF(Py_None);
@@ -931,18 +1024,19 @@ static PyObject* PyPointlessPrimVector_sort(PyPointlessPrimVector* self)
 
 typedef struct {
 	// the projection
-	PyObject* p_p; // Python object
 	void* p_b;     // base pointer
 	uint32_t p_n;  // number of items
 	uint32_t p_t;  // item type
+	uint32_t p_w;  // lock status
 
 	// sort value vectors
 	uint32_t n;
 
 	PyObject* v_p[16]; // Python objects
-	void* v_b[16];    // base pointers
+	void* v_b[16];     // base pointers
 	uint32_t v_n[16];  // number of items
 	uint32_t v_t[16];  // item types
+	uint32_t v_w[16];  // lock status
 } prim_sort_proj_state_t;
 
 static void prim_sort_proj_swap_i8(int a, int b, void* user)
@@ -1011,19 +1105,25 @@ static int prim_sort_proj_cmp(int a, int b, int* c, void* user)
 
 static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, PyObject* args)
 {
+	if (self->write_lock > 0 || self->read_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a read/write lock: cannot be modified");
+		return 0;
+	}
+
 	// initialize sort state
 	prim_sort_proj_state_t state;
 
-	state.p_p = 0;
 	state.p_b = 0;
 	state.p_n = 0;
 	state.p_t = 0;
+	state.p_w = 0;
 
 	for (state.n = 0; state.n < 16; state.n++) {
 		state.v_p[state.n] = 0;
 		state.v_b[state.n] = 0;
 		state.v_n[state.n] = 0;
 		state.v_t[state.n] = 0;
+		state.v_w[state.n] = 0;
 	}
 
 	state.n = 0;
@@ -1034,7 +1134,7 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 		&state.v_p[4], &state.v_p[5], &state.v_p[6], &state.v_p[7],
 		&state.v_p[8], &state.v_p[9], &state.v_p[10], &state.v_p[11],
 		&state.v_p[12], &state.v_p[13], &state.v_p[14], &state.v_p[15])) {
-		return 0;
+		goto cleanup;
 	}
 
 	// initialize projection vector state
@@ -1053,10 +1153,10 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 			break;
 		case POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
 			PyErr_SetString(PyExc_ValueError, "projection vector must contain only integer values");
-			return 0;
+			goto cleanup;
 		default:
 			PyErr_BadInternalCall();
-			return 0;
+			goto cleanup;
 	}
 
 	// count and initialize value vectors
@@ -1066,6 +1166,12 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 			state.v_b[state.n] = ppv->array._data;
 			state.v_n[state.n] = pointless_dynarray_n_items(&ppv->array);
 			state.v_t[state.n] = ppv->type;
+
+			if (ppv->write_lock > 0) {
+				PyErr_SetString(PyExc_ValueError, "vector has a write lock: cannot be read");
+				return 0;
+			}
+
 		} else if (PyPointlessVector_Check(state.v_p[state.n])) {
 			PyPointlessVector* pv = (PyPointlessVector*)state.v_p[state.n];
 
@@ -1085,16 +1191,27 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 				case POINTLESS_VECTOR_VALUE:
 				case POINTLESS_VECTOR_VALUE_HASHABLE:
 					PyErr_SetString(PyExc_ValueError, "illegal pointless vector type");
-					return 0;
+					goto cleanup;
 				default:
 					PyErr_BadInternalCall();
-					return 0;
+					goto cleanup;
 			}
 		} else {
 			PyErr_Format(PyExc_ValueError, "illegal value vector type: %s", state.v_p[state.n]->ob_type->tp_name);
-			return 0;
+			goto cleanup;
 		}
+
+		Py_INCREF(state.v_p[state.n]);
+		state.v_w[state.n] = 1;
 	}
+
+	if (self->write_lock > 0 || self->read_lock > 0) {
+		PyErr_SetString(PyExc_ValueError, "vector has a read/write lock: cannot be modified");
+		return 0;
+	}
+
+	state.p_w = 1;
+	Py_INCREF(self);
 
 	// all value vectors must have the same number of items
 	uint32_t i;
@@ -1102,53 +1219,88 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 	for (i = 1; i < state.n; i++) {
 		if (state.v_n[0] != state.v_n[i]) {
 			PyErr_Format(PyExc_ValueError, "all value vectors must have the same number of items (%i, %i)", (int)state.v_n[0], (int)state.v_n[i]);
-			return 0;
+			goto cleanup;
 		}
 	}
 
 	// if there are no items in the projection, we're done
-	if (state.p_n == 0) {
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
+	if (state.p_n == 0)
+		goto cleanup;
 
-	// find min/max values in projection
-	int64_t p_min = 0, p_max = 0;
+	// true iff: we are inside bounds
+	int in_bounds = 1;
 
-	for (i = 0; i < state.p_n; i++) {
-		int64_t v = 0;
+	// release GIL
+	Py_BEGIN_ALLOW_THREADS
 
-		switch (state.p_t) {
-			case POINTLESS_PRIM_VECTOR_TYPE_I8:  v = ((int8_t*)state.p_b)[i]; break;
-			case POINTLESS_PRIM_VECTOR_TYPE_U8:  v = ((uint8_t*)state.p_b)[i]; break;
-			case POINTLESS_PRIM_VECTOR_TYPE_I16: v = ((int16_t*)state.p_b)[i]; break;
-			case POINTLESS_PRIM_VECTOR_TYPE_U16: v = ((uint16_t*)state.p_b)[i]; break;
-			case POINTLESS_PRIM_VECTOR_TYPE_I32: v = ((int32_t*)state.p_b)[i]; break;
-			case POINTLESS_PRIM_VECTOR_TYPE_U32: v = ((uint32_t*)state.p_b)[i]; break;
+	{
+		// find min/max values in projection
+		int64_t p_min = 0, p_max = 0;
+
+		for (i = 0; i < state.p_n; i++) {
+			int64_t v = 0;
+
+			switch (state.p_t) {
+				case POINTLESS_PRIM_VECTOR_TYPE_I8:  v = ((int8_t*)state.p_b)[i]; break;
+				case POINTLESS_PRIM_VECTOR_TYPE_U8:  v = ((uint8_t*)state.p_b)[i]; break;
+				case POINTLESS_PRIM_VECTOR_TYPE_I16: v = ((int16_t*)state.p_b)[i]; break;
+				case POINTLESS_PRIM_VECTOR_TYPE_U16: v = ((uint16_t*)state.p_b)[i]; break;
+				case POINTLESS_PRIM_VECTOR_TYPE_I32: v = ((int32_t*)state.p_b)[i]; break;
+				case POINTLESS_PRIM_VECTOR_TYPE_U32: v = ((uint32_t*)state.p_b)[i]; break;
+			}
+
+			if (i == 0 || v < p_min)
+				p_min = v;
+
+			if (i == 0 || v > p_max)
+				p_max = v;
 		}
 
-		if (i == 0 || v < p_min)
-			p_min = v;
+		// bounds check
+		in_bounds = (0 <= p_min && p_max < state.v_n[0]);
 
-		if (i == 0 || v > p_max)
-			p_max = v;
+		// if we are inside the bounds, we can sort
+		if (in_bounds) {
+			switch (state.p_t) {
+				case POINTLESS_PRIM_VECTOR_TYPE_I8:  bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_i8,  (void*)&state); break;
+				case POINTLESS_PRIM_VECTOR_TYPE_U8:  bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_u8,  (void*)&state); break;
+				case POINTLESS_PRIM_VECTOR_TYPE_I16: bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_i16, (void*)&state); break;
+				case POINTLESS_PRIM_VECTOR_TYPE_U16: bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_u16, (void*)&state); break;
+				case POINTLESS_PRIM_VECTOR_TYPE_I32: bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_i32, (void*)&state); break;
+				case POINTLESS_PRIM_VECTOR_TYPE_U32: bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_u32, (void*)&state); break;
+			}
+		}
 	}
 
-	// and make sure they are inside the value vector bounds
-	if (!(0 <= p_min && p_max < state.v_n[0])) {
+	// acquire GIL
+	Py_END_ALLOW_THREADS
+
+	// if we were not in bounds: raise an exception
+	if (!in_bounds) {
 		PyErr_SetString(PyExc_ValueError, "projection value out of bounds");
-		return 0;
+		goto cleanup;
 	}
 
-	// now we can sort
-	switch (state.p_t) {
-		case POINTLESS_PRIM_VECTOR_TYPE_I8:  bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_i8,  (void*)&state); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U8:  bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_u8,  (void*)&state); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_I16: bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_i16, (void*)&state); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U16: bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_u16, (void*)&state); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_I32: bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_i32, (void*)&state); break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U32: bentley_sort_((int)state.p_n, prim_sort_proj_cmp,  prim_sort_proj_swap_u32, (void*)&state); break;
+cleanup:
+
+	for (state.n = 0; state.n < 16 && state.v_p[state.n]; state.n++) {
+		if (state.v_w[state.n]) {
+			if (PyPointlessPrimVector_Check(state.v_p[state.n])) {
+				PyPointlessPrimVector* ppv = (PyPointlessPrimVector*)state.v_p[state.n];
+				ppv->write_lock -= 1;
+			}
+
+			Py_DECREF(state.v_p[state.n]);
+		}
 	}
+
+	if (state.p_w) {
+		self->write_lock -= 1;
+		Py_DECREF(self);
+	}
+
+	if (PyErr_Occurred())
+		return 0;
 
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -1201,6 +1353,11 @@ static PyMethodDef PyPointlessPrimVector_methods[] = {
 
 static PyObject* PyPointlessPrimVector_slice(PyPointlessPrimVector* self, Py_ssize_t ilow, Py_ssize_t ihigh)
 {
+	if (self->write_lock > 0) {
+		PyErr_SetString(PyExc_BufferError, "object has a write lock: cannot be modified");
+		return 0;
+	}
+
 	// clamp the limits
 	uint32_t n_items = pointless_dynarray_n_items(&self->array), i;
 
@@ -1260,44 +1417,44 @@ static PySequenceMethods PyPointlessPrimVector_as_sequence = {
 
 PyTypeObject PyPointlessPrimVectorType = {
 	PyObject_HEAD_INIT(NULL)
-	0,                                         /*ob_size*/
-	"pointless.PyPointlessPrimVector",         /*tp_name*/
-	sizeof(PyPointlessPrimVector),             /*tp_basicsize*/
-	0,                                         /*tp_itemsize*/
-	(destructor)PyPointlessPrimVector_dealloc, /*tp_dealloc*/
-	0,                                         /*tp_print*/
-	0,                                         /*tp_getattr*/
-	0,                                         /*tp_setattr*/
-	0,                                         /*tp_compare*/
-	(reprfunc)PyPointlessPrimVector_repr,      /*tp_repr*/
-	0,                                         /*tp_as_number*/
-	&PyPointlessPrimVector_as_sequence,        /*tp_as_sequence*/
-	&PyPointlessPrimVector_as_mapping,         /*tp_as_mapping*/
-	0,                                         /*tp_hash */
-	0,                                         /*tp_call*/
-	(reprfunc)PyPointlessPrimVector_str,       /*tp_str*/
-	0,                                         /*tp_getattro*/
-	0,                                         /*tp_setattro*/
-	0,                                         /*tp_as_buffer*/
-	Py_TPFLAGS_DEFAULT,                        /*tp_flags*/
-	"PyPointlessPrimVector wrapper",           /*tp_doc */
-	0,                                         /*tp_traverse */
-	0,                                         /*tp_clear */
-	0,                                         /*tp_richcompare */
-	0,                                         /*tp_weaklistoffset */
-	PyPointlessPrimVector_iter,                /*tp_iter */
-	0,                                         /*tp_iternext */
-	PyPointlessPrimVector_methods,             /*tp_methods */
-	0,                                         /*tp_members */
-	PyPointlessPrimVector_getsets,             /*tp_getset */
-	0,                                         /*tp_base */
-	0,                                         /*tp_dict */
-	0,                                         /*tp_descr_get */
-	0,                                         /*tp_descr_set */
-	0,                                         /*tp_dictoffset */
-	(initproc)PyPointlessPrimVector_init,      /*tp_init */
-	0,                                         /*tp_alloc */
-	PyPointlessPrimVector_new,                 /*tp_new */
+	0,                                              /*ob_size*/
+	"pointless.PyPointlessPrimVector",              /*tp_name*/
+	sizeof(PyPointlessPrimVector),                  /*tp_basicsize*/
+	0,                                              /*tp_itemsize*/
+	(destructor)PyPointlessPrimVector_dealloc,      /*tp_dealloc*/
+	0,                                              /*tp_print*/
+	0,                                              /*tp_getattr*/
+	0,                                              /*tp_setattr*/
+	0,                                              /*tp_compare*/
+	(reprfunc)PyPointlessPrimVector_repr,           /*tp_repr*/
+	0,                                              /*tp_as_number*/
+	&PyPointlessPrimVector_as_sequence,             /*tp_as_sequence*/
+	&PyPointlessPrimVector_as_mapping,              /*tp_as_mapping*/
+	0,                                              /*tp_hash */
+	0,                                              /*tp_call*/
+	(reprfunc)PyPointlessPrimVector_str,            /*tp_str*/
+	0,                                              /*tp_getattro*/
+	0,                                              /*tp_setattro*/
+	0,                                              /*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_NEWBUFFER, /*tp_flags*/
+	"PyPointlessPrimVector wrapper",                /*tp_doc */
+	0,                                              /*tp_traverse */
+	0,                                              /*tp_clear */
+	0,                                              /*tp_richcompare */
+	0,                                              /*tp_weaklistoffset */
+	PyPointlessPrimVector_iter,                     /*tp_iter */
+	0,                                              /*tp_iternext */
+	PyPointlessPrimVector_methods,                  /*tp_methods */
+	0,                                              /*tp_members */
+	PyPointlessPrimVector_getsets,                  /*tp_getset */
+	0,                                              /*tp_base */
+	0,                                              /*tp_dict */
+	0,                                              /*tp_descr_get */
+	0,                                              /*tp_descr_set */
+	0,                                              /*tp_dictoffset */
+	(initproc)PyPointlessPrimVector_init,           /*tp_init */
+	0,                                              /*tp_alloc */
+	PyPointlessPrimVector_new,                      /*tp_new */
 };
 
 PyTypeObject PyPointlessPrimVectorIterType = {
