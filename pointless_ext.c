@@ -7,7 +7,13 @@ static PyPointless_CAPI CAPI = {
 	pointless_dynarray_push,
 	pointless_dynarray_clear,
 	pointless_dynarray_destroy,
-	PyPointlessPrimVector_from_T_vector
+	PyPointlessPrimVector_from_T_vector,
+	&PyPointlessType,
+	&PyPointlessVectorType,
+	&PyPointlessBitvectorType,
+	&PyPointlessSetType,
+	&PyPointlessMapType,
+	&PyPointlessPrimVectorType
 };
 
 static PyMethodDef pointless_methods[] =
