@@ -195,7 +195,6 @@ typedef struct {
 	PyTypeObject* PyPointlessPrimVectorType_ptr;
 } PyPointless_CAPI;
 
-// #define POINTLESS_API_MAGIC 0xC6D89E08
 #define POINTLESS_API_MAGIC 0xC6D89E11
 
 static PyPointless_CAPI* PyPointlessAPI;
@@ -205,27 +204,20 @@ static int PyPointlessAPI_magic;
 	if (PyPointlessAPI != 0 && PyPointlessAPI_magic != magic) {                                      \
 		PyErr_SetString(PyExc_ImportError, "pointless already imported with some other magic");      \
 	} else {                                                                                         \
-		printf("A\n");\
 		PyObject* m = PyImport_ImportModule("pointless");                                            \
 		PyPointlessAPI = 0;                                                                          \
 		void* next_PyPointlessAPI = 0;                                                               \
 		if (m != 0) {                                                                                \
-			printf("B\n");\
 			PyObject* c = PyObject_GetAttrString(m, "pointless_CAPI");                               \
 			if (c != 0) {                                                                            \
-				printf("C\n");\
 				next_PyPointlessAPI = PyCObject_AsVoidPtr(c);                                        \
 				Py_DECREF(c);                                                                        \
 				if (next_PyPointlessAPI != 0) {                                                      \
-					printf("D\n");\
 					void* desc = PyCObject_GetDesc(c);                                               \
 					if (desc != 0) {                                                                 \
-						printf("E\n");\
 						if (desc != (void*)POINTLESS_API_MAGIC) {                                    \
-							printf("F\n");\
 							PyErr_SetString(PyExc_ImportError, "pointless magic does not match");    \
 						} else {                                                                     \
-							printf("G\n");\
 							PyPointlessAPI = next_PyPointlessAPI;                                    \
 							PyPointlessAPI_magic = magic;                                            \
 						}                                                                            \
