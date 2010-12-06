@@ -6,7 +6,7 @@ static void PyPointlessMap_dealloc(PyPointlessMap* self)
 	self->pp = 0;
 	self->v = 0;
 	self->container_id = 0;
-	self->ob_type->tp_free((PyObject*)self);
+	PyObject_Del(self);
 }
 
 static void PyPointlessMapKeyIter_dealloc(PyPointlessMapKeyIter* self)
@@ -14,7 +14,7 @@ static void PyPointlessMapKeyIter_dealloc(PyPointlessMapKeyIter* self)
 	Py_XDECREF(self->map);
 	self->map = 0;
 	self->iter_state = 0;
-	self->ob_type->tp_free((PyObject*)self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 static void PyPointlessMapValueIter_dealloc(PyPointlessMapValueIter* self)
@@ -22,7 +22,7 @@ static void PyPointlessMapValueIter_dealloc(PyPointlessMapValueIter* self)
 	Py_XDECREF(self->map);
 	self->map = 0;
 	self->iter_state = 0;
-	self->ob_type->tp_free((PyObject*)self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 static void PyPointlessMapItemIter_dealloc(PyPointlessMapItemIter* self)
@@ -30,7 +30,7 @@ static void PyPointlessMapItemIter_dealloc(PyPointlessMapItemIter* self)
 	Py_XDECREF(self->map);
 	self->map = 0;
 	self->iter_state = 0;
-	self->ob_type->tp_free((PyObject*)self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 PyObject* PyPointlessMap_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
@@ -122,8 +122,6 @@ static PyObject* PyPointlessMap_iter(PyObject* map)
 
 	if (iter == 0)
 		return 0;
-
-	iter = (PyPointlessMapKeyIter*)PyObject_Init((PyObject*)iter, &PyPointlessMapKeyIterType);
 
 	Py_INCREF(map);
 
@@ -275,8 +273,8 @@ static PyObject* PyPointlessMap_iteritems(PyPointlessMap* m)
 }
 
 static PyMemberDef PyPointlessMap_memberlist[] = {
-        {"container_id",  T_ULONG, offsetof(PyPointlessMap, container_id), READONLY},
-		{NULL}
+	{"container_id",  T_ULONG, offsetof(PyPointlessMap, container_id), READONLY},
+	{NULL}
 };
 
 static PyObject* PyPointlessMap_subscript(PyPointlessMap* m, PyObject* key)
@@ -611,8 +609,6 @@ PyPointlessMap* PyPointlessMap_New(PyPointless* pp, pointless_value_t* v)
 
 	if (pv == 0)
 		return 0;
-
-	pv = (PyPointlessMap*)PyObject_Init((PyObject*)pv, &PyPointlessMapType);
 
 	Py_INCREF(pp);
 

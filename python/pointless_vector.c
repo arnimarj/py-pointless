@@ -9,7 +9,7 @@ static void PyPointlessVector_dealloc(PyPointlessVector* self)
 	self->is_hashable = 0;
 	self->slice_i = 0;
 	self->slice_n = 0;
-	self->ob_type->tp_free((PyObject*)self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 static void PyPointlessVectorIter_dealloc(PyPointlessVectorIter* self)
@@ -17,7 +17,7 @@ static void PyPointlessVectorIter_dealloc(PyPointlessVectorIter* self)
 	Py_XDECREF(self->vector);
 	self->vector = 0;
 	self->iter_state = 0;
-	self->ob_type->tp_free((PyObject*)self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 PyObject* PyPointlessVector_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
@@ -196,8 +196,6 @@ static PyObject* PyPointlessVector_iter(PyObject* vector)
 	if (iter == 0)
 		return 0;
 
-	iter = (PyPointlessVectorIter*)PyObject_Init((PyObject*)iter, &PyPointlessVectorIterType);
-
 	Py_INCREF(vector);
 
 	iter->vector = (PyPointlessVector*)vector;
@@ -352,8 +350,8 @@ static PyGetSetDef PyPointlessVector_getsets [] = {
 };
 
 static PyMemberDef PyPointlessVector_memberlist[] = {
-        {"container_id",  T_ULONG, offsetof(PyPointlessVector, container_id), READONLY},
-		{"is_hashable", T_INT, offsetof(PyPointlessVector, is_hashable), READONLY},
+	{"container_id",  T_ULONG, offsetof(PyPointlessVector, container_id), READONLY},
+	{"is_hashable", T_INT, offsetof(PyPointlessVector, is_hashable), READONLY},
 		{NULL}
 };
 
@@ -471,8 +469,6 @@ PyPointlessVector* PyPointlessVector_New(PyPointless* pp, pointless_value_t* v, 
 
 	if (pv == 0)
 		return 0;
-
-	pv = (PyPointlessVector*)PyObject_Init((PyObject*)pv, &PyPointlessVectorType);
 
 	Py_INCREF(pp);
 

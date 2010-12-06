@@ -6,7 +6,7 @@ static void PyPointlessSet_dealloc(PyPointlessSet* self)
 	self->pp = 0;
 	self->v = 0;
 	self->container_id = 0;
-	self->ob_type->tp_free((PyObject*)self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 static void PyPointlessSetIter_dealloc(PyPointlessSetIter* self)
@@ -14,7 +14,7 @@ static void PyPointlessSetIter_dealloc(PyPointlessSetIter* self)
 	Py_XDECREF(self->set);
 	self->set = 0;
 	self->iter_state = 0;
-	self->ob_type->tp_free((PyObject*)self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 PyObject* PyPointlessSet_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
@@ -71,8 +71,6 @@ static PyObject* PyPointlessSet_iter(PyObject* set)
 	if (iter == 0)
 		return 0;
 
-	iter = (PyPointlessSetIter*)PyObject_Init((PyObject*)iter, &PyPointlessSetIterType);
-
 	Py_INCREF(set);
 
 	iter->set = (PyPointlessSet*)set;
@@ -124,8 +122,8 @@ static int PyPointlessSet_contains(PyPointlessSet* s, PyObject* key)
 }
 
 static PyMemberDef PyPointlessSet_memberlist[] = {
-        {"container_id",  T_ULONG, offsetof(PyPointlessSet, container_id), READONLY},
-		{NULL}
+	{"container_id",  T_ULONG, offsetof(PyPointlessSet, container_id), READONLY},
+	{NULL}
 };
 
 static PyMappingMethods PyPointlessSet_as_mapping = {
@@ -235,8 +233,6 @@ PyPointlessSet* PyPointlessSet_New(PyPointless* pp, pointless_value_t* v)
 
 	if (pv == 0)
 		return 0;
-
-	pv = (PyPointlessSet*)PyObject_Init((PyObject*)pv, &PyPointlessSetType);
 
 	Py_INCREF(pp);
 

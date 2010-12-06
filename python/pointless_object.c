@@ -10,7 +10,7 @@ static void PyPointless_dealloc(PyPointless* self)
 	}
 
 	self->allow_print = 0;
-	self->ob_type->tp_free((PyObject*)self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 static PyObject* PyPointless_new(PyTypeObject* type, PyObject* args, PyObject* kwds)

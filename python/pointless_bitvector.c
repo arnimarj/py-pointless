@@ -13,7 +13,7 @@ static void PyPointlessBitvector_dealloc(PyPointlessBitvector* self)
 	free(self->primitive_bits);
 	self->primitive_bits = 0;
 	self->primitive_n_bytes_alloc = 0;
-	self->ob_type->tp_free((PyObject*)self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 static void PyPointlessBitvectorIter_dealloc(PyPointlessBitvectorIter* self)
@@ -21,7 +21,7 @@ static void PyPointlessBitvectorIter_dealloc(PyPointlessBitvectorIter* self)
 	Py_XDECREF(self->bitvector);
 	self->bitvector = 0;
 	self->iter_state = 0;
-	self->ob_type->tp_free((PyObject*)self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 PyObject* PyPointlessBitvector_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
@@ -362,8 +362,6 @@ static PyObject* PyPointlessBitvector_iter(PyObject* bitvector)
 	if (iter == 0)
 		return 0;
 
-	iter = (PyPointlessBitvectorIter*)PyObject_Init((PyObject*)iter, &PyPointlessBitvectorIterType);
-
 	Py_INCREF(bitvector);
 
 	iter->bitvector = (PyPointlessBitvector*)bitvector;
@@ -561,8 +559,6 @@ PyPointlessBitvector* PyPointlessBitvector_New(PyPointless* pp, pointless_value_
 
 	if (pv == 0)
 		return 0;
-
-	pv = (PyPointlessBitvector*)PyObject_Init((PyObject*)pv, &PyPointlessBitvectorType);
 
 	Py_INCREF(pp);
 

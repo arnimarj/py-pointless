@@ -5,7 +5,7 @@ static PyObject* PyPointlessPrimVector_append_item(PyPointlessPrimVector* self, 
 static void PyPointlessPrimVector_dealloc(PyPointlessPrimVector* self)
 {
 	pointless_dynarray_destroy(&self->array);
-	self->ob_type->tp_free((PyObject*)self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 static void PyPointlessPrimVectorIter_dealloc(PyPointlessPrimVectorIter* self)
@@ -13,7 +13,7 @@ static void PyPointlessPrimVectorIter_dealloc(PyPointlessPrimVectorIter* self)
 	Py_XDECREF(self->vector);
 	self->vector = 0;
 	self->iter_state = 0;
-	self->ob_type->tp_free((PyObject*)self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 PyObject* PyPointlessPrimVector_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
@@ -566,8 +566,6 @@ static PyObject* PyPointlessPrimVector_iter(PyObject* vector)
 
 	if (iter == 0)
 		return 0;
-
-	iter = (PyPointlessPrimVectorIter*)PyObject_Init((PyObject*)iter, &PyPointlessPrimVectorIterType);
 
 	Py_INCREF(vector);
 
@@ -1243,8 +1241,6 @@ static PyObject* PyPointlessPrimVector_slice(PyPointlessPrimVector* self, Py_ssi
 	if (pv == 0)
 		return 0;
 
-	pv = (PyPointlessPrimVector*)PyObject_Init((PyObject*)pv, &PyPointlessPrimVectorType);
-
 	pv->type = self->type;
 	pointless_dynarray_init(&pv->array, self->array.item_size);
 
@@ -1396,8 +1392,6 @@ PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t*
 		pointless_dynarray_destroy(v);
 		return 0;
 	}
-
-	pv = (PyPointlessPrimVector*)PyObject_Init((PyObject*)pv, &PyPointlessPrimVectorType);
 
 	pv->type = t;
 	pv->array = *v;
