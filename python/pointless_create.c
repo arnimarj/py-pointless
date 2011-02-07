@@ -83,6 +83,26 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 				return handle;
 			}
 		}
+	// python bytearray
+	} else if (PyByteArray_Check(py_object)) {
+		Py_ssize_t n_items = PyByteArray_GET_SIZE(py_object);
+
+		if (n_items > UINT32_MAX) {
+			state->is_error = 1;
+			PyErr_SetString(PyExc_ValueError, "bytearray has too many items");
+			return handle;
+		}
+
+		void* data = (void*)PyByteArray_AS_STRING(py_object);
+
+		handle = pointless_create_vector_u8_owner(&state->c, (uint8_t*)data, (uint32_t)n_items);
+
+		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
+			PyErr_NoMemory();
+			state->is_error = 1;
+			return handle;
+		}
+
 	// primitive vectors
 	} else if (PyPointlessPrimVector_Check(py_object)) {
 		// we just hand over the memory
