@@ -456,6 +456,12 @@ static void PyPointlessVector_releasebuffer(PyPointlessVector* obj, Py_buffer *v
 {
 }
 
+static PyObject* PyPointlessVector_sizeof(PyPointlessVector* self)
+{
+	return PyLong_FromSize_t(sizeof(PyPointlessVector) + pointless_vector_n_bytes(&self->pp->p, self->v));
+}
+
+
 static PyGetSetDef PyPointlessVector_getsets [] = {
 	{"typecode", (getter)PyPointlessVector_get_typecode, 0, "the typecode character used to create the vector"},
 	{NULL}
@@ -466,6 +472,12 @@ static PyMemberDef PyPointlessVector_memberlist[] = {
 	{"is_hashable", T_INT, offsetof(PyPointlessVector, is_hashable), READONLY},
 	{NULL}
 };
+
+static PyMethodDef PyPointlessVector_methods[] = {
+	{"__sizeof__",  (PyCFunction)PyPointlessVector_sizeof,      METH_NOARGS,  ""}, 
+	{NULL, NULL}
+};
+
 
 static PyMappingMethods PyPointlessVector_as_mapping = {
 	(lenfunc)PyPointlessVector_length,
@@ -526,7 +538,7 @@ PyTypeObject PyPointlessVectorType = {
 	0,                                              /*tp_weaklistoffset */
 	PyPointlessVector_iter,                         /*tp_iter */
 	0,                                              /*tp_iternext */
-	0,                                              /*tp_methods */
+	PyPointlessVector_methods,                      /*tp_methods */
 	PyPointlessVector_memberlist,                   /*tp_members */
 	PyPointlessVector_getsets,                      /*tp_getset */
 	0,                                              /*tp_base */
