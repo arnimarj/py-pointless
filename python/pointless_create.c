@@ -38,35 +38,27 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 	// check if container object has been seen before
 	uint32_t handle = pointless_export_get_seen(state, py_object);
 
-	// lookup exception
-	if (state->is_error)
-		return POINTLESS_CREATE_VALUE_FAIL;
-
 	// object has been seen before, return its handle
 	if (handle != POINTLESS_CREATE_VALUE_FAIL)
 		return handle;
 
-	// ...otherwise, create a new handle
-	const char* error = 0;
+	// true iff: we cache the object handle
+	int is_cache = 0;
+
+	#define RETURN_OOM(state) {PyErr_NoMemory(); (state)->is_error = 1; return POINTLESS_CREATE_VALUE_FAIL;}
+	#define RETURN_OOM_IF_FAIL(handle, state) if ((handle) == POINTLESS_CREATE_VALUE_FAIL) RETURN_OOM(state);
 
 	// list/tuple object
 	if (PyList_Check(py_object) || PyTuple_Check(py_object)) {
+		// create and cache handle
 		handle = pointless_create_vector_value(&state->c);
+		RETURN_OOM_IF_FAIL(handle, state);
 
-		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
-			PyErr_NoMemory();
-			state->is_error = 1;
-			return handle;
-		}
-
-		// we only do this for container objects
 		if (!pointless_export_set_seen(state, py_object, handle)) {
-			PyErr_NoMemory();
-			state->is_error = 1;
-			handle = POINTLESS_CREATE_VALUE_FAIL;
-			return handle;
+			RETURN_OOM(state);
 		}
 
+		// populate vector
 		Py_ssize_t i, n_items = PyList_Check(py_object) ? PyList_GET_SIZE(py_object) : PyTuple_GET_SIZE(py_object);
 
 		for (i = 0; i < n_items; i++) {
@@ -77,31 +69,71 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 				return child_handle;
 
 			if (pointless_create_vector_value_append(&state->c, handle, child_handle) == POINTLESS_CREATE_VALUE_FAIL) {
-				PyErr_Format(PyExc_ValueError, "error appending to vector: out of memory");
-				state->is_error = 1;
-				handle = POINTLESS_CREATE_VALUE_FAIL;
-				return handle;
+				RETURN_OOM(state);
 			}
 		}
+	// pointless value vectors
+	} else if (PyPointlessVector_Check(py_object)) {
+		// currently, we only support value vectors, they are simple
+		PyPointlessVector* v = (PyPointlessVector*)py_object;
+
+		switch(v->v->type) {
+			case POINTLESS_VECTOR_VALUE:
+			case POINTLESS_VECTOR_VALUE_HASHABLE:
+				PyErr_Format(PyExc_ValueError, "only primitive pointless vectors are supported");
+				state->is_error = 1;
+				return POINTLESS_CREATE_VALUE_FAIL;
+			case POINTLESS_VECTOR_I8:
+				handle = pointless_create_vector_i8_owner(&state->c, pointless_reader_vector_i8(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				break;
+			case POINTLESS_VECTOR_U8:
+				handle = pointless_create_vector_u8_owner(&state->c, pointless_reader_vector_u8(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				break;
+			case POINTLESS_VECTOR_I16:
+				handle = pointless_create_vector_i16_owner(&state->c, pointless_reader_vector_i16(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				break;
+			case POINTLESS_VECTOR_U16:
+				handle = pointless_create_vector_u16_owner(&state->c, pointless_reader_vector_u16(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				break;
+			case POINTLESS_VECTOR_I32:
+				handle = pointless_create_vector_i32_owner(&state->c, pointless_reader_vector_i32(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				break;
+			case POINTLESS_VECTOR_U32:
+				handle = pointless_create_vector_u32_owner(&state->c, pointless_reader_vector_u32(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				break;
+			case POINTLESS_VECTOR_FLOAT:
+				handle = pointless_create_vector_float_owner(&state->c, pointless_reader_vector_float(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				break;
+			case POINTLESS_VECTOR_EMPTY:
+				handle = pointless_create_vector_value(&state->c);
+				break;
+			default:
+				state->is_error = 1;
+				PyErr_SetString(PyExc_ValueError, "internal error: illegal type for primitive vector");
+				return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
+		RETURN_OOM_IF_FAIL(handle, state);
+
+		// cache handle
+		is_cache = 1;
+
 	// python bytearray
 	} else if (PyByteArray_Check(py_object)) {
+		// create handle and hand over the memory
 		Py_ssize_t n_items = PyByteArray_GET_SIZE(py_object);
 
 		if (n_items > UINT32_MAX) {
-			state->is_error = 1;
 			PyErr_SetString(PyExc_ValueError, "bytearray has too many items");
-			return handle;
-		}
-
-		void* data = (void*)PyByteArray_AS_STRING(py_object);
-
-		handle = pointless_create_vector_u8_owner(&state->c, (uint8_t*)data, (uint32_t)n_items);
-
-		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
-			PyErr_NoMemory();
 			state->is_error = 1;
-			return handle;
+			return POINTLESS_CREATE_VALUE_FAIL;
 		}
+
+		handle = pointless_create_vector_u8_owner(&state->c, (uint8_t*)PyByteArray_AS_STRING(py_object), (uint32_t)n_items);
+		RETURN_OOM_IF_FAIL(handle, state);
+
+		// cache object
+		is_cache = 1;
 
 	// primitive vectors
 	} else if (PyPointlessPrimVector_Check(py_object)) {
@@ -133,24 +165,16 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 				handle = pointless_create_vector_float_owner(&state->c, (float*)data, n_items);
 				break;
 			default:
-				state->is_error = 1;
 				PyErr_SetString(PyExc_ValueError, "internal error: illegal type for primitive vector");
-				return handle;
+				state->is_error = 1;
+				return POINTLESS_CREATE_VALUE_FAIL;
 		}
 
-		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
-			PyErr_NoMemory();
-			state->is_error = 1;
-			return handle;
-		}
+		RETURN_OOM_IF_FAIL(handle, state);
 
-		// we only do this for container objects
-		if (!pointless_export_set_seen(state, py_object, handle)) {
-			PyErr_NoMemory();
-			state->is_error = 1;
-			handle = POINTLESS_CREATE_VALUE_FAIL;
-			return handle;
-		}
+		// cache object
+		is_cache = 1;
+
 	// unicode object
 	} else if (PyUnicode_Check(py_object)) {
 		// get it from python
@@ -160,34 +184,30 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		if (Py_UNICODE_SIZE != 2 && Py_UNICODE_SIZE != 4) {
 			PyErr_Format(PyExc_ValueError, "strange value for Py_UNICODE_SIZE: %u", (unsigned int)Py_UNICODE_SIZE);
 			state->is_error = 1;
-		} else {
-			if (Py_UNICODE_SIZE == 4)
-				handle = pointless_create_unicode_ucs4(&state->c, (uint32_t*)python_buffer, &error);
-			else
-				handle = pointless_create_unicode_ucs2(&state->c, (uint16_t*)python_buffer, &error);
-
-			if (handle == POINTLESS_CREATE_VALUE_FAIL) {
-				PyErr_Format(PyExc_ValueError, "error converting unicode to UCS-4: %s", error);
-				state->is_error = 1;
-			}
+			return POINTLESS_CREATE_VALUE_FAIL;
 		}
+
+		if (Py_UNICODE_SIZE == 4)
+			handle = pointless_create_unicode_ucs4(&state->c, (uint32_t*)python_buffer);
+		else
+			handle = pointless_create_unicode_ucs2(&state->c, (uint16_t*)python_buffer);
+
+		RETURN_OOM_IF_FAIL(handle, state);
+
 	// string object, converts to unicode
 	} else if (PyString_Check(py_object)) {
-		const char* s = PyString_AS_STRING(py_object);
-		handle = pointless_create_unicode_ascii(&state->c, s, &error);
+		const char* error = 0;
+		handle = pointless_create_unicode_ascii(&state->c, PyString_AS_STRING(py_object), &error);
 
 		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
-			PyErr_Format(PyExc_ValueError, "error converting (assumed) ascii string to UCS-4: %s", error);
+			PyErr_Format(PyExc_ValueError, "error creating/converting (assumed) ascii string to UCS-4: %s", error);
 			state->is_error = 1;
+			return POINTLESS_CREATE_VALUE_FAIL;
 		}
 	// float object
 	} else if (PyFloat_Check(py_object)) {
 		handle = pointless_create_float(&state->c, (float)PyFloat_AS_DOUBLE(py_object));
-
-		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
-			PyErr_NoMemory();
-			state->is_error = 1;
-		}
+		RETURN_OOM_IF_FAIL(handle, state);
 	// booleans, need this above integer check, cause PyInt_Check return 1 for booleans
 	} else if (PyBool_Check(py_object)) {
 		if (py_object == Py_True)
@@ -195,33 +215,33 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		else
 			handle = pointless_create_boolean_false(&state->c);
 
-		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
-			PyErr_Format(PyExc_ValueError, "error creating boolean value: %s", error);
-			state->is_error = 1;
-		}
+		RETURN_OOM_IF_FAIL(handle, state);
 
 	// integer
 	} else if (PyInt_Check(py_object)) {
 		long v = PyInt_AS_LONG(py_object);
 
+		// unsigned
 		if (v >= 0) {
 			if (v > UINT32_MAX) {
 				PyErr_Format(PyExc_ValueError, "integer too large for mere 32 bits");
 				state->is_error = 1;
-			} else
-				handle = pointless_create_u32(&state->c, (uint32_t)v);
+				return POINTLESS_CREATE_VALUE_FAIL;
+			}
+
+			handle = pointless_create_u32(&state->c, (uint32_t)v);
+		// signed
 		} else {
 			if (!(INT32_MIN <= v && v <= INT32_MAX)) {
 				PyErr_Format(PyExc_ValueError, "integer too large for mere 32 bits with a sign");
 				state->is_error = 1;
-			} else
-				handle = pointless_create_i32(&state->c, (int32_t)v);
+				return POINTLESS_CREATE_VALUE_FAIL;
+			}
+
+			handle = pointless_create_i32(&state->c, (int32_t)v);
 		}
 
-		if (!state->is_error && handle == POINTLESS_CREATE_VALUE_FAIL) {
-			PyErr_NoMemory();
-			state->is_error = 1;
-		}
+		RETURN_OOM_IF_FAIL(handle, state);
 	// long
 	} else if (PyLong_Check(py_object)) {
 		// this will raise an overflow error if number is outside the legal range of PY_LONG_LONG
@@ -232,79 +252,67 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			PyErr_Clear();
 			PyErr_SetString(PyExc_ValueError, "value of long is way beyond what we can store right now");
 			state->is_error = 1;
-		// we have the value, see if we can represent it using 32-bits
-		// NOTE: same code as above
-		// TODO: see if we can re-use it
-		} else {
-			if (v >= 0) {
-				if (v > UINT32_MAX) {
-					PyErr_Format(PyExc_ValueError, "long too large for mere 32 bits");
-					state->is_error = 1;
-				} else
-					handle = pointless_create_u32(&state->c, (uint32_t)v);
-			} else {
-				if (!(INT32_MIN <= v && v <= INT32_MAX)) {
-					PyErr_Format(PyExc_ValueError, "long too large for mere 32 bits with a sign");
-					state->is_error = 1;
-				} else
-					handle = pointless_create_i32(&state->c, (int32_t)v);
+			return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
+		// unsigned
+		if (v >= 0) {
+			if (v > UINT32_MAX) {
+				PyErr_Format(PyExc_ValueError, "long too large for mere 32 bits");
+				state->is_error = 1;
+				return POINTLESS_CREATE_VALUE_FAIL;
 			}
 
-			if (!state->is_error && handle == POINTLESS_CREATE_VALUE_FAIL) {
-				PyErr_NoMemory();
+			handle = pointless_create_u32(&state->c, (uint32_t)v);
+		// signed
+		} else {
+			if (!(INT32_MIN <= v && v <= INT32_MAX)) {
+				PyErr_Format(PyExc_ValueError, "long too large for mere 32 bits with a sign");
 				state->is_error = 1;
+				return POINTLESS_CREATE_VALUE_FAIL;
 			}
+
+			handle = pointless_create_i32(&state->c, (int32_t)v);
 		}
+
+		RETURN_OOM_IF_FAIL(handle, state);
 	// None object
 	} else if (py_object == Py_None) {
-		if ((handle = pointless_create_null(&state->c)) == POINTLESS_CREATE_VALUE_FAIL) {
-			PyErr_Format(PyExc_ValueError, "error creating NULL value");
-			state->is_error = 1;
-		}
+		handle = pointless_create_null(&state->c);
+		RETURN_OOM_IF_FAIL(handle, state);
 	// dict object
 	} else if (PyDict_Check(py_object)) {
-		if ((handle = pointless_create_map(&state->c)) == POINTLESS_CREATE_VALUE_FAIL) {
-			PyErr_SetString(PyExc_ValueError, "error creating map");
+		handle = pointless_create_map(&state->c);
+		RETURN_OOM_IF_FAIL(handle, state);
+
+		// we only do this for container objects
+		if (!pointless_export_set_seen(state, py_object, handle)) {
+			PyErr_NoMemory();
 			state->is_error = 1;
-		} else {
-			// we only do this for container objects
-			if (!pointless_export_set_seen(state, py_object, handle)) {
-				PyErr_NoMemory();
+			return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
+		PyObject* key = 0;
+		PyObject* value = 0;
+		Py_ssize_t pos = 0;
+
+		while (PyDict_Next(py_object, &pos, &key, &value)) {
+			uint32_t key_handle = pointless_export_py_rec(state, key, depth + 1);
+			uint32_t value_handle = pointless_export_py_rec(state, value, depth + 1);
+
+			if (key_handle == POINTLESS_CREATE_VALUE_FAIL || value_handle == POINTLESS_CREATE_VALUE_FAIL)
+				break;
+
+			if (pointless_create_map_add(&state->c, handle, key_handle, value_handle) == POINTLESS_CREATE_VALUE_FAIL) {
+				PyErr_SetString(PyExc_ValueError, "error adding key/value pair to map");
 				state->is_error = 1;
-				handle = POINTLESS_CREATE_VALUE_FAIL;
-				return handle;
-			}
-
-			PyObject* key = 0;
-			PyObject* value = 0;
-			Py_ssize_t pos = 0;
-
-			while (PyDict_Next(py_object, &pos, &key, &value)) {
-				uint32_t key_handle = pointless_export_py_rec(state, key, depth + 1);
-				uint32_t value_handle = pointless_export_py_rec(state, value, depth + 1);
-
-				if (key_handle == POINTLESS_CREATE_VALUE_FAIL || value_handle == POINTLESS_CREATE_VALUE_FAIL)
-					break;
-
-				if (pointless_create_map_add(&state->c, handle, key_handle, value_handle) == POINTLESS_CREATE_VALUE_FAIL) {
-					PyErr_SetString(PyExc_ValueError, "error adding key/value pair to map");
-					state->is_error = 1;
-					break;
-				}
-			}
-
-			if (state->is_error) {
-				handle = POINTLESS_CREATE_VALUE_FAIL;
-				return handle;
-			}
-
-			if (!pointless_export_set_seen(state, py_object, handle)) {
-				PyErr_NoMemory();
-				state->is_error = 1;
-				handle = POINTLESS_CREATE_VALUE_FAIL;
-				return handle;
+				break;
 			}
 		}
+
+		if (state->is_error)
+			return POINTLESS_CREATE_VALUE_FAIL;
+
 	// set object
 	} else if (PyAnySet_Check(py_object)) {
 		PyObject* iterator = PyObject_GetIter(py_object);
@@ -312,50 +320,41 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 
 		if (iterator == 0) {
 			state->is_error = 1;
-		} else {
-			// get a handle
-			if ((handle = pointless_create_set(&state->c)) == POINTLESS_CREATE_VALUE_FAIL) {
-				PyErr_SetString(PyExc_ValueError, "error creating set");
+			return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
+		// get a handle
+		handle = pointless_create_set(&state->c);
+		RETURN_OOM_IF_FAIL(handle, state);
+
+		// cache object
+		if (!pointless_export_set_seen(state, py_object, handle)) {
+			RETURN_OOM(state);
+		}
+
+		// iterate over it
+		while ((item = PyIter_Next(iterator)) != 0) {
+			uint32_t item_handle = pointless_export_py_rec(state, item, depth + 1);
+
+			if (item_handle == POINTLESS_CREATE_VALUE_FAIL)
+				break;
+
+			if (pointless_create_set_add(&state->c, handle, item_handle) == POINTLESS_CREATE_VALUE_FAIL) {
+				PyErr_SetString(PyExc_ValueError, "error adding item to set");
 				state->is_error = 1;
-			} else {
-				// we only do this for container objects
-				if (!pointless_export_set_seen(state, py_object, handle)) {
-					PyErr_NoMemory();
-					state->is_error = 1;
-					handle = POINTLESS_CREATE_VALUE_FAIL;
-					return handle;
-				}
-
-				// iterate over it
-				while ((item = PyIter_Next(iterator)) != 0) {
-					uint32_t item_handle = pointless_export_py_rec(state, item, depth + 1);
-
-					if (item_handle == POINTLESS_CREATE_VALUE_FAIL)
-						break;
-
-					if (pointless_create_set_add(&state->c, handle, item_handle) == POINTLESS_CREATE_VALUE_FAIL) {
-						PyErr_SetString(PyExc_ValueError, "error adding item to set");
-						state->is_error = 1;
-						break;
-					}
-				}
-
-				Py_DECREF(iterator);
-
-				if (PyErr_Occurred()) {
-					state->is_error = 1;
-				} else {
-					// we only do this for container objects
-					if (!pointless_export_set_seen(state, py_object, handle)) {
-						PyErr_NoMemory();
-						state->is_error = 1;
-						handle = POINTLESS_CREATE_VALUE_FAIL;
-						return handle;
-					}
-				}
+				break;
 			}
 		}
 
+		Py_DECREF(iterator);
+
+		if (PyErr_Occurred()) {
+			state->is_error = 1;
+			return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
+		// we only do this for container objects
+		is_cache = 1;
 	// bitvector
 	} else if (PyPointlessBitvector_Check(py_object)) {
 		PyPointlessBitvector* bitvector = (PyPointlessBitvector*)py_object;
@@ -365,36 +364,35 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			void* bits = calloc(ICEIL(n_bits, 8), 1);
 
 			if (bits == 0) {
-				PyErr_NoMemory();
-				state->is_error = 1;
-			} else {
-				for (i = 0; i < n_bits; i++) {
-					if (pointless_reader_bitvector_is_set(&bitvector->pointless_pp->p, bitvector->pointless_v, i))
-						bm_set_(bits, i);
-				}
-
-				handle = pointless_create_bitvector(&state->c, bits, n_bits);
-				free(bits);
-				bits = 0;
-
-				if (handle == POINTLESS_CREATE_VALUE_FAIL) {
-					PyErr_NoMemory();
-					state->is_error = 1;
-				}
+				RETURN_OOM(state);
 			}
+
+			for (i = 0; i < n_bits; i++) {
+				if (pointless_reader_bitvector_is_set(&bitvector->pointless_pp->p, bitvector->pointless_v, i))
+					bm_set_(bits, i);
+			}
+
+			handle = pointless_create_bitvector(&state->c, bits, n_bits);
+			free(bits);
+			bits = 0;
+
 		} else {
-			if ((handle = pointless_create_bitvector(&state->c, bitvector->primitive_bits, bitvector->primitive_n_bits)) == POINTLESS_CREATE_VALUE_FAIL) {
-				PyErr_Format(PyExc_ValueError, "error creating bitvector value");
-				state->is_error = 1;
-			}
+			handle = pointless_create_bitvector(&state->c, bitvector->primitive_bits, bitvector->primitive_n_bits);
 		}
+
+		RETURN_OOM_IF_FAIL(handle, state);
 	// type not supported
 	} else {
 		PyErr_Format(PyExc_ValueError, "type <%s> not supported", py_object->ob_type->tp_name);
 		state->is_error = 1;
+		return POINTLESS_CREATE_VALUE_FAIL;
 	}
 
-	assert((handle == POINTLESS_CREATE_VALUE_FAIL) == (state->is_error != 0));
+	#undef RETURN_OOM
+	#undef RETURN_IF_OOM
+
+	assert(handle != POINTLESS_CREATE_VALUE_FAIL);
+	assert(state->is_error == 0);
 
 	return handle;
 }

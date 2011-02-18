@@ -344,6 +344,118 @@ static PyObject* PyPointlessVector_get_typecode(PyPointlessVector* a, void* clos
 	return Py_BuildValue("s", s);
 }
 
+static int pointless_is_prim_vector(pointless_value_t* v)
+{
+	switch (v->type) {
+		case POINTLESS_VECTOR_VALUE:
+		case POINTLESS_VECTOR_VALUE_HASHABLE:
+			return 0;
+		case POINTLESS_VECTOR_EMPTY:
+		case POINTLESS_VECTOR_I8:
+		case POINTLESS_VECTOR_U8:
+		case POINTLESS_VECTOR_I16:
+		case POINTLESS_VECTOR_U16:
+		case POINTLESS_VECTOR_I32:
+		case POINTLESS_VECTOR_U32:
+		case POINTLESS_VECTOR_FLOAT:
+			return 1;
+	}
+
+	assert(0);
+	return 0;
+}
+
+static size_t pointless_vector_n_bytes(pointless_t* pp, pointless_value_t* v)
+{
+	size_t n_bytes = 0;
+	switch (v->type) {
+		// no support for value vecto
+		case POINTLESS_VECTOR_EMPTY: n_bytes = 0;                 break;
+		case POINTLESS_VECTOR_I8:    n_bytes = sizeof(int8_t);    break;
+		case POINTLESS_VECTOR_U8:    n_bytes = sizeof(uint8_t);   break;
+		case POINTLESS_VECTOR_I16:   n_bytes = sizeof(int16_t);   break;
+		case POINTLESS_VECTOR_U16:   n_bytes = sizeof(uint16_t);  break;
+		case POINTLESS_VECTOR_I32:   n_bytes = sizeof(int32_t);   break;
+		case POINTLESS_VECTOR_U32:   n_bytes = sizeof(uint32_t);  break;
+		case POINTLESS_VECTOR_FLOAT: n_bytes = sizeof(float);     break;
+		default:                     assert(0); break;
+	}
+
+	return n_bytes * pointless_reader_vector_n_items(pp, v);
+
+	assert(0);
+	return 0;
+}
+
+static void* pointless_prim_vector_base_ptr(pointless_t* pp, pointless_value_t* v)
+{
+	switch (v->type) {
+		case POINTLESS_VECTOR_VALUE:
+		case POINTLESS_VECTOR_VALUE_HASHABLE:
+			assert(0);
+			return 0;
+		case POINTLESS_VECTOR_EMPTY: return 0;
+		case POINTLESS_VECTOR_I8:    return (void*)pointless_reader_vector_i8(pp, v);
+		case POINTLESS_VECTOR_U8:    return (void*)pointless_reader_vector_u8(pp, v);
+		case POINTLESS_VECTOR_I16:   return (void*)pointless_reader_vector_i16(pp, v);
+		case POINTLESS_VECTOR_U16:   return (void*)pointless_reader_vector_u16(pp, v);
+		case POINTLESS_VECTOR_I32:   return (void*)pointless_reader_vector_i32(pp, v);
+		case POINTLESS_VECTOR_U32:   return (void*)pointless_reader_vector_u32(pp, v);
+		case POINTLESS_VECTOR_FLOAT: return (void*)pointless_reader_vector_float(pp, v);
+	}
+
+	assert(0);
+	return 0;
+}
+
+static Py_ssize_t PyPointlessVector_buffer_getreadbuf(PyPointlessVector* self, Py_ssize_t index, const void **ptr)
+{
+	if (index != 0) {
+		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
+		return -1;
+	}
+
+	if (!pointless_is_prim_vector(self->v)) {
+		PyErr_SetString(PyExc_SystemError, "value vectors do not support buffer protocol");
+		return -1;
+	}
+
+	*ptr = pointless_prim_vector_base_ptr(&self->pp->p, self->v);
+	return pointless_vector_n_bytes(&self->pp->p, self->v);
+}
+
+static Py_ssize_t PyPointlessVector_buffer_getsegcount(PyPointlessVector* self, Py_ssize_t* lenp)
+{
+	if (lenp)
+		*lenp = pointless_vector_n_bytes(&self->pp->p, self->v);
+
+	return 1;
+}
+
+static Py_ssize_t PyPointlessVector_buffer_getcharbuf(PyPointlessVector* self, Py_ssize_t index, const char** ptr)
+{
+	if (index != 0) {
+		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
+		return -1;
+	}
+
+	*ptr = pointless_prim_vector_base_ptr(&self->pp->p, self->v);
+	return pointless_vector_n_bytes(&self->pp->p, self->v);
+}
+
+static int PyPointlessVector_getbuffer(PyPointlessVector* self, Py_buffer* view, int flags)
+{
+	if (view == 0)
+		return 0;
+
+	void* ptr = pointless_prim_vector_base_ptr(&self->pp->p, self->v);
+	return PyBuffer_FillInfo(view, (PyObject*)self, ptr, pointless_vector_n_bytes(&self->pp->p, self->v), 0, flags);
+}
+
+static void PyPointlessVector_releasebuffer(PyPointlessVector* obj, Py_buffer *view)
+{
+}
+
 static PyGetSetDef PyPointlessVector_getsets [] = {
 	{"typecode", (getter)PyPointlessVector_get_typecode, 0, "the typecode character used to create the vector"},
 	{NULL}
@@ -352,7 +464,7 @@ static PyGetSetDef PyPointlessVector_getsets [] = {
 static PyMemberDef PyPointlessVector_memberlist[] = {
 	{"container_id",  T_ULONG, offsetof(PyPointlessVector, container_id), READONLY},
 	{"is_hashable", T_INT, offsetof(PyPointlessVector, is_hashable), READONLY},
-		{NULL}
+	{NULL}
 };
 
 static PyMappingMethods PyPointlessVector_as_mapping = {
@@ -360,6 +472,17 @@ static PyMappingMethods PyPointlessVector_as_mapping = {
 	(binaryfunc)PyPointlessVector_subscript,
 	(objobjargproc)0
 };
+
+static PyBufferProcs PyPointlessVector_as_buffer = {
+    (readbufferproc)PyPointlessVector_buffer_getreadbuf,
+    (writebufferproc)0,
+    (segcountproc)PyPointlessVector_buffer_getsegcount,
+    (charbufferproc)PyPointlessVector_buffer_getcharbuf,
+    (getbufferproc)PyPointlessVector_getbuffer,
+    (releasebufferproc)PyPointlessVector_releasebuffer
+};
+
+
 
 static PySequenceMethods PyPointlessVector_as_sequence = {
 	(lenfunc)PyPointlessVector_length,          /* sq_length */
@@ -376,44 +499,44 @@ static PySequenceMethods PyPointlessVector_as_sequence = {
 
 PyTypeObject PyPointlessVectorType = {
 	PyObject_HEAD_INIT(NULL)
-	0,                                     /*ob_size*/
-	"pointless.PyPointlessVector",         /*tp_name*/
-	sizeof(PyPointlessVector),             /*tp_basicsize*/
-	0,                                     /*tp_itemsize*/
-	(destructor)PyPointlessVector_dealloc, /*tp_dealloc*/
-	0,                                     /*tp_print*/
-	0,                                     /*tp_getattr*/
-	0,                                     /*tp_setattr*/
-	0,                                     /*tp_compare*/
-	PyPointless_repr,                      /*tp_repr*/
-	0,                                     /*tp_as_number*/
-	&PyPointlessVector_as_sequence,        /*tp_as_sequence*/
-	&PyPointlessVector_as_mapping,         /*tp_as_mapping*/
-	0,                                     /*tp_hash */
-	0,                                     /*tp_call*/
-	PyPointless_str,                       /*tp_str*/
-	0,                                     /*tp_getattro*/
-	0,                                     /*tp_setattro*/
-	0,                                     /*tp_as_buffer*/
-	Py_TPFLAGS_DEFAULT,                    /*tp_flags*/
-	"PyPointlessVector wrapper",           /*tp_doc */
-	0,                                     /*tp_traverse */
-	0,                                     /*tp_clear */
-	PyPointlessVector_richcompare,         /*tp_richcompare */
-	0,                                     /*tp_weaklistoffset */
-	PyPointlessVector_iter,                /*tp_iter */
-	0,                                     /*tp_iternext */
-	0,                                     /*tp_methods */
-	PyPointlessVector_memberlist,          /*tp_members */
-	PyPointlessVector_getsets,             /*tp_getset */
-	0,                                     /*tp_base */
-	0,                                     /*tp_dict */
-	0,                                     /*tp_descr_get */
-	0,                                     /*tp_descr_set */
-	0,                                     /*tp_dictoffset */
-	(initproc)PyPointlessVector_init,      /*tp_init */
-	0,                                     /*tp_alloc */
-	PyPointlessVector_new,                 /*tp_new */
+	0,                                              /*ob_size*/
+	"pointless.PyPointlessVector",                  /*tp_name*/
+	sizeof(PyPointlessVector),                      /*tp_basicsize*/
+	0,                                              /*tp_itemsize*/
+	(destructor)PyPointlessVector_dealloc,          /*tp_dealloc*/
+	0,                                              /*tp_print*/
+	0,                                              /*tp_getattr*/
+	0,                                              /*tp_setattr*/
+	0,                                              /*tp_compare*/
+	PyPointless_repr,                               /*tp_repr*/
+	0,                                              /*tp_as_number*/
+	&PyPointlessVector_as_sequence,                 /*tp_as_sequence*/
+	&PyPointlessVector_as_mapping,                  /*tp_as_mapping*/
+	0,                                              /*tp_hash */
+	0,                                              /*tp_call*/
+	PyPointless_str,                                /*tp_str*/
+	0,                                              /*tp_getattro*/
+	0,                                              /*tp_setattro*/
+	&PyPointlessVector_as_buffer,                   /*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_NEWBUFFER, /*tp_flags*/
+	"PyPointlessVector wrapper",                    /*tp_doc */
+	0,                                              /*tp_traverse */
+	0,                                              /*tp_clear */
+	PyPointlessVector_richcompare,                  /*tp_richcompare */
+	0,                                              /*tp_weaklistoffset */
+	PyPointlessVector_iter,                         /*tp_iter */
+	0,                                              /*tp_iternext */
+	0,                                              /*tp_methods */
+	PyPointlessVector_memberlist,                   /*tp_members */
+	PyPointlessVector_getsets,                      /*tp_getset */
+	0,                                              /*tp_base */
+	0,                                              /*tp_dict */
+	0,                                              /*tp_descr_get */
+	0,                                              /*tp_descr_set */
+	0,                                              /*tp_dictoffset */
+	(initproc)PyPointlessVector_init,               /*tp_init */
+	0,                                              /*tp_alloc */
+	PyPointlessVector_new,                          /*tp_new */
 };
 
 PyTypeObject PyPointlessVectorIterType = {
@@ -475,7 +598,7 @@ PyPointlessVector* PyPointlessVector_New(PyPointless* pp, pointless_value_t* v, 
 	pv->pp = pp;
 	pv->v = v;
 
-	// the container ID is a unique between all non-empty vectors, maps and sets
+	// the container ID is unique between all non-empty vectors, maps and sets
 	pv->container_id = (unsigned long)pointless_container_id(&pp->p, v);
 	pv->is_hashable = (int)pointless_is_hashable(v->type);
 

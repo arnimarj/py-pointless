@@ -1518,7 +1518,7 @@ uint32_t pointless_create_null(pointless_create_t* c)
 
 
 // big-values
-uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v, const char** error)
+uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v)
 {
 	// resources we allocate
 	int pop_value = 0;
@@ -1589,19 +1589,17 @@ cleanup:
 	if (pop_unicode)
 		pointless_dynarray_pop(&c->unicode_values);
 
-	*error = "out of memory A";
-
 	return POINTLESS_CREATE_VALUE_FAIL;
 }
 
-uint32_t pointless_create_unicode_ucs2(pointless_create_t* c, uint16_t* s, const char** error)
+uint32_t pointless_create_unicode_ucs2(pointless_create_t* c, uint16_t* s)
 {
-	uint32_t* ucs4 = pointless_unicode_ucs2_to_ucs4(s, error);
+	uint32_t* ucs4 = pointless_unicode_ucs2_to_ucs4(s);
 
 	if (ucs4 == 0)
 		return POINTLESS_CREATE_VALUE_FAIL;
 
-	uint32_t handle = pointless_create_unicode_ucs4(c, ucs4, error);
+	uint32_t handle = pointless_create_unicode_ucs4(c, ucs4);
 
 	free(ucs4);
 
@@ -1615,7 +1613,10 @@ uint32_t pointless_create_unicode_ascii(pointless_create_t* c, const char* s, co
 	if (ucs4 == 0)
 		return POINTLESS_CREATE_VALUE_FAIL;
 
-	uint32_t handle = pointless_create_unicode_ucs4(c, ucs4, error);
+	uint32_t handle = pointless_create_unicode_ucs4(c, ucs4);
+
+	if (handle == POINTLESS_CREATE_VALUE_FAIL)
+		*error = "out of memory";
 
 	free(ucs4);
 

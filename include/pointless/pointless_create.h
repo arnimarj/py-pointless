@@ -39,8 +39,8 @@ uint32_t pointless_create_boolean_false(pointless_create_t* c);
 uint32_t pointless_create_empty_slot(pointless_create_t* c);
 
 // unicode constructors, using different sources
-uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* s, const char** error);
-uint32_t pointless_create_unicode_ucs2(pointless_create_t* c, uint16_t* s, const char** error);
+uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* s);
+uint32_t pointless_create_unicode_ucs2(pointless_create_t* c, uint16_t* s);
 uint32_t pointless_create_unicode_ascii(pointless_create_t* c, const char* s, const char** error);
 
 // bitvectors

@@ -93,10 +93,10 @@ typedef union {
 	} __attribute__ ((packed)) bitvector_01_or_10;
 } __attribute__ ((packed)) pointless_value_data_t;
 
-// a base value
+// a base value (64-bits)
 typedef struct {
-	uint32_t type;
-	pointless_value_data_t data;
+	uint32_t type;                  // 32
+	pointless_value_data_t data;    // 32
 } __attribute__ ((packed)) pointless_value_t;
 
 // a base value

@@ -42,15 +42,13 @@ uint32_t* pointless_unicode_ascii_to_ucs4(char* ascii, const char** error)
 	return buffer;
 }
 
-uint32_t* pointless_unicode_ucs2_to_ucs4(uint16_t* ucs2, const char** error)
+uint32_t* pointless_unicode_ucs2_to_ucs4(uint16_t* ucs2)
 {
 	size_t len = ucs2_strlen(ucs2), i;
 	uint32_t* buffer = (uint32_t*)malloc(sizeof(uint32_t) * (len + 1));
 
-	if (buffer == 0) {
-		*error = "out of memory";
+	if (buffer == 0)
 		return 0;
-	}
 
 	for (i = 0; i < len; i++)
 		buffer[i] = (uint32_t)ucs2[i];
