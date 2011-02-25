@@ -330,7 +330,7 @@ class TestPrimVector(unittest.TestCase):
 		for tc in tcs:
 			n_random = range(100)
 
-			for i in xrange(1000):
+			for i in xrange(100):
 				n_random.append(random.randint(101, 100000))
 
 			sys.stdout.write('.')
