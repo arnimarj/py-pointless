@@ -1425,6 +1425,7 @@ PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t*
 		return 0;
 	}
 
+	pv->ob_exports = 0;
 	pv->type = t;
 	pv->array = *v;
 
