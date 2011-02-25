@@ -9,8 +9,15 @@
 		{ return je_malloc(size); }
 	void pointless_free(void* ptr)
 		{ je_free(ptr); }
-	void* pointless_realloc(void* ptr, size_t size)
-		{ return je_realloc(ptr, size); }
+	char* pointless_strdup(const char* s)
+	{
+		char* s_ = (char*)pointless_malloc(strlen(s) + 1);
+
+		if (s_)
+			strcpy(s_, s);
+
+		return s_;
+	}
 
 #else
 
@@ -24,5 +31,7 @@
 		{ free(ptr); }
 	void* pointless_realloc(void* ptr, size_t size)
 		{ return realloc(ptr, size); }
+	char* pointless_strdup(const char* s)
+		{ return strdup(s); }
 
 #endif

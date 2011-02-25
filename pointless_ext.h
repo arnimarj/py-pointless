@@ -181,16 +181,21 @@ typedef struct {
 	int(*primvector_push)(pointless_dynarray_t* a, void* i);
 	void(*primvector_clear)(pointless_dynarray_t* a);
 	void(*primvector_destroy)(pointless_dynarray_t* a);
+	void*(*primvector_item_at)(pointless_dynarray_t* a, size_t i);
 
 	// malloc routines
 	void*(*pointless_calloc)(size_t nmemb, size_t size);
 	void*(*pointless_malloc)(size_t size);
 	void (*pointless_free)(void* ptr);
 	void*(*pointless_realloc)(void* ptr, size_t size);
+	char*(*pointless_strdup)(const char* s);
 
 	// prim-vector object constructors
 	PyPointlessPrimVector*(*primvector_from_vector)(pointless_dynarray_t* v, uint32_t t);
 	PyPointlessPrimVector*(*primvector_from_buffer)(void* buffer, size_t n_buffer);
+
+	// utilities
+	int(*pointless_sort)(int n, qsort_cmp_ cmp, qsort_swap_ swap, void* user);
 
 	// types
 	PyTypeObject* PyPointlessType_ptr;
@@ -201,7 +206,7 @@ typedef struct {
 	PyTypeObject* PyPointlessPrimVectorType_ptr;
 } PyPointless_CAPI;
 
-#define POINTLESS_API_MAGIC 0xC6D89E12
+#define POINTLESS_API_MAGIC 0xC6D89E13
 
 static PyPointless_CAPI* PyPointlessAPI;
 static int PyPointlessAPI_magic;
