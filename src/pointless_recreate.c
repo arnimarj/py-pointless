@@ -70,11 +70,6 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 			handle = state->unicode_r_c_mapping[v->data.data_u32];
 			break;
 		case POINTLESS_BITVECTOR:
-		case POINTLESS_BITVECTOR_0:
-		case POINTLESS_BITVECTOR_1:
-		case POINTLESS_BITVECTOR_01:
-		case POINTLESS_BITVECTOR_10:
-		case POINTLESS_BITVECTOR_PACKED:
 			handle = state->bitvector_r_c_mapping[v->data.data_u32];
 			break;
 		case POINTLESS_SET_VALUE:
@@ -193,7 +188,9 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 				return POINTLESS_CREATE_VALUE_FAIL;
 			}
 
-			state->bitvector_r_c_mapping[v->data.data_u32] = handle;
+			if (v->type == POINTLESS_BITVECTOR)
+				state->bitvector_r_c_mapping[v->data.data_u32] = handle;
+
 			return handle;
 		case POINTLESS_SET_VALUE:
 			POINTLESS_RECREATE_FUNC_1(pointless_create_set, state->c);
