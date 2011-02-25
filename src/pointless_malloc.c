@@ -1,3 +1,5 @@
+#include <pointless/pointless_malloc.h>
+
 #if 0
 
 	#define JEMALLOC_MANGLE
@@ -20,8 +22,6 @@
 	}
 
 #else
-
-	#include <stdlib.h>
 
 	void* pointless_calloc(size_t nmemb, size_t size)
 		{ return calloc(nmemb, size); }
