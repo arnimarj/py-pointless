@@ -618,6 +618,7 @@ static PyObject* PyPointlessPrimVector_append(PyPointlessPrimVector* self, PyObj
 
 	return PyPointlessPrimVector_append_item(self, obj);
 }
+
 static PyObject* PyPointlessPrimVector_pop(PyPointlessPrimVector* self)
 {
 	size_t n_items = pointless_dynarray_n_items(&self->array);
@@ -820,7 +821,7 @@ static PyObject* PyPointlessPrimVector_serialize(PyPointlessPrimVector* self)
 	n_bytes += sizeof(uint32_t);
 
 	PyObject* bytearray = PyByteArray_FromStringAndSize((const char*)buffer, (Py_ssize_t)n_bytes);
-	free(buffer);
+	pointless_free(buffer);
 
 	return bytearray;
 }
