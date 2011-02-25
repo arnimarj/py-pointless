@@ -21,9 +21,9 @@ def RandomPrimVector(n, tc, pointless):
 	i_min, i_max = ranges[tc]
 
 	if tc == 'f':
-		return pointless.PointlessPrimVector(tc, (random.uniform(-10000.0, 10000.0) for i in xrange(n)))
+		return pointless.PointlessPrimVector(tc, sequence = (random.uniform(-10000.0, 10000.0) for i in xrange(n)))
 
-	return pointless.PointlessPrimVector(tc, (random.randint(i_min, i_max) for i in xrange(n)))
+	return pointless.PointlessPrimVector(tc, sequence = (random.randint(i_min, i_max) for i in xrange(n)))
 
 class TestPrimVector(unittest.TestCase):
 	def testIndex(self):
@@ -84,7 +84,7 @@ class TestPrimVector(unittest.TestCase):
 						if V not in v:
 							self.assertRaises(ValueError, w.remove, V)
 							self.assertRaises(ValueError, v.remove, V)
-							
+
 
 			sys.stdout.write(' | ')
 			sys.stdout.flush()
@@ -116,7 +116,7 @@ class TestPrimVector(unittest.TestCase):
 						if V not in v:
 							self.assertRaises(ValueError, w.remove, V)
 							self.assertRaises(ValueError, v.fast_remove, V)
-							
+
 			sys.stdout.write(' | ')
 			sys.stdout.flush()
 
@@ -124,8 +124,7 @@ class TestPrimVector(unittest.TestCase):
 		w = pointless.PointlessPrimVector('u32')
 		self.assertRaises(IndexError, w.pop)
 
-		v = list(xrange(1000))
-		w = pointless.PointlessPrimVector('u32', v)
+		w = pointless.PointlessPrimVector('u32', sequence = xrange(1000))
 
 		self.assert_(len(w) == 1000)
 
@@ -143,7 +142,7 @@ class TestPrimVector(unittest.TestCase):
 			sys.stdout.write('.')
 			sys.stdout.flush()
 			r = range(0, 10) if tc != 'f' else [0.0, 1.0, 2.0, 3.0]
-			v = pointless.PointlessPrimVector(tc, r)
+			v = pointless.PointlessPrimVector(tc, sequence = r)
 			self.assert_(v.typecode == tc)
 
 	def testPrimVector(self):
@@ -171,7 +170,7 @@ class TestPrimVector(unittest.TestCase):
 
 			self.assert_(a == v_min and b == 0 and c == v_max)
 
-			vv = pointless.PointlessPrimVector(v_type, v)
+			vv = pointless.PointlessPrimVector(v_type, sequence = v)
 
 			self.assert_(len(v) == len(vv))
 
@@ -198,7 +197,7 @@ class TestPrimVector(unittest.TestCase):
 			v.append(+100.0)
 			v.append(+0.5)
 
-			vv = pointless.PointlessPrimVector('f', v)
+			vv = pointless.PointlessPrimVector('f', sequence = v)
 
 			self.assert_(len(v) == len(vv))
 
@@ -235,7 +234,7 @@ class TestPrimVector(unittest.TestCase):
 					py_v += [random.randint(i_min, i_max) for i in xrange(n)]
 					random.shuffle(py_v)
 
-					pr_v = pointless.PointlessPrimVector(tc, py_v)
+					pr_v = pointless.PointlessPrimVector(tc, sequence = py_v)
 
 					py_v.sort()
 					pr_v.sort()
@@ -245,7 +244,7 @@ class TestPrimVector(unittest.TestCase):
 
 					py_v = [random.uniform(-10000.0, +10000.0) for i in xrange(n)]
 					random.shuffle(py_v)
-					pr_v = pointless.PointlessPrimVector('f', py_v)
+					pr_v = pointless.PointlessPrimVector('f', sequence = py_v)
 
 					py_v.sort()
 					pr_v.sort()
@@ -293,7 +292,7 @@ class TestPrimVector(unittest.TestCase):
 			# create an equivalent primary vector projection, using any of the possible primitive range types
 			# since it is important to test them all
 			tc = random.choice(tc)
-			pp_proj = pointless.PointlessPrimVector(tc, py_proj)
+			pp_proj = pointless.PointlessPrimVector(tc, sequence = py_proj)
 
 			sys.stdout.write('.')
 			sys.stdout.flush()
@@ -316,7 +315,7 @@ class TestPrimVector(unittest.TestCase):
 				if a != b:
 					t_a = [pp_vv[i][a] for i in xrange(n_attributes)]
 					t_b = [py_vv[i][b] for i in xrange(n_attributes)]
-					
+
 					# since the pointless sort is not stable, we have to account for equivalence
 					if t_a == t_b:
 						continue
@@ -340,7 +339,7 @@ class TestPrimVector(unittest.TestCase):
 			for n in n_random:
 				v_in = RandomPrimVector(n, tc, pointless)
 				buffer = v_in.serialize()
-				v_out = pointless.PointlessPrimVector(buffer)
+				v_out = pointless.PointlessPrimVector(buffer = buffer)
 
 				self.assert_(v_in.typecode == v_out.typecode)
 				self.assert_(len(v_in) == len(v_out))
