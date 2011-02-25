@@ -1,3 +1,4 @@
+#include <pointless/pointless_defs.h>
 #include <pointless/pointless_unicode_utils.h>
 
 static size_t ucs2_strlen(uint16_t* s)
@@ -27,7 +28,7 @@ static size_t ucs4_strlen(uint32_t* s)
 uint32_t* pointless_unicode_ascii_to_ucs4(char* ascii, const char** error)
 {
 	size_t len = strlen(ascii), i;
-	uint32_t* buffer = (uint32_t*)malloc(sizeof(uint32_t) * (len + 1));
+	uint32_t* buffer = (uint32_t*)pointless_malloc(sizeof(uint32_t) * (len + 1));
 
 	if (buffer == 0) {
 		*error = "out of memory";
@@ -45,7 +46,7 @@ uint32_t* pointless_unicode_ascii_to_ucs4(char* ascii, const char** error)
 uint32_t* pointless_unicode_ucs2_to_ucs4(uint16_t* ucs2)
 {
 	size_t len = ucs2_strlen(ucs2), i;
-	uint32_t* buffer = (uint32_t*)malloc(sizeof(uint32_t) * (len + 1));
+	uint32_t* buffer = (uint32_t*)pointless_malloc(sizeof(uint32_t) * (len + 1));
 
 	if (buffer == 0)
 		return 0;
@@ -61,7 +62,7 @@ uint32_t* pointless_unicode_ucs2_to_ucs4(uint16_t* ucs2)
 uint16_t* pointless_unicode_ucs4_to_ucs2(uint32_t* ucs4, const char** error)
 {
 	size_t len = ucs4_strlen(ucs4), i;
-	uint16_t* buffer = (uint16_t*)malloc(sizeof(uint16_t) * (len + 1));
+	uint16_t* buffer = (uint16_t*)pointless_malloc(sizeof(uint16_t) * (len + 1));
 
 	if (buffer == 0) {
 		*error = "out of memory";
@@ -71,7 +72,7 @@ uint16_t* pointless_unicode_ucs4_to_ucs2(uint32_t* ucs4, const char** error)
 	for (i = 0; i < len; i++) {
 		if (ucs4[i] > 0xFFFF) {
 			*error = "string character is larger than 0xFFFF";
-			free(buffer);
+			pointless_free(buffer);
 			return 0;
 		}
 

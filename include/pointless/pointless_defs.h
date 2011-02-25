@@ -7,6 +7,7 @@
 
 #include <Judy.h>
 
+#include <pointless/pointless_malloc.h>
 #include <pointless/pointless_dynarray.h>
 
 #define ASSERT_CONCAT_(a, b) a##b

@@ -327,7 +327,7 @@ void* pointless_cycle_marker(pointless_t* p, const char** error)
 	pointless_cycle_marker_state_t state;
 	state.p = p;
 	state.error = 0;
-	state.cycle_marker = calloc(ICEIL(pointless_n_containers(p), 8), 1);
+	state.cycle_marker = pointless_calloc(ICEIL(pointless_n_containers(p), 8), 1);
 	state.visited_judy = 0;
 	state.component_judy = 0;
 	state.root_judy = 0;
@@ -351,7 +351,7 @@ error:
 
 	assert(state.error != 0);
 
-	free(state.cycle_marker);
+	pointless_free(state.cycle_marker);
 	state.cycle_marker = 0;
 
 	*error = state.error;

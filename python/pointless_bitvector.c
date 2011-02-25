@@ -10,7 +10,7 @@ static void PyPointlessBitvector_dealloc(PyPointlessBitvector* self)
 	self->pointless_pp = 0;
 	self->pointless_v = 0;
 	self->primitive_n_bits = 0;
-	free(self->primitive_bits);
+	pointless_free(self->primitive_bits);
 	self->primitive_bits = 0;
 	self->primitive_n_bytes_alloc = 0;
 	Py_TYPE(self)->tp_free(self);
@@ -62,7 +62,7 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 	self->pointless_pp = 0;
 	self->pointless_v = 0;
 
-	free(self->primitive_bits);
+	pointless_free(self->primitive_bits);
 	self->primitive_n_bits = 0;
 	self->primitive_bits = 0;
 	self->primitive_n_bytes_alloc = 0;
@@ -121,7 +121,7 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 	self->primitive_n_bytes_alloc = (uint32_t)ICEIL(n_items, 8);
 
 	if (n_items > 0) {
-		self->primitive_bits = calloc(self->primitive_n_bytes_alloc, 1);
+		self->primitive_bits = pointless_calloc(self->primitive_n_bytes_alloc, 1);
 
 		if (self->primitive_bits == 0) {
 			self->primitive_n_bytes_alloc = 0;
@@ -165,7 +165,7 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 			}
 
 			if (is_error) {
-				free(self->primitive_bits);
+				pointless_free(self->primitive_bits);
 				self->primitive_n_bits = 0;
 				self->primitive_bits = 0;
 				self->primitive_n_bytes_alloc = 0;
@@ -394,7 +394,7 @@ static PyObject* PyPointlessBitvector_append(PyPointlessBitvector* self, PyObjec
 
 	if (self->primitive_n_bits == self->primitive_n_bytes_alloc * 8) {
 		uint32_t next_bytes = next_size(self->primitive_n_bytes_alloc);
-		void* next_data = realloc(self->primitive_bits, next_bytes);
+		void* next_data = pointless_realloc(self->primitive_bits, next_bytes);
 
 		if (next_data == 0) {
 			PyErr_NoMemory();

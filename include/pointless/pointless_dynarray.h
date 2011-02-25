@@ -6,6 +6,8 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include <pointless/pointless_malloc.h>
+
 typedef struct {
 	void* _data;
 	size_t n_items;

@@ -245,15 +245,13 @@ void create_special_b(pointless_create_t* c)
 		exit(EXIT_FAILURE);
 	}
 
-	const char* error = 0;
-
 	uint32_t a_string[] = {'a', 0};
 
-	uint32_t a = pointless_create_unicode_ucs4(c, a_string, &error);
-	uint32_t aa = pointless_create_unicode_ucs4(c, a_string, &error);
+	uint32_t a = pointless_create_unicode_ucs4(c, a_string);
+	uint32_t aa = pointless_create_unicode_ucs4(c, a_string);
 
 	if (a == POINTLESS_CREATE_VALUE_FAIL || aa == POINTLESS_CREATE_VALUE_FAIL) {
-		fprintf(stderr, "pointless_create_unicode_ucs4() failure: %s\n", error);
+		fprintf(stderr, "pointless_create_unicode_ucs4() failure\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -345,7 +343,7 @@ static uint32_t create_special_d_1(pointless_create_t* c, uint32_t* buffer)
 
 static uint32_t create_special_d_2(pointless_create_t* c)
 {
-	uint32_t* u32_buffer = (uint32_t*)malloc(sizeof(uint32_t) * SPECIAL_D_N);
+	uint32_t* u32_buffer = (uint32_t*)pointless_malloc(sizeof(uint32_t) * SPECIAL_D_N);
 
 	if (u32_buffer == 0) {
 		fprintf(stderr, "out of memory\n");
@@ -374,7 +372,7 @@ static uint32_t create_special_d_2(pointless_create_t* c)
 
 static uint32_t create_special_d_3(pointless_create_t* c)
 {
-	uint32_t* value_buffer = (uint32_t*)malloc(sizeof(uint32_t) * SPECIAL_D_N);
+	uint32_t* value_buffer = (uint32_t*)pointless_malloc(sizeof(uint32_t) * SPECIAL_D_N);
 
 	if (value_buffer == 0) {
 		fprintf(stderr, "out of memory\n");

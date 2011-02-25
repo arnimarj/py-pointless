@@ -67,9 +67,9 @@ static int pointless_hash_table_create(pointless_create_t* c, uint32_t hash_tabl
 	uint32_t i, n_buckets = pointless_hash_compute_n_buckets(n_keys);
 
 	// allocate output vectors
-	hash_serialize = (uint32_t*)malloc(sizeof(uint32_t) * n_buckets);
-	keys_serialize = (uint32_t*)malloc(sizeof(uint32_t) * n_buckets);
-	hash_vector = (uint32_t*)malloc(sizeof(uint32_t) * n_keys);
+	hash_serialize = (uint32_t*)pointless_malloc(sizeof(uint32_t) * n_buckets);
+	keys_serialize = (uint32_t*)pointless_malloc(sizeof(uint32_t) * n_buckets);
+	hash_vector = (uint32_t*)pointless_malloc(sizeof(uint32_t) * n_keys);
 
 	if (hash_serialize == 0 || keys_serialize == 0 || hash_vector == 0) {
 		*error = "out of memory B";
@@ -78,7 +78,7 @@ static int pointless_hash_table_create(pointless_create_t* c, uint32_t hash_tabl
 
 	// ...and one for values if this is a map
 	if (cv_value_type(hash_table) == POINTLESS_MAP_VALUE_VALUE) {
-		values_serialize = (uint32_t*)malloc(sizeof(uint32_t) * n_buckets);
+		values_serialize = (uint32_t*)pointless_malloc(sizeof(uint32_t) * n_buckets);
 
 		if (values_serialize == 0) {
 			*error = "out of memory C";
@@ -124,7 +124,7 @@ static int pointless_hash_table_create(pointless_create_t* c, uint32_t hash_tabl
 		goto cleanup;
 
 	// hash vector no longer needed
-	free(hash_vector);
+	pointless_free(hash_vector);
 	hash_vector = 0;
 
 	// our serialize vector handles
@@ -152,7 +152,7 @@ static int pointless_hash_table_create(pointless_create_t* c, uint32_t hash_tabl
 		goto cleanup;
 	}
 
-	// the vector has been transferred, so it being free()'d is somebody elses problem
+	// the vector has been transferred, so it being pointless_free()'d is somebody elses problem
 	hash_serialize = 0;
 
 	// transfer key vector over
@@ -179,10 +179,10 @@ static int pointless_hash_table_create(pointless_create_t* c, uint32_t hash_tabl
 
 cleanup:
 
-	free(hash_serialize);
-	free(keys_serialize);
-	free(hash_vector);
-	free(values_serialize);
+	pointless_free(hash_serialize);
+	pointless_free(keys_serialize);
+	pointless_free(hash_vector);
+	pointless_free(values_serialize);
 
 	return retval;
 }
@@ -226,10 +226,10 @@ static void pointless_create_value_free(pointless_create_t* c, uint32_t i)
 				pointless_dynarray_destroy(&cv_priv_vector_at(i)->vector);
 			break;
 		case POINTLESS_BITVECTOR:
-			free(cv_bitvector_at(i));
+			pointless_free(cv_bitvector_at(i));
 			break;
 		case POINTLESS_UNICODE:
-			free(cv_unicode_at(i));
+			pointless_free(cv_unicode_at(i));
 			break;
 		case POINTLESS_SET_VALUE:
 			pointless_dynarray_destroy(&cv_set_at(i)->keys);
@@ -830,8 +830,8 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 	c->priv_vector_values = temp;
 
 	// see if some value-vectors can be compressed, and if not, whether they are hashable
-	priv_vector_bitmask = calloc(ICEIL(pointless_dynarray_n_items(&c->priv_vector_values), 8), 1);
-	outside_vector_bitmask = calloc(ICEIL(pointless_dynarray_n_items(&c->outside_vector_values), 8), 1);
+	priv_vector_bitmask = pointless_calloc(ICEIL(pointless_dynarray_n_items(&c->priv_vector_values), 8), 1);
+	outside_vector_bitmask = pointless_calloc(ICEIL(pointless_dynarray_n_items(&c->outside_vector_values), 8), 1);
 
 	if (priv_vector_bitmask == 0 || outside_vector_bitmask == 0) {
 		*error = "out of memory J";
@@ -1198,8 +1198,8 @@ error_cleanup:
 success_cleanup:
 
 	pointless_dynarray_destroy(&new_priv_vector_values);
-	free(priv_vector_bitmask);
-	free(outside_vector_bitmask);
+	pointless_free(priv_vector_bitmask);
+	pointless_free(outside_vector_bitmask);
 
 	pointless_create_end(c);
 
@@ -1251,7 +1251,7 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 	char* temp_fname = 0;
 
 	// create and open a unique file
-	temp_fname = (char*)malloc(strlen(fname) + 32);
+	temp_fname = (char*)pointless_malloc(strlen(fname) + 32);
 
 	if (temp_fname == 0) {
 		*error = "out of memory";
@@ -1316,7 +1316,7 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 
 	fd_exists = 0;
 
-	free(temp_fname);
+	pointless_free(temp_fname);
 	temp_fname = 0;
 
 	return 1;
@@ -1324,7 +1324,7 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 cleanup:
 
 	pointless_create_end(c);
-	free(temp_fname);
+	pointless_free(temp_fname);
 	temp_fname = 0;
 
 	if (f)
@@ -1526,7 +1526,7 @@ uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v)
 
 	// create buffer to hold [uint32 + v]
 	size_t unicode_len = pointless_unicode_len(v);
-	void* unicode_buffer = malloc(sizeof(uint32_t) + sizeof(pointless_char_t) * (unicode_len + 1));
+	void* unicode_buffer = pointless_malloc(sizeof(uint32_t) + sizeof(pointless_char_t) * (unicode_len + 1));
 
 	if (unicode_buffer == 0)
 		goto cleanup;
@@ -1541,7 +1541,7 @@ uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v)
 	JHSG(prev_ref, c->unicode_map_judy, unicode_buffer, sizeof(uint32_t) + (unicode_len + 1) * sizeof(pointless_char_t));
 
 	if (prev_ref) {
-		free(unicode_buffer);
+		pointless_free(unicode_buffer);
 		return (uint32_t)(*prev_ref);
 	}
 
@@ -1581,7 +1581,7 @@ uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v)
 
 cleanup:
 
-	free(unicode_buffer);
+	pointless_free(unicode_buffer);
 
 	if (pop_value)
 		pointless_dynarray_pop(&c->values);
@@ -1601,7 +1601,7 @@ uint32_t pointless_create_unicode_ucs2(pointless_create_t* c, uint16_t* s)
 
 	uint32_t handle = pointless_create_unicode_ucs4(c, ucs4);
 
-	free(ucs4);
+	pointless_free(ucs4);
 
 	return handle;
 }
@@ -1618,7 +1618,7 @@ uint32_t pointless_create_unicode_ascii(pointless_create_t* c, const char* s, co
 	if (handle == POINTLESS_CREATE_VALUE_FAIL)
 		*error = "out of memory";
 
-	free(ucs4);
+	pointless_free(ucs4);
 
 	return handle;
 }
@@ -1754,7 +1754,7 @@ uint32_t pointless_create_bitvector(pointless_create_t* c, void* v, uint32_t n_b
 	int pop_bitvector = 0;
 
 	// create buffer to hold [uint32 + v]
-	buffer = malloc(sizeof(uint32_t) + ICEIL(n_bits, 8));
+	buffer = pointless_malloc(sizeof(uint32_t) + ICEIL(n_bits, 8));
 
 	if (buffer == 0)
 		goto cleanup;
@@ -1767,7 +1767,7 @@ uint32_t pointless_create_bitvector(pointless_create_t* c, void* v, uint32_t n_b
 	JHSG(prev_ref, c->bitvector_map_judy, buffer, sizeof(uint32_t) + ICEIL(n_bits, 8));
 
 	if (prev_ref) {
-		free(buffer);
+		pointless_free(buffer);
 		return (uint32_t)(*prev_ref);
 	}
 
@@ -1803,7 +1803,7 @@ uint32_t pointless_create_bitvector(pointless_create_t* c, void* v, uint32_t n_b
 	return (pointless_dynarray_n_items(&c->values) - 1);
 
 cleanup:
-	free(buffer);
+	pointless_free(buffer);
 
 	if (pop_value)
 		pointless_dynarray_pop(&c->values);

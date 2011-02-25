@@ -107,7 +107,7 @@ static int32_t pointless_validate_unicode_heap(pointless_validate_context_t* con
 
 cleanup:
 
-	free(ucs2);
+	pointless_free(ucs2);
 
 	return retval;
 }

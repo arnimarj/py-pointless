@@ -230,7 +230,7 @@ static void pointless_print_set(pointless_debug_state_t* state, pointless_value_
 		if (state->sort_set) {
 			// allocate keys buffer
 			uint32_t n_keys = pointless_reader_set_n_items(state->p, v);
-			pointless_value_t* keys = (pointless_value_t*)malloc(sizeof(pointless_value_t) * n_keys);
+			pointless_value_t* keys = (pointless_value_t*)pointless_malloc(sizeof(pointless_value_t) * n_keys);
 
 			if (keys == 0) {
 				*state->error = "out of memory";
@@ -252,7 +252,7 @@ static void pointless_print_set(pointless_debug_state_t* state, pointless_value_
 
 			// sort keys
 			if (!bentley_sort_((int)n_keys, pv_cmp, pv_swap, (void*)&sort_state)) {
-				free(keys);
+				pointless_free(keys);
 				return;
 			}
 
@@ -264,7 +264,7 @@ static void pointless_print_set(pointless_debug_state_t* state, pointless_value_
 				pointless_print_value(state, &keys[i], depth + 1);
 			}
 
-			free(keys);
+			pointless_free(keys);
 			keys = 0;
 
 		} else {
@@ -304,12 +304,12 @@ static void pointless_print_map(pointless_debug_state_t* state, pointless_value_
 		if (state->sort_map) {
 			// allocate keys buffer
 			uint32_t n_keys = pointless_reader_map_n_items(state->p, v);
-			pointless_value_t* keys = (pointless_value_t*)malloc(sizeof(pointless_value_t) * n_keys);
-			pointless_value_t* values = (pointless_value_t*)malloc(sizeof(pointless_value_t) * n_keys);
+			pointless_value_t* keys = (pointless_value_t*)pointless_malloc(sizeof(pointless_value_t) * n_keys);
+			pointless_value_t* values = (pointless_value_t*)pointless_malloc(sizeof(pointless_value_t) * n_keys);
 
 			if (keys == 0 || values == 0) {
-				free(keys);
-				free(values);
+				pointless_free(keys);
+				pointless_free(values);
 				*state->error = "out of memory";
 				return;
 			}
@@ -332,8 +332,8 @@ static void pointless_print_map(pointless_debug_state_t* state, pointless_value_
 
 			// sort keys
 			if (!bentley_sort_((int)n_keys, pv_cmp, pv_swap, (void*)&sort_state)) {
-				free(keys);
-				free(values);
+				pointless_free(keys);
+				pointless_free(values);
 				return;
 			}
 
@@ -347,8 +347,8 @@ static void pointless_print_map(pointless_debug_state_t* state, pointless_value_
 				pointless_print_value(state, &values[i], depth + 1);
 			}
 
-			free(keys);
-			free(values);
+			pointless_free(keys);
+			pointless_free(values);
 
 			keys = 0;
 			values = 0;

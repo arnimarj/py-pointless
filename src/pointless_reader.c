@@ -110,7 +110,7 @@ void pointless_close(pointless_t* p)
 	if (p->fd)
 		fclose(p->fd);
 
-	// free(p->buf);
+	// pointless_free(p->buf);
 }
 
 pointless_value_t* pointless_root(pointless_t* p)

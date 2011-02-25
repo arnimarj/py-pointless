@@ -361,7 +361,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 
 		if (bitvector->is_pointless) {
 			uint32_t i, n_bits = pointless_reader_bitvector_n_bits(&bitvector->pointless_pp->p, bitvector->pointless_v);
-			void* bits = calloc(ICEIL(n_bits, 8), 1);
+			void* bits = pointless_calloc(ICEIL(n_bits, 8), 1);
 
 			if (bits == 0) {
 				RETURN_OOM(state);

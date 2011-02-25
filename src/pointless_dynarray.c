@@ -41,7 +41,7 @@ int pointless_dynarray_push(pointless_dynarray_t* a, void* i)
 {
 	if (a->n_items == a->n_alloc) {
 		size_t next_n_alloc = next_size(a->n_alloc);
-		void* next_data = realloc(a->_data, a->item_size * next_n_alloc);
+		void* next_data = pointless_realloc(a->_data, a->item_size * next_n_alloc);
 
 		if (next_data == 0) {
 			// fprintf(stderr, "ERROR: failure to grow vector of %zu items to %zu items, each item being %zu bytes\n", a->n_alloc, next_n_alloc, a->item_size);
@@ -66,7 +66,7 @@ void pointless_dynarray_clear(pointless_dynarray_t* a)
 
 void pointless_dynarray_destroy(pointless_dynarray_t* a)
 {
-	free(a->_data);
+	pointless_free(a->_data);
 	a->_data = 0;
 	a->n_items = 0;
 	a->n_alloc = 0;
@@ -120,7 +120,7 @@ void pointless_dynarray_give_data(pointless_dynarray_t* a, void* data, size_t n_
 {
 	assert(a->n_items == 0);
 
-	free(a->_data);
+	pointless_free(a->_data);
 
 	a->_data = data;
 	a->n_items = n_items;

@@ -116,7 +116,7 @@ typedef struct {
 typedef struct {
 	PyObject_HEAD
 	int allow_print;
-
+	int ob_exports;
 	// vector
 	pointless_dynarray_t array;
 	uint8_t type;
@@ -127,8 +127,6 @@ typedef struct {
 	PyPointlessPrimVector* vector;
 	uint32_t iter_state;
 } PyPointlessPrimVectorIter;
-
-PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t* v, uint32_t t);
 
 PyPointlessVector* PyPointlessVector_New(PyPointless* pp, pointless_value_t* v, uint32_t slice_i, uint32_t slice_n);
 PyPointlessBitvector* PyPointlessBitvector_New(PyPointless* pp, pointless_value_t* v);
@@ -173,6 +171,7 @@ extern PyTypeObject PyPointlessPrimVectorIterType;
 
 // C-API
 PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t* v, uint32_t t);
+PyPointlessPrimVector* PyPointlessPrimVector_from_buffer(void* buffer, size_t n_buffer);
 
 typedef struct {
 	// prim-vector operations
@@ -183,8 +182,15 @@ typedef struct {
 	void(*primvector_clear)(pointless_dynarray_t* a);
 	void(*primvector_destroy)(pointless_dynarray_t* a);
 
+	// malloc routines
+	void*(*pointless_calloc)(size_t nmemb, size_t size);
+	void*(*pointless_malloc)(size_t size);
+	void (*pointless_free)(void* ptr);
+	void*(*pointless_realloc)(void* ptr, size_t size);
+
 	// prim-vector object constructors
 	PyPointlessPrimVector*(*primvector_from_vector)(pointless_dynarray_t* v, uint32_t t);
+	PyPointlessPrimVector*(*primvector_from_buffer)(void* buffer, size_t n_buffer);
 
 	// types
 	PyTypeObject* PyPointlessType_ptr;
@@ -195,7 +201,7 @@ typedef struct {
 	PyTypeObject* PyPointlessPrimVectorType_ptr;
 } PyPointless_CAPI;
 
-#define POINTLESS_API_MAGIC 0xC6D89E11
+#define POINTLESS_API_MAGIC 0xC6D89E12
 
 static PyPointless_CAPI* PyPointlessAPI;
 static int PyPointlessAPI_magic;
@@ -226,6 +232,5 @@ static int PyPointlessAPI_magic;
 			}                                                                                        \
 		}                                                                                            \
 	}
-
 
 #endif

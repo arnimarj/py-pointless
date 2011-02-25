@@ -5,7 +5,7 @@
 void create_1M_set(pointless_create_t* c)
 {
 	uint32_t i, j, t, s;
-	uint32_t* data = (uint32_t*)malloc(sizeof(uint32_t) * ONE_MILLION);
+	uint32_t* data = (uint32_t*)pointless_malloc(sizeof(uint32_t) * ONE_MILLION);
 
 	if (data == 0) {
 		fprintf(stderr, "create_1M_set(): out of memory\n");
@@ -43,7 +43,7 @@ void create_1M_set(pointless_create_t* c)
 		}
 	}
 
-	free(data);
+	pointless_free(data);
 
 	pointless_create_set_root(c, s);
 }

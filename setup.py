@@ -1,7 +1,7 @@
 import sys
 from distutils.core import setup, Extension
 
-extra_compile_args = ['-I./include', '-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O2', '-DNDEBUG']
+extra_compile_args = ['-I./include', '-I/usr/local/include', '-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O2', '-DNDEBUG']
 # extra_compile_args = ['-I./include', '-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O0']
 extra_link_args = ['-Bstatic', '-lJudy', '-Bdynamic', '-lm']
 
@@ -72,6 +72,7 @@ setup(
 				'src/pointless_validate_heap_ref.c',
 				'src/pointless_validate_heap.c',
 				'src/pointless_validate_hash_table.c',
+				'src/pointless_malloc.c',
 			],
 
 			extra_compile_args = extra_compile_args,

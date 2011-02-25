@@ -140,9 +140,9 @@ int pointless_validate(pointless_validate_context_t* context, const char** error
 	state.pass = 1;
 	state.error = 0;
 	state.cycle_marker = 0;
-	state.vector = calloc(ICEIL(context->p->header->n_vector, 8), 1);
-	state.set = calloc(ICEIL(context->p->header->n_set, 8), 1);
-	state.map = calloc(ICEIL(context->p->header->n_map, 8), 1);
+	state.vector = pointless_calloc(ICEIL(context->p->header->n_vector, 8), 1);
+	state.set = pointless_calloc(ICEIL(context->p->header->n_set, 8), 1);
+	state.map = pointless_calloc(ICEIL(context->p->header->n_map, 8), 1);
 
 	if (state.vector == 0 || state.set == 0 || state.map == 0) {
 		*error = "out of memory";
@@ -179,10 +179,10 @@ int pointless_validate(pointless_validate_context_t* context, const char** error
 
 cleanup:
 
-	free(state.cycle_marker);
-	free(state.vector);
-	free(state.set);
-	free(state.map);
+	pointless_free(state.cycle_marker);
+	pointless_free(state.vector);
+	pointless_free(state.set);
+	pointless_free(state.map);
 
 	if (state.error)
 		*error = state.error;

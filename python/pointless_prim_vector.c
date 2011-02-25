@@ -4,6 +4,11 @@ static PyObject* PyPointlessPrimVector_append_item(PyPointlessPrimVector* self, 
 
 static void PyPointlessPrimVector_dealloc(PyPointlessPrimVector* self)
 {
+	if (self->ob_exports > 0) {
+		PyErr_SetString(PyExc_SystemError, "deallocated PointlessPrimVector object has exported buffers");
+		PyErr_Print();
+	}
+
 	pointless_dynarray_destroy(&self->array);
 	Py_TYPE(self)->tp_free(self);
 }
@@ -21,6 +26,7 @@ PyObject* PyPointlessPrimVector_new(PyTypeObject* type, PyObject* args, PyObject
 	PyPointlessPrimVector* self = (PyPointlessPrimVector*)type->tp_alloc(type, 0);
 
 	if (self) {
+		self->ob_exports = 0;
 		pointless_dynarray_init(&self->array, 1);
 	}
 
@@ -194,7 +200,7 @@ static int pointless_get_continuous_buffer(PyObject* buffer_obj, void** buffer, 
 	}
 
 	// otherwise, we concat all the segments into a single buffer, and free it later
-	void* m_buffer = malloc(n_bytes);
+	void* m_buffer = pointless_malloc(n_bytes);
 	*buffer = 0;
 	*n_buffer = n_bytes;
 	*must_free = 1;
@@ -226,10 +232,25 @@ static int pointless_get_continuous_buffer(PyObject* buffer_obj, void** buffer, 
 	return 1;
 }
 
+static int PyPointlessPrimVector_can_resize(PyPointlessPrimVector* self)
+{
+	if (self->ob_exports > 0) {
+		PyErr_SetString(PyExc_BufferError, "existing exports of data: object cannot be re-sized");
+		return 0;
+	}
+
+	return 1;
+}
+
 static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* args, PyObject* kwds)
 {
+	// if we have a buffer attached, we shouldn't be here
+	if (!PyPointlessPrimVector_can_resize(self))
+		return -1;
+
 	// printing enabled by default
 	self->allow_print = 1;
+	self->ob_exports = 0;
 
 	// clear previous contents
 	pointless_dynarray_clear(&self->array);
@@ -340,8 +361,6 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 			goto buffer_cleanup;
 			return -1;
 		}
-
-
 
 		for (i = 0; i < buffer_n_items; i++) {
 			void* data_buffer = (uint32_t*)buffer + 2;
@@ -598,6 +617,9 @@ static PyObject* PyPointlessPrimVectorIter_iternext(PyPointlessPrimVectorIter* i
 
 static PyObject* PyPointlessPrimVector_append_item(PyPointlessPrimVector* self, PyObject* item)
 {
+	if (!PyPointlessPrimVector_can_resize(self))
+		return 0;
+
 	PY_LONG_LONG ii;
 	float ff;
 
@@ -677,9 +699,11 @@ static PyObject* PyPointlessPrimVector_append(PyPointlessPrimVector* self, PyObj
 		return 0;
 	}
 
+	if (!PyPointlessPrimVector_can_resize(self))
+		return 0;
+
 	return PyPointlessPrimVector_append_item(self, obj);
 }
-
 static PyObject* PyPointlessPrimVector_pop(PyPointlessPrimVector* self)
 {
 	size_t n_items = pointless_dynarray_n_items(&self->array);
@@ -688,6 +712,9 @@ static PyObject* PyPointlessPrimVector_pop(PyPointlessPrimVector* self)
 		PyErr_SetString(PyExc_IndexError, "pop from empty vector");
 		return 0;
 	}
+
+	if (!PyPointlessPrimVector_can_resize(self))
+		return 0;
 
 	PyObject* v = PyPointlessPrimVector_subscript_priv(self, n_items - 1);
 
@@ -786,6 +813,9 @@ static PyObject* PyPointlessPrimVector_index(PyPointlessPrimVector* self, PyObje
 
 static PyObject* PyPointlessPrimVector_remove(PyPointlessPrimVector* self, PyObject* args)
 {
+	if (!PyPointlessPrimVector_can_resize(self))
+		return 0;
+
 	size_t i = PyPointlessPrimVector_index_(self, args, "remove");
 
 	if (i == (SIZE_MAX-1))
@@ -804,6 +834,9 @@ static PyObject* PyPointlessPrimVector_remove(PyPointlessPrimVector* self, PyObj
 
 static PyObject* PyPointlessPrimVector_fast_remove(PyPointlessPrimVector* self, PyObject* args)
 {
+	if (!PyPointlessPrimVector_can_resize(self))
+		return 0;
+
 	size_t i = PyPointlessPrimVector_index_(self, args, "fast_remove");
 
 	if (i == (SIZE_MAX-1))
@@ -817,13 +850,9 @@ static PyObject* PyPointlessPrimVector_fast_remove(PyPointlessPrimVector* self, 
 	return Py_None;	
 }
 
-static PyObject* PyPointlessPrimVector_serialize(PyPointlessPrimVector* self)
+static size_t PyPointlessPrimVector_type_size(PyPointlessPrimVector* self)
 {
-	// the format is: [uint32_t type] [uint32 length] [raw integers]
-	// the length param is redundant, but gives a fair sanity check
-
-	// create a buffer
-	uint32_t typesize = 0, i;
+	size_t typesize = 0, i;
 
 	for (i = 0; i < POINTLESS_PRIM_VECTOR_N_TYPES; i++) {
 		if (pointless_prim_vector_type_map[i].type == self->type) {
@@ -832,42 +861,127 @@ static PyObject* PyPointlessPrimVector_serialize(PyPointlessPrimVector* self)
 		}
 	}
 
-	if (typesize == 0) {
-		PyErr_SetString(PyExc_Exception, "internal error, unknown type");
-		return 0;
-	}
+	return typesize;
+}
 
-	uint32_t n_items = pointless_dynarray_n_items(&self->array);
-	uint64_t n_buffer = sizeof(uint32_t) + sizeof(uint32_t) + (uint64_t)n_items * (uint64_t)typesize;
+static size_t PyPointlessPrimVector_n_items(PyPointlessPrimVector* self)
+{
+	return pointless_dynarray_n_items(&self->array);
+}
 
-	if (n_buffer > UINT32_MAX) {
+static size_t PyPointlessPrimVector_n_bytes(PyPointlessPrimVector* self)
+{
+	size_t n_items = PyPointlessPrimVector_n_bytes(self);
+	size_t item_size = PyPointlessPrimVector_type_size(self);
+	return (n_items * item_size);
+}
+
+static PyObject* PyPointlessPrimVector_serialize(PyPointlessPrimVector* self)
+{
+	// the format is: [uint32_t type] [uint32 length] [raw integers]
+	// the length param is redundant, but gives a fair sanity check
+
+	// create a buffer
+	size_t n_bytes = PyPointlessPrimVector_n_bytes(self);
+	uint32_t n_items = PyPointlessPrimVector_n_items(self);
+	uint64_t n_buffer = sizeof(uint32_t) + sizeof(uint32_t) + (uint64_t)n_bytes;
+
+	if (n_buffer > PY_SSIZE_T_MAX || n_buffer > SIZE_MAX) {
 		PyErr_SetString(PyExc_Exception, "vector too large for serialization");
 		return 0;
 	}
 
-	// allocate a buffer object
-	PyObject* buffer_object = PyBuffer_New((uint32_t)n_buffer);
+	// allocate a buffer
+	void* buffer = pointless_malloc((size_t)n_buffer);
 
-	if (buffer_object == 0)
+	if (buffer == 0)
 		return 0;
 
-	// copy the data across
-	PyBufferProcs* procs = buffer_object->ob_type->tp_as_buffer;
-	void* buffer_ptr = 0;
+	// serialize it
+	((uint32_t*)buffer)[0] = self->type;
+	((uint32_t*)buffer)[1] = n_items;
+	memcpy((void*)((uint32_t*)buffer + 2), pointless_dynarray_buffer(&self->array), n_bytes);
 
-	if ((*procs->bf_getwritebuffer)(buffer_object, 0, &buffer_ptr) == -1) {
-		Py_DECREF(buffer_object);
+	PyObject* bytearray = PyByteArray_FromStringAndSize((const char*)buffer, (Py_ssize_t)n_bytes);
+	free(buffer);
+
+	return bytearray;
+}
+
+static Py_ssize_t PointlessPrimVector_buffer_getreadbuf(PyPointlessPrimVector* self, Py_ssize_t index, const void** ptr)
+{
+	if (index != 0 ) {
+		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
+		return -1;
+	}
+
+	*ptr = (void*)pointless_dynarray_buffer(&self->array);
+	return (Py_ssize_t)PyPointlessPrimVector_n_bytes(self);
+}
+
+static Py_ssize_t PointlessPrimVector_buffer_getwritebuf(PyPointlessPrimVector* self, Py_ssize_t index, const void** ptr)
+{
+	if (index != 0) {
+		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
+		return -1;
+	}
+
+	*ptr = (void*)pointless_dynarray_buffer(&self->array);
+	return (Py_ssize_t)PyPointlessPrimVector_n_bytes(self);
+}
+
+static Py_ssize_t PointlessPrimVector_buffer_getsegcount(PyPointlessPrimVector* self, Py_ssize_t* lenp)
+{
+	if (lenp)
+		*lenp = (Py_ssize_t)PyPointlessPrimVector_n_bytes(self);
+
+	return 1;
+}
+
+static Py_ssize_t PointlessPrimVector_buffer_getcharbuf(PyPointlessPrimVector* self, Py_ssize_t index, const char** ptr)
+{
+	if (index != 0) {
+		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
+		return -1;
+	}
+
+	*ptr = (void*)pointless_dynarray_buffer(&self->array);
+	return (Py_ssize_t)PyPointlessPrimVector_n_bytes(self);
+}
+
+static int PointlessPrimVector_getbuffer(PyPointlessPrimVector* obj, Py_buffer* view, int flags)
+{
+	int ret;
+	void* ptr;
+
+	if (view == NULL) {
+		obj->ob_exports++;
 		return 0;
 	}
 
-	// serialize it
-	((uint32_t*)buffer_ptr)[0] = self->type;
-	((uint32_t*)buffer_ptr)[1] = n_items;
-	memcpy((void*)((uint32_t*)buffer_ptr + 2), pointless_dynarray_buffer(&self->array), n_items * typesize);
+	ptr = (void*)pointless_dynarray_buffer(&obj->array);
+	ret = PyBuffer_FillInfo(view, (PyObject*)obj, ptr, (Py_ssize_t)PyPointlessPrimVector_n_bytes(obj), 0, flags);
 
-	// we're done
-	return buffer_object;
+	if (ret >= 0)
+		obj->ob_exports++;
+
+	return ret;
 }
+
+static void PointlessPrimVector_releasebuffer(PyPointlessPrimVector* obj, Py_buffer* view)
+{
+	obj->ob_exports--;
+}
+
+static PyBufferProcs PointlessPrimVector_as_buffer = {
+	(readbufferproc)PointlessPrimVector_buffer_getreadbuf,
+	(writebufferproc)PointlessPrimVector_buffer_getwritebuf,
+	(segcountproc)PointlessPrimVector_buffer_getsegcount,
+	(charbufferproc)PointlessPrimVector_buffer_getcharbuf,
+	(getbufferproc)PointlessPrimVector_getbuffer,
+	(releasebufferproc)PointlessPrimVector_releasebuffer,
+};
+
 
 #define SORT_SWAP(T, B, I_A, I_B) T t = ((T*)(B))[I_A]; ((T*)(B))[I_A] = ((T*)(B))[I_B]; ((T*)(B))[I_B] = t
 #define PRIM_SORT_SWAP(T, P, I_A, I_B) SORT_SWAP(T, ((PyPointlessPrimVector*)P)->array._data, I_A, I_B)
@@ -1295,7 +1409,7 @@ PyTypeObject PyPointlessPrimVectorType = {
 	(reprfunc)PyPointlessPrimVector_str,            /*tp_str*/
 	0,                                              /*tp_getattro*/
 	0,                                              /*tp_setattro*/
-	0,                                              /*tp_as_buffer*/
+	&PointlessPrimVector_as_buffer,                 /*tp_as_buffer*/
 	Py_TPFLAGS_DEFAULT,                             /*tp_flags*/
 	"PyPointlessPrimVector wrapper",                /*tp_doc */
 	0,                                              /*tp_traverse */
@@ -1397,4 +1511,12 @@ PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t*
 	pv->array = *v;
 
 	return pv;
+}
+
+PyPointlessPrimVector* PyPointlessPrimVector_from_buffer(void* buffer, size_t n_buffer)
+{
+	pointless_dynarray_t a;
+	pointless_dynarray_init(&a, 1);
+	pointless_dynarray_give_data(&a, buffer, n_buffer);
+	return PyPointlessPrimVector_from_T_vector(&a, POINTLESS_PRIM_VECTOR_TYPE_U8);
 }
