@@ -181,6 +181,7 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 	PyObject* sequence_obj = 0;
 	PyObject* allow_print = 0;
 	uint32_t i;
+	int retval = -1;
 
 	buffer.buf = 0;
 	buffer.len = 0;
@@ -192,16 +193,12 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 
 	if ((type != 0) == (buffer.buf != 0)) {
 		PyErr_SetString(PyExc_TypeError, "exactly one of type/buffer must be specified");
-		if (buffer.buf != 0)
-			PyBuffer_Release(&buffer);
-		return -1;
+		goto cleanup;
 	}
 
 	if (type == 0 && sequence_obj != 0) {
 		PyErr_SetString(PyExc_ValueError, "sequence only allowed if type is specified");
-		if (buffer.buf != 0)
-			PyBuffer_Release(&buffer);
-		return -1;
+		goto cleanup;
 	}
 
 	if (allow_print == Py_False)
@@ -219,7 +216,7 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 
 		if (i == POINTLESS_PRIM_VECTOR_N_TYPES) {
 			PyErr_SetString(PyExc_TypeError, "unknown primitive vector type");
-			return -1;
+			goto cleanup;
 		}
 
 		// if we have an iterator, construct the vector from it
@@ -227,7 +224,7 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 			PyObject* iterator = PyObject_GetIter(sequence_obj);
 
 			if (iterator == 0)
-				return -1;
+				goto cleanup;
 
 			PyObject* item = 0;
 
@@ -244,17 +241,17 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 
 			if (PyErr_Occurred()) {
 				pointless_dynarray_destroy(&self->array);
-				return -1;
+				goto cleanup;
 			}
 		}
+
+		retval = 0;
 	// else a single buffer
 	} else {
-		int retval = -1;
-
 		// de-serialize the buffer
 		if (buffer.len < sizeof(uint32_t) + sizeof(uint32_t)) {
 			PyErr_SetString(PyExc_ValueError, "buffer too short");
-			goto buffer_cleanup;
+			goto cleanup;
 		}
 
 		self->type = ((uint32_t*)buffer.buf)[0];
@@ -271,15 +268,14 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 
 		if (i == POINTLESS_PRIM_VECTOR_N_TYPES) {
 			PyErr_SetString(PyExc_ValueError, "illegal buffer vector type");
-			goto buffer_cleanup;
+			goto cleanup;
 		}
 
 		expected_buffer_size += sizeof(uint32_t) + sizeof(uint32_t);
 
 		if ((uint64_t)buffer.len != expected_buffer_size) {
 			PyErr_SetString(PyExc_ValueError, "illegal buffer length");
-			goto buffer_cleanup;
-			return -1;
+			goto cleanup;
 		}
 
 		for (i = 0; i < buffer_n_items; i++) {
@@ -310,29 +306,27 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 					break;
 				default:
 					PyErr_SetString(PyExc_Exception, "internal error");
-					goto buffer_cleanup;
+					goto cleanup;
 			}
 
 			if (!added) {
 				PyErr_NoMemory();
-				goto buffer_cleanup;
+				goto cleanup;
 			}
 		}
 
 		retval = 0;
-
-buffer_cleanup:
-
-		if (retval == -1)
-			pointless_dynarray_clear(&self->array);
-
-		if (buffer.buf != 0)
-			PyBuffer_Release(&buffer);
-
-		return retval;
 	}
 
-	return 0;
+cleanup:
+
+	if (retval == -1)
+		pointless_dynarray_clear(&self->array);
+
+	if (buffer.buf)
+		PyBuffer_Release(&buffer);
+
+	return retval;
 }
 
 static int PyPointlessPrimVectorIter_init(PyPointlessPrimVector* self, PyObject* args)
