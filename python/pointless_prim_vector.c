@@ -151,87 +151,6 @@ struct {
 	{"f", POINTLESS_PRIM_VECTOR_TYPE_FLOAT, sizeof(float)}
 };
 
-static int pointless_get_continuous_buffer(PyObject* buffer_obj, void** buffer, uint32_t* n_buffer, uint32_t* must_free)
-{
-	// our return values
-	*buffer = 0;
-	*n_buffer = 0;
-	*must_free = 0;
-
-	// object must be a buffer
-	if (!PyBuffer_Check(buffer_obj)) {
-		PyErr_SetString(PyExc_ValueError, "object is not a buffer");
-		return 0;
-	}
-
-	// get the buffer interface
-	PyBufferProcs* procs = buffer_obj->ob_type->tp_as_buffer;
-
-	// we can't rely in bf_getreadbuffer existing, see http://docs.python.org/c-api/typeobj.html
-	if (procs->bf_getreadbuffer == 0) {
-		PyErr_SetString(PyExc_ValueError, "buffer object does not support bf_getreadbuffer");
-		return 0;
-	}
-
-	// get number of segments and bytes
-	Py_ssize_t n_bytes = 0;
-	Py_ssize_t n_segments = (*procs->bf_getsegcount)(buffer_obj, &n_bytes);
-
-	if (!(0 <= n_bytes && n_bytes <= UINT32_MAX)) {
-		PyErr_SetString(PyExc_ValueError, "buffer size not supported");
-		return 0;
-	}
-
-	// if there are no segments, we're done
-	if (n_segments == 0)
-		return 1;
-
-	// if there is only a single segment, just get a pointer to that
-	if (n_segments == 1) {
-		Py_ssize_t segment_len = (*procs->bf_getreadbuffer)(buffer_obj, 0, buffer);
-
-		if (segment_len == -1)
-			return 0;
-
-		assert(segment_len == n_bytes);
-
-		*n_buffer = n_bytes;
-		return 1;
-	}
-
-	// otherwise, we concat all the segments into a single buffer, and free it later
-	void* m_buffer = pointless_malloc(n_bytes);
-	*buffer = 0;
-	*n_buffer = n_bytes;
-	*must_free = 1;
-
-	if (m_buffer == 0) {
-		PyErr_NoMemory();
-		return 0;
-	}
-
-	Py_ssize_t i, c = 0;
-
-	for (i = 0; i < n_segments; i++) {
-		void* ptr = 0;
-		Py_ssize_t segment_len = (*procs->bf_getreadbuffer)(buffer_obj, i, &ptr);
-
-		if (segment_len == -1) {
-			free(m_buffer);
-			return 0;
-		}
-
-		memcpy((char*)m_buffer + c, ptr, segment_len);
-		c += segment_len;
-	}
-
-	*buffer = m_buffer;
-
-	assert(c == n_bytes);
-
-	return 1;
-}
-
 static int PyPointlessPrimVector_can_resize(PyPointlessPrimVector* self)
 {
 	if (self->ob_exports > 0) {
@@ -258,23 +177,30 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 
 	// parse input
 	const char* type = 0;
-	PyObject* buffer_obj = 0;
+	Py_buffer buffer;
 	PyObject* sequence_obj = 0;
 	PyObject* allow_print = 0;
 	uint32_t i;
 
+	buffer.buf = 0;
+	buffer.len = 0;
+
 	static char* kwargs[] = {"type", "buffer", "sequence", "allow_print", 0};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|sO!OO!", kwargs, &type, &PyBuffer_Type, &buffer_obj, &sequence_obj, &PyBool_Type, &allow_print))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ss*OO!", kwargs, &type, &buffer, &sequence_obj, &PyBool_Type, &allow_print))
 		return -1;
 
-	if ((type != 0) == (buffer_obj != 0)) {
+	if ((type != 0) == (buffer.buf != 0)) {
 		PyErr_SetString(PyExc_TypeError, "exactly one of type/buffer must be specified");
+		if (buffer.buf != 0)
+			PyBuffer_Release(&buffer);
 		return -1;
 	}
 
 	if (type == 0 && sequence_obj != 0) {
 		PyErr_SetString(PyExc_ValueError, "sequence only allowed if type is specified");
+		if (buffer.buf != 0)
+			PyBuffer_Release(&buffer);
 		return -1;
 	}
 
@@ -324,21 +250,15 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 	// else a single buffer
 	} else {
 		int retval = -1;
-		void* buffer = 0;
-		uint32_t n_buffer = 0;
-		uint32_t must_free = 0;
-
-		if (!pointless_get_continuous_buffer(buffer_obj, &buffer, &n_buffer, &must_free))
-			goto buffer_cleanup;
 
 		// de-serialize the buffer
-		if (n_buffer < sizeof(uint32_t) + sizeof(uint32_t)) {
+		if (buffer.len < sizeof(uint32_t) + sizeof(uint32_t)) {
 			PyErr_SetString(PyExc_ValueError, "buffer too short");
 			goto buffer_cleanup;
 		}
 
-		self->type = ((uint32_t*)buffer)[0];
-		uint32_t buffer_n_items = ((uint32_t*)buffer)[1];
+		self->type = ((uint32_t*)buffer.buf)[0];
+		uint32_t buffer_n_items = ((uint32_t*)buffer.buf)[1];
 		uint64_t expected_buffer_size = 0;
 
 		for (i = 0; i < POINTLESS_PRIM_VECTOR_N_TYPES; i++) {
@@ -356,14 +276,14 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 
 		expected_buffer_size += sizeof(uint32_t) + sizeof(uint32_t);
 
-		if ((uint64_t)n_buffer != expected_buffer_size) {
+		if ((uint64_t)buffer.len != expected_buffer_size) {
 			PyErr_SetString(PyExc_ValueError, "illegal buffer length");
 			goto buffer_cleanup;
 			return -1;
 		}
 
 		for (i = 0; i < buffer_n_items; i++) {
-			void* data_buffer = (uint32_t*)buffer + 2;
+			void* data_buffer = (uint32_t*)buffer.buf + 2;
 			int added = 0;
 
 			switch (self->type) {
@@ -406,8 +326,8 @@ buffer_cleanup:
 		if (retval == -1)
 			pointless_dynarray_clear(&self->array);
 
-		if (must_free)
-			free(buffer);
+		if (buffer.buf != 0)
+			PyBuffer_Release(&buffer);
 
 		return retval;
 	}
@@ -871,7 +791,7 @@ static size_t PyPointlessPrimVector_n_items(PyPointlessPrimVector* self)
 
 static size_t PyPointlessPrimVector_n_bytes(PyPointlessPrimVector* self)
 {
-	size_t n_items = PyPointlessPrimVector_n_bytes(self);
+	size_t n_items = PyPointlessPrimVector_n_items(self);
 	size_t item_size = PyPointlessPrimVector_type_size(self);
 	return (n_items * item_size);
 }
@@ -901,6 +821,9 @@ static PyObject* PyPointlessPrimVector_serialize(PyPointlessPrimVector* self)
 	((uint32_t*)buffer)[0] = self->type;
 	((uint32_t*)buffer)[1] = n_items;
 	memcpy((void*)((uint32_t*)buffer + 2), pointless_dynarray_buffer(&self->array), n_bytes);
+
+	n_bytes += sizeof(uint32_t);
+	n_bytes += sizeof(uint32_t);
 
 	PyObject* bytearray = PyByteArray_FromStringAndSize((const char*)buffer, (Py_ssize_t)n_bytes);
 	free(buffer);
