@@ -13,6 +13,7 @@ static PyPointless_CAPI CAPI = {
 	pointless_free,
 	pointless_realloc,
 	pointless_strdup,
+	pointless_malloc_stats,
 	PyPointlessPrimVector_from_T_vector,
 	PyPointlessPrimVector_from_buffer,
 	bentley_sort_,
@@ -24,6 +25,13 @@ static PyPointless_CAPI CAPI = {
 	&PyPointlessPrimVectorType
 };
 
+static PyObject* py_pointless_malloc_stats(PyObject* self)
+{
+	pointless_malloc_stats();
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
 static PyMethodDef pointless_methods[] =
 {
 	POINTLESS_FUNC_DEF("serialize",       pointless_write_object),
@@ -31,12 +39,18 @@ static PyMethodDef pointless_methods[] =
 	POINTLESS_FUNC_DEF("pointless_cmp",   pointless_cmp),
 	POINTLESS_FUNC_DEF("pointless_is_eq", pointless_is_eq),
 	POINTLESS_FUNC_DEF("db_array_sort",   pointless_db_array_sort),
+	{"malloc_stats", py_pointless_malloc_stats, METH_NOARGS, ""},
 	{NULL, NULL},
 };
+
+#define POINTLESS_FUNC_DEF(pyfunc, func) { pyfunc, func, METH_VARARGS, func##_doc}
+
 
 // helpers
 #define TRY_MODULE_INIT(module, description) PyObject* module##_module = 0; if ((module##_module = Py_InitModule4(#module, module##_methods, description, 0, PYTHON_API_VERSION)) == 0) { return; }
 #define TRY_MODULE_ADD_OBJECT(module, key, value) if (PyModule_AddObject(module, key, value) != 0) return;
+
+#include <stdlib.h>
 
 PyMODINIT_FUNC
 initpointless(void)

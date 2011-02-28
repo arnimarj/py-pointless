@@ -97,7 +97,7 @@ static int32_t pointless_validate_unicode_heap(pointless_validate_context_t* con
 	int retval = 0;
 
 	if (context->force_ucs2) {
-		uint16_t* ucs2 = pointless_unicode_ucs4_to_ucs2(s, error);
+		ucs2 = pointless_unicode_ucs4_to_ucs2(s, error);
 
 		if (ucs2 == 0)
 			goto cleanup;

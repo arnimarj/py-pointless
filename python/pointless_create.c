@@ -373,7 +373,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			}
 
 			handle = pointless_create_bitvector(&state->c, bits, n_bits);
-			free(bits);
+			pointless_free(bits);
 			bits = 0;
 
 		} else {
