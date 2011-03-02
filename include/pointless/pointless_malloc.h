@@ -11,5 +11,6 @@ void pointless_free(void* ptr);
 void* pointless_realloc(void* ptr, size_t size);
 char* pointless_strdup(const char* s);
 void pointless_malloc_stats();
+size_t pointless_malloc_sizeof(void* ptr);
 
 #endif

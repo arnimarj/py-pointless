@@ -1210,6 +1210,12 @@ static PyObject* PyPointlessPrimVector_sizeof(PyPointlessPrimVector* self)
 	return PyLong_FromSize_t(sizeof(PyPointlessPrimVector) + pointless_dynarray_n_heap_bytes(&self->array));
 }
 
+static PyObject* PyPointlessPrimVector_malloc_sizeof(PyPointlessPrimVector* self)
+{
+	return PyLong_FromSize_t(sizeof(PyPointlessPrimVector) + pointless_malloc_sizeof(self->array._data));
+}
+
+
 static PyObject* PyPointlessPrimVector_get_typecode(PyPointlessPrimVector* self, void* closure)
 {
 	const char* s = 0;
@@ -1247,6 +1253,7 @@ static PyMethodDef PyPointlessPrimVector_methods[] = {
 	{"sort",        (PyCFunction)PyPointlessPrimVector_sort,        METH_NOARGS,  ""},
 	{"sort_proj",   (PyCFunction)PyPointlessPrimVector_sort_proj,   METH_VARARGS, ""},
 	{"__sizeof__",  (PyCFunction)PyPointlessPrimVector_sizeof,      METH_NOARGS,  ""}, 
+	{"__sizeof2__", (PyCFunction)PyPointlessPrimVector_malloc_sizeof,      METH_NOARGS,  ""},
 	{NULL, NULL}
 };
 
@@ -1437,5 +1444,22 @@ PyPointlessPrimVector* PyPointlessPrimVector_from_buffer(void* buffer, size_t n_
 	pointless_dynarray_t a;
 	pointless_dynarray_init(&a, 1);
 	pointless_dynarray_give_data(&a, buffer, n_buffer);
+	return PyPointlessPrimVector_from_T_vector(&a, POINTLESS_PRIM_VECTOR_TYPE_U8);
+}
+
+PyPointlessPrimVector* PyPointlessPrimVector_from_buffer_2(void* buffer, size_t n_buffer)
+{
+	size_t i;
+	pointless_dynarray_t a;
+	pointless_dynarray_init(&a, 1);
+
+	for (i = 0; i < n_buffer; i++) {
+		if (!pointless_dynarray_push(&a, (char*)buffer + i)) {
+			pointless_dynarray_destroy(&a);
+			PyErr_NoMemory();
+			return 0;
+		}
+	}
+
 	return PyPointlessPrimVector_from_T_vector(&a, POINTLESS_PRIM_VECTOR_TYPE_U8);
 }

@@ -24,9 +24,13 @@
 	}
 	void pointless_malloc_stats()
 	{
-		je_malloc_stats_print();
+		//je_malloc_stats_print();
 	}
+	size_t pointless_malloc_sizeof(void* ptr)
+	{
 
+		return 0;
+	}
 #elif 0
 
 	static long page_size = -1;
@@ -102,6 +106,14 @@
 		update_stats_free(s + sizeof(size_t));
 	}
 
+	size_t pointless_malloc_sizeof(void* ptr)
+	{
+		if (ptr == 0)
+			return 0;
+
+		return *((size_t*)ptr - 1);
+	}
+
 	void* pointless_realloc(void* ptr, size_t size)
 	{
 		if (ptr == 0)
@@ -163,5 +175,8 @@
 	{
 		malloc_stats();
 	}
-
+ size_t pointless_malloc_sizeof(void* ptr)
+{
+return 0;
+}
 #endif
