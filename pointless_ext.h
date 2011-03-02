@@ -210,17 +210,18 @@ typedef struct {
 	PyTypeObject* PyPointlessPrimVectorType_ptr;
 } PyPointless_CAPI;
 
-#define POINTLESS_API_MAGIC 0xC6D89E16
+#define POINTLESS_API_MAGIC 0xC6D89E17
 
 static PyPointless_CAPI* PyPointlessAPI;
 static int PyPointlessAPI_magic;
 
+#define PyPointless_IS_GOOD_IMPORT(magic) (PyPointlessAPI != 0 && PyPointlessAPI_magic == (magic))
+
 #define PyPointless_IMPORT_MACRO(magic)                                                              \
 	if (PyPointlessAPI != 0 && PyPointlessAPI_magic != magic) {                                      \
 		PyErr_SetString(PyExc_ImportError, "pointless already imported with some other magic");      \
-	} else {                                                                                         \
+	} else if (PyPointlessAPI == 0) {                                                                \
 		PyObject* m = PyImport_ImportModule("pointless");                                            \
-		PyPointlessAPI = 0;                                                                          \
 		void* next_PyPointlessAPI = 0;                                                               \
 		if (m != 0) {                                                                                \
 			PyObject* c = PyObject_GetAttrString(m, "pointless_CAPI");                               \
