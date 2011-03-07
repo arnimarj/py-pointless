@@ -312,54 +312,45 @@ static int pointless_serialize_unicode(pointless_create_cb_t* cb, void* unicode_
 static int pointless_serialize_vector_outside(pointless_create_t* c, uint32_t vector, pointless_create_cb_t* cb, const char** error)
 {
 	assert(cv_is_outside_vector(vector) == 1);
-	uint32_t i, n_items = cv_outside_vector_at(vector)->n_items;
+	uint32_t n_items = cv_outside_vector_at(vector)->n_items;
 	void* items = cv_outside_vector_at(vector)->items;
-	void* w = 0;
 	size_t w_len = 0;
 
 	if (!(cb->write)(&n_items, sizeof(n_items), cb->user, error))
 		return 0;
 
-	for (i = 0; i < n_items; i++) {
-		switch (cv_value_type(vector)) {
-			case POINTLESS_VECTOR_I8:
-				w = ((int8_t*)items) + i;
-				w_len = sizeof(int8_t);
-				break;
-			case POINTLESS_VECTOR_U8:
-				w = ((uint8_t*)items) + i;
-				w_len = sizeof(uint8_t);
-				break;
-			case POINTLESS_VECTOR_I16:
-				w = ((int16_t*)items) + i;
-				w_len = sizeof(int16_t);
-				break;
-			case POINTLESS_VECTOR_U16:
-				w = ((uint16_t*)items) + i;
-				w_len = sizeof(uint16_t);
-				break;
-			case POINTLESS_VECTOR_I32:
-				w = ((int32_t*)items) + i;
-				w_len = sizeof(int32_t);
-				break;
-			case POINTLESS_VECTOR_U32:
-				w = ((uint32_t*)items) + i;
-				w_len = sizeof(uint32_t);
-				break;
-			case POINTLESS_VECTOR_FLOAT:
-				w = ((float*)items) + i;
-				w_len = sizeof(float);
-				break;
-			default:
-				assert(0);
-				w = 0;
-				w_len = 0;
-				break;
-		}
-
-		if (!(cb->write)(w, w_len, cb->user, error))
+	switch (cv_value_type(vector)) {
+		case POINTLESS_VECTOR_I8:
+			w_len = sizeof(int8_t);
+			break;
+		case POINTLESS_VECTOR_U8:
+			w_len = sizeof(uint8_t);
+			break;
+		case POINTLESS_VECTOR_I16:
+			w_len = sizeof(int16_t);
+			break;
+		case POINTLESS_VECTOR_U16:
+			w_len = sizeof(uint16_t);
+			break;
+		case POINTLESS_VECTOR_I32:
+			w_len = sizeof(int32_t);
+			break;
+		case POINTLESS_VECTOR_U32:
+			w_len = sizeof(uint32_t);
+			break;
+		case POINTLESS_VECTOR_FLOAT:
+			w_len = sizeof(float);
+			break;
+		default:
+			assert(0);
+			w_len = 0;
+			*error = "pointless_serialize_vector_outside(): internal error";
 			return 0;
 	}
+
+	// TBD: multiply overflow
+	if (!(cb->write)(items, w_len * n_items, cb->user, error))
+		return 0;
 
 	if (!(cb->align_4)(cb->user, error))
 		return 0;
@@ -753,7 +744,6 @@ static int pointless_vector_check_hashable(pointless_create_t* c, uint32_t vecto
 
 static int pointless_create_output_and_end_(pointless_create_t* c, pointless_create_cb_t* cb, const char** error)
 {
-
 	// return value
 	int retval = 1;
 
@@ -1216,15 +1206,16 @@ static int file_align_4(void* user, const char** error)
 		return 0;
 	}
 
-	while (pos % 4) {
-		uint8_t v = 0;
+	// good alignment, nothing to do
+	if (pos % 4 == 0)
+		return 1;
 
-		if (fwrite(&v, sizeof(v), 1, f) != 1) {
-			*error = "fwrite() failure";
-			return 0;
-		}
+	uint32_t v = 0;
+	size_t n = 4 - pos % 4;
 
-		pos += 1;
+	if (fwrite(&v, n, 1, f) != 1) {
+		*error = "fwrite() failure A";
+		return 0;
 	}
 
 	return 1;
@@ -1235,7 +1226,7 @@ static int file_write(void* buf, size_t buflen, void* user, const char** error)
 	FILE* f = (FILE*)user;
 
 	if (fwrite(buf, buflen, 1, f) != 1) {
-		*error = "fwrite() failure";
+		*error = "fwrite() failure B";
 		return 0;
 	}
 
