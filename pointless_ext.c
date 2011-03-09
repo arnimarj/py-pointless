@@ -26,13 +26,6 @@ static PyPointless_CAPI CAPI = {
 	&PyPointlessPrimVectorType
 };
 
-static PyObject* py_pointless_malloc_stats(PyObject* self)
-{
-	pointless_malloc_stats();
-	Py_INCREF(Py_None);
-	return Py_None;
-}
-
 static PyMethodDef pointless_methods[] =
 {
 	POINTLESS_FUNC_DEF("serialize",       pointless_write_object),
@@ -40,7 +33,6 @@ static PyMethodDef pointless_methods[] =
 	POINTLESS_FUNC_DEF("pointless_cmp",   pointless_cmp),
 	POINTLESS_FUNC_DEF("pointless_is_eq", pointless_is_eq),
 	POINTLESS_FUNC_DEF("db_array_sort",   pointless_db_array_sort),
-	{"malloc_stats", py_pointless_malloc_stats, METH_NOARGS, ""},
 	{NULL, NULL},
 };
 
