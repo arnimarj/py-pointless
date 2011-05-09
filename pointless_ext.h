@@ -217,7 +217,7 @@ static int PyPointlessAPI_magic = 0;
 
 #define PyPointless_IMPORT_MACRO(magic)                                                                                              \
 	if (PyPointlessAPI != 0 && PyPointlessAPI_magic != (magic)) {                                                                    \
-		PyErr_Format(PyExc_ImportError, "pointless already imported with other magic [%lx, %lx]", (long)(magic), (long)PyPointlessAPI_magic);\
+		PyErr_Format(PyExc_ImportError, "pointless already imported with other magic [%ld, %ld]", (long)(magic), (long)PyPointlessAPI_magic);\
 	} else if (PyPointlessAPI == 0) {                                                                                                \
 		PyObject* m = PyImport_ImportModule("pointless");                                                                            \
 		if (m != 0) {                                                                                                                \
@@ -229,7 +229,7 @@ static int PyPointlessAPI_magic = 0;
 					void* desc = PyCObject_GetDesc(c);                                                                               \
 					if (desc != 0) {                                                                                                 \
 						if (desc != (void*)POINTLESS_API_MAGIC) {                                                                    \
-							PyErr_Format(PyExc_ImportError, "pointless magic does not match [%lx, %lx]", (long)(magic), (long)desc);  \
+							PyErr_Format(PyExc_ImportError, "pointless magic does not match [%ld, %ld]", (long)(magic), (long)desc);  \
 						} else {                                                                                                     \
 							PyPointlessAPI = next_PyPointlessAPI;                                                                    \
 							PyPointlessAPI_magic = magic;                                                                            \
