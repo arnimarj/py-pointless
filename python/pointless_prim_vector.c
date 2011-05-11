@@ -597,6 +597,137 @@ static PyObject* PyPointlessPrimVector_append(PyPointlessPrimVector* self, PyObj
 	return PyPointlessPrimVector_append_item(self, obj);
 }
 
+static PyObject* PyPointlessPrimVector_append_bulk(PyPointlessPrimVector* self, PyObject* args)
+{
+	PyObject* obj = 0;
+	PyObject* iterator = 0;
+	PyObject* item = 0;
+	size_t n_append = 0;
+	size_t i = 0;
+	size_t j = 0;
+
+	if (!PyArg_ParseTuple(args, "O", &obj))
+		return 0;
+
+	if (!PyPointlessPrimVector_can_resize(self))
+		return 0;
+
+	// fast version 1
+	if (PyPointlessPrimVector_Check(obj)) {
+		PyPointlessPrimVector* p_obj = (PyPointlessPrimVector*)obj;
+
+		if (p_obj->type == self->type) {
+			for (i = 0; i < pointless_dynarray_n_items(&p_obj->array); i++) {
+				void* v = pointless_dynarray_item_at(&p_obj->array, i);
+				if (!pointless_dynarray_push(&self->array, v)) {
+					for (j = 0; j < n_append; j++)
+						pointless_dynarray_pop(&self->array);
+
+					PyErr_NoMemory();
+					return 0;
+				}
+				n_append += 1;
+			}
+
+			Py_INCREF(Py_None);
+			return Py_None;
+		}
+	}
+
+	// fast version 2
+	if (PyPointlessVector_Check(obj)) {
+		PyPointlessVector* p_obj = (PyPointlessVector*)obj;
+
+		size_t s = 0;
+
+		if      (p_obj->v->type == POINTLESS_VECTOR_I8 && self->type == POINTLESS_PRIM_VECTOR_TYPE_I8)
+			s = sizeof(int8_t);
+		else if (p_obj->v->type == POINTLESS_VECTOR_U8 && self->type == POINTLESS_PRIM_VECTOR_TYPE_U8)
+			s = sizeof(uint8_t);
+		else if (p_obj->v->type == POINTLESS_VECTOR_I16 && self->type == POINTLESS_PRIM_VECTOR_TYPE_I16)
+			s = sizeof(int16_t);
+		else if (p_obj->v->type == POINTLESS_VECTOR_U16 && self->type == POINTLESS_PRIM_VECTOR_TYPE_U16)
+			s = sizeof(uint16_t);
+		else if (p_obj->v->type == POINTLESS_VECTOR_I32 && self->type == POINTLESS_PRIM_VECTOR_TYPE_I32)
+			s = sizeof(int32_t);
+		else if (p_obj->v->type == POINTLESS_VECTOR_U32 && self->type == POINTLESS_PRIM_VECTOR_TYPE_U32)
+			s = sizeof(uint32_t);
+		else if (p_obj->v->type == POINTLESS_VECTOR_FLOAT && self->type == POINTLESS_PRIM_VECTOR_TYPE_FLOAT)
+			s = sizeof(float);
+
+		if (s > 0) {
+			void* base = 0;
+
+			switch (p_obj->v->type) {
+				case POINTLESS_VECTOR_I8:
+					base = pointless_reader_vector_i8(&p_obj->pp->p, p_obj->v);
+					break;
+				case POINTLESS_VECTOR_U8:
+					base = pointless_reader_vector_u8(&p_obj->pp->p, p_obj->v);
+					break;
+				case POINTLESS_VECTOR_I16:
+					base = pointless_reader_vector_i16(&p_obj->pp->p, p_obj->v);
+					break;
+				case POINTLESS_VECTOR_U16:
+					base = pointless_reader_vector_u16(&p_obj->pp->p, p_obj->v);
+					break;
+				case POINTLESS_VECTOR_I32:
+					base = pointless_reader_vector_i32(&p_obj->pp->p, p_obj->v);
+					break;
+				case POINTLESS_VECTOR_U32:
+					base = pointless_reader_vector_u32(&p_obj->pp->p, p_obj->v);
+					break;
+				case POINTLESS_VECTOR_FLOAT:
+					base = pointless_reader_vector_float(&p_obj->pp->p, p_obj->v);
+					break;
+			}
+
+			for (i = 0; i < p_obj->slice_n; i++) {
+				void* v = (char*)base + (i + p_obj->slice_i) * s;
+
+				if (!pointless_dynarray_push(&self->array, v)) {
+					for (j = 0; j < n_append; j++)
+						pointless_dynarray_pop(&self->array);
+
+					PyErr_NoMemory();
+					return 0;
+				}
+				n_append += 1;
+			}
+
+			Py_INCREF(Py_None);
+			return Py_None;
+		}
+	}
+
+	iterator = PyObject_GetIter(obj);
+
+	if (iterator == 0)
+		return 0;
+
+	while ((item = PyIter_Next(iterator)) != 0) {
+		if (!PyPointlessPrimVector_append_item(self, item))
+			break;
+
+		n_append += 1;
+		Py_DECREF(item);
+		item = 0;
+	}
+
+	Py_DECREF(iterator);
+	iterator = 0;
+
+	if (PyErr_Occurred()) {
+		for (i = 0; i < n_append; i++)
+			pointless_dynarray_pop(&self->array);
+
+		return 0;
+	}
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
 static PyObject* PyPointlessPrimVector_pop(PyPointlessPrimVector* self)
 {
 	size_t n_items = pointless_dynarray_n_items(&self->array);
@@ -616,6 +747,25 @@ static PyObject* PyPointlessPrimVector_pop(PyPointlessPrimVector* self)
 
 	pointless_dynarray_pop(&self->array);
 	return v;
+}
+
+static PyObject* PyPointlessPrimVector_pop_bulk(PyPointlessPrimVector* self, PyObject* args)
+{
+	PY_LONG_LONG n = 0, i = 0;
+
+	if (!PyArg_ParseTuple(args, "I", &n))
+		return 0;
+
+	if (n > pointless_dynarray_n_items(&self->array)) {
+		PyErr_SetString(PyExc_ValueError, "vector is not big enough");
+		return 0;
+	}
+
+	for (i = 0; i < n; i++)
+		pointless_dynarray_pop(&self->array);
+
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 static size_t PyPointlessPrimVector_index_f(PyPointlessPrimVector* self, float v)
@@ -1223,7 +1373,9 @@ static PyGetSetDef PyPointlessPrimVector_getsets [] = {
 
 static PyMethodDef PyPointlessPrimVector_methods[] = {
 	{"append",      (PyCFunction)PyPointlessPrimVector_append,      METH_VARARGS, ""},
+	{"append_bulk", (PyCFunction)PyPointlessPrimVector_append_bulk, METH_VARARGS, ""},
 	{"pop",         (PyCFunction)PyPointlessPrimVector_pop,         METH_NOARGS,  ""},
+	{"pop_bulk",    (PyCFunction)PyPointlessPrimVector_pop_bulk,    METH_VARARGS, ""},
 	{"index",       (PyCFunction)PyPointlessPrimVector_index,       METH_VARARGS,  ""},
 	{"remove",      (PyCFunction)PyPointlessPrimVector_remove,      METH_VARARGS,  ""},
 	{"fast_remove", (PyCFunction)PyPointlessPrimVector_fast_remove, METH_VARARGS,  ""},
