@@ -40,16 +40,16 @@ static uint32_t pyobject_hash_unicode(PyObject* py_object, pyobject_hash_state_t
 	Py_UNICODE* s = PyUnicode_AS_UNICODE(py_object);
 
 #ifdef Py_UNICODE_WIDE
-	return pointless_hash_unicode_ucs4((uint32_t*)s);
+	return pointless_hash_unicode_ucs4_v0((uint32_t*)s);
 #else
-	return pointless_hash_unicode_ucs2((uint16_t*)s);
+	return pointless_hash_unicode_ucs2_v0((uint16_t*)s);
 #endif
 }
 
 static uint32_t pyobject_hash_string(PyObject* py_object, pyobject_hash_state_t* state)
 {
 	char* s = PyString_AS_STRING(py_object);
-	return pointless_hash_string((uint8_t*)s);
+	return pointless_hash_string_v0((uint8_t*)s);
 }
 
 static uint32_t pyobject_hash_pypointlessbitvector(PyObject* py_object, pyobject_hash_state_t* state)

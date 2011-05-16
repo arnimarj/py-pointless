@@ -108,13 +108,25 @@ static int pointless_get_set_(pointless_t* p, pointless_value_t* set, uint32_t h
 
 int pointless_get_mapping_string_to_u32(pointless_t* p, pointless_value_t* map, char* key, uint32_t* value)
 {
-	uint32_t hash = pointless_hash_string((uint8_t*)key);
+	uint32_t hash = 0;
+
+	switch (p->header->version) {
+		case 0: hash = pointless_hash_string_v0((uint8_t*)key); break;
+		case 1: hash = pointless_hash_string_v1((uint8_t*)key); break;
+	}
+
 	return pointless_get_map_(p, map, hash, check_string, (void*)key, check_and_get_u32, 0, (void*)value);
 }
 
 int pointless_get_mapping_string_to_i64(pointless_t* p, pointless_value_t* map, char* key, int64_t* value)
 {
-	uint32_t hash = pointless_hash_string((uint8_t*)key);
+	uint32_t hash = 0;
+
+	switch (p->header->version) {
+		case 0: hash = pointless_hash_string_v0((uint8_t*)key); break;
+		case 1: hash = pointless_hash_string_v1((uint8_t*)key); break;
+	}
+
 	return pointless_get_map_(p, map, hash, check_string, (void*)key, check_and_get_i64, 0, (void*)value);
 }
 
@@ -225,26 +237,50 @@ int pointless_get_mapping_string_to_vector_value(pointless_t* p, pointless_value
 
 int pointless_get_mapping_string_to_value(pointless_t* p, pointless_value_t* map, char* key, pointless_value_t* value)
 {
-	uint32_t hash = pointless_hash_string((uint8_t*)key);
+	uint32_t hash = 0;
+
+	switch (p->header->version) {
+		case 0: hash = pointless_hash_string_v0((uint8_t*)key); break;
+		case 1: hash = pointless_hash_string_v1((uint8_t*)key); break;
+	}
+
 	return pointless_get_map_(p, map, hash, check_string, (void*)key, get_value, 0, (void*)value);
 }
 
 int pointless_get_mapping_unicode_to_value(pointless_t* p, pointless_value_t* map, uint32_t* key, pointless_value_t* value)
 {
-	uint32_t hash = pointless_hash_unicode_ucs4(key);
+	uint32_t hash = 0;
+
+	switch (p->header->version) {
+		case 0: hash = pointless_hash_unicode_ucs4_v0(key); break;
+		case 1: hash = pointless_hash_unicode_ucs4_v1(key); break;
+	}
+
 	return pointless_get_map_(p, map, hash, check_unicode, (void*)key, get_value, 0, (void*)value);
 }
 
 int pointless_get_mapping_unicode_to_u32(pointless_t* p, pointless_value_t* map, uint32_t* key, uint32_t* value)
 {
-	uint32_t hash = pointless_hash_unicode_ucs4(key);
+	uint32_t hash = 0;
+
+	switch (p->header->version) {
+		case 0: hash = pointless_hash_unicode_ucs4_v0(key); break;
+		case 1: hash = pointless_hash_unicode_ucs4_v1(key); break;
+	}
+
 	return pointless_get_map_(p, map, hash, check_unicode, (void*)key, check_and_get_u32, 0, (void*)value);
 }
 
 
 static int pointless_get_mapping_string_to_value_type(pointless_t* p, pointless_value_t* map, char* key, pointless_value_t* value, uint32_t type)
 {
-	uint32_t hash = pointless_hash_string((uint8_t*)key);
+	uint32_t hash = 0;
+
+	switch (p->header->version) {
+		case 0: hash = pointless_hash_string_v0((uint8_t*)key); break;
+		case 1: hash = pointless_hash_string_v1((uint8_t*)key); break;
+	}
+
 	pointless_value_t v;
 
 	if (!pointless_get_map_(p, map, hash, check_string, (void*)key, get_value, 0, (void*)&v))

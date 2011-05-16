@@ -205,6 +205,7 @@ void pointless_create_begin(pointless_create_t* c)
 	c->bitvector_map_judy = 0;
 	c->unicode_map_judy_count = 0;
 	c->bitvector_map_judy_count = 0;
+	c->version = 0;
 }
 
 static void pointless_create_value_free(pointless_create_t* c, uint32_t i)
@@ -914,7 +915,7 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 	header.n_bitvector = c->bitvector_map_judy_count;
 	header.n_set = n_sets;
 	header.n_map = n_maps;
-	header.padding = 0;
+	header.version = 0;
 
 	// write it out
 	if (!(*cb->write)(&header, sizeof(header), cb->user, error))

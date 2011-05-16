@@ -3,21 +3,38 @@
 #include <pointless/pointless_reader.h>
 #include <pointless/pointless_bitvector.h>
 
+#define PYTHON_STRING_HASH(s, T) { T* p = (s); size_t len = 0; uint32_t x = (uint32_t)(*p) << 7; while (*p) {x = (1000003 * x) ^ (uint32_t)(*p++); len++;} return x ^ len;}
+
+uint32_t pointless_hash_string_v1(uint8_t* s)
+{
+	PYTHON_STRING_HASH(s, uint8_t)
+}
+
+uint32_t pointless_hash_unicode_ucs2_v1(uint16_t* s)
+{
+	PYTHON_STRING_HASH(s, uint16_t)
+}
+
+uint32_t pointless_hash_unicode_ucs4_v1(uint32_t* s)
+{
+	PYTHON_STRING_HASH(s, uint32_t)
+}
+
 #define HASH_UNICODE_SEED 1000000001L
 
 #define POINTLESS_HASH_STRING(s) uint32_t v = 1; while (*(s)) { v = v + HASH_UNICODE_SEED + *(s); (s) += 1; } return v
 
-uint32_t pointless_hash_unicode_ucs4(uint32_t* s)
+uint32_t pointless_hash_unicode_ucs4_v0(uint32_t* s)
 {
 	POINTLESS_HASH_STRING(s);
 }
 
-uint32_t pointless_hash_unicode_ucs2(uint16_t* s)
+uint32_t pointless_hash_unicode_ucs2_v0(uint16_t* s)
 {
 	POINTLESS_HASH_STRING(s);
 }
 
-uint32_t pointless_hash_string(uint8_t* s)
+uint32_t pointless_hash_string_v0(uint8_t* s)
 {
 	POINTLESS_HASH_STRING(s);
 }
@@ -29,13 +46,28 @@ typedef uint32_t (*pointless_hash_create_cb)(pointless_create_t* c, pointless_cr
 static uint32_t pointless_hash_reader_unicode(pointless_t* p, pointless_value_t* v)
 {
 	uint32_t* s = pointless_reader_unicode_value_ucs4(p, v);
-	return pointless_hash_unicode_ucs4(s);
+	uint32_t hash = 0;
+
+	switch (p->header->version) {
+		case 0: hash = pointless_hash_unicode_ucs4_v0(s); break;
+		case 1: hash = pointless_hash_unicode_ucs4_v1(s); break;
+	}
+
+	return hash;
 }
 
 static uint32_t pointless_hash_create_unicode(pointless_create_t* c, pointless_create_value_t* v)
 {
 	uint32_t* s = ((uint32_t*)cv_get_unicode(v) + 1);
-	return pointless_hash_unicode_ucs4(s);
+
+	uint32_t hash = 0;
+
+	switch (c->version) {
+		case 0: hash = pointless_hash_unicode_ucs4_v0(s); break;
+		case 1: hash = pointless_hash_unicode_ucs4_v1(s); break;
+	}
+
+	return hash;
 }
 
 // integers are easy

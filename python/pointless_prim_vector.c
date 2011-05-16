@@ -637,7 +637,6 @@ static PyObject* PyPointlessPrimVector_append_bulk(PyPointlessPrimVector* self, 
 	// fast version 2
 	if (PyPointlessVector_Check(obj)) {
 		PyPointlessVector* p_obj = (PyPointlessVector*)obj;
-
 		size_t s = 0;
 
 		if      (p_obj->v->type == POINTLESS_VECTOR_I8 && self->type == POINTLESS_PRIM_VECTOR_TYPE_I8)

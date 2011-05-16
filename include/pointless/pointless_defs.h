@@ -148,7 +148,7 @@ typedef struct {
 	uint32_t n_bitvector;
 	uint32_t n_set;
 	uint32_t n_map;
-	uint32_t padding;
+	uint32_t version;
 } __attribute__ ((aligned (4))) pointless_header_t;
 
 typedef struct {
@@ -278,6 +278,9 @@ typedef struct {
 	// bitvector value -> bitvector reference
 	Pvoid_t bitvector_map_judy;
 	uint32_t bitvector_map_judy_count;
+
+	// file format version
+	uint32_t version;
 } pointless_create_t;
 
 // create-time utility macros
@@ -325,9 +328,15 @@ void pointless_vector_hash_next(pointless_vector_hash_state_t* state, uint32_t h
 uint32_t pointless_vector_hash_end(pointless_vector_hash_state_t* state);
 
 uint32_t pointless_is_hashable(uint32_t type);
-uint32_t pointless_hash_unicode_ucs4(uint32_t* s);
-uint32_t pointless_hash_unicode_ucs2(uint16_t* s);
-uint32_t pointless_hash_string(uint8_t* s);
+
+uint32_t pointless_hash_unicode_ucs4_v0(uint32_t* s);
+uint32_t pointless_hash_unicode_ucs2_v0(uint16_t* s);
+uint32_t pointless_hash_string_v0(uint8_t* s);
+
+uint32_t pointless_hash_unicode_ucs4_v1(uint32_t* s);
+uint32_t pointless_hash_unicode_ucs2_v1(uint16_t* s);
+uint32_t pointless_hash_string_v1(uint8_t* s);
+
 uint32_t pointless_hash_float(float f);
 uint32_t pointless_hash_i32(int32_t i);
 uint32_t pointless_hash_u32(uint32_t i);
