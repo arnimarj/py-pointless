@@ -144,7 +144,7 @@ PyObject* PyPointless_str(PyObject* py_object);
 PyObject* PyPointless_repr(PyObject* py_object);
 
 uint32_t pypointless_cmp_eq(pointless_t* p, pointless_value_t* v, PyObject* py_object, const char** error);
-uint32_t pyobject_hash(PyObject* py_object, const char** error);
+uint32_t pyobject_hash(PyObject* py_object, uint32_t version, const char** error);
 uint32_t pointless_pybitvector_hash(PyPointlessBitvector* bitvector);
 
 // custom types

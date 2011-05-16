@@ -11,11 +11,10 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 	p->header = (pointless_header_t*)buf;
 
 	// check for version
-	if (p->header->version != 0) {
+	if (!(POINTLESS_FILE_FORMAT_OLDEST_VERSION <= p->header->version && p->header->version <= POINTLESS_FILE_FORMAT_LATEST_VERSION)) {
 		*error = "file version not supported";
 		return 0;
 	}
-
 
 	// right, we need some number of bytes for the offset vectors
 	uint64_t mandatory_size = sizeof(pointless_header_t);

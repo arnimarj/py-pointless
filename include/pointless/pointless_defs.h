@@ -10,6 +10,9 @@
 #include <pointless/pointless_malloc.h>
 #include <pointless/pointless_dynarray.h>
 
+#define POINTLESS_FILE_FORMAT_OLDEST_VERSION 0
+#define POINTLESS_FILE_FORMAT_LATEST_VERSION 1
+
 #define ASSERT_CONCAT_(a, b) a##b
 #define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
 /* These can't be used after statements in c89. */

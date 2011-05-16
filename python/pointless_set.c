@@ -103,7 +103,7 @@ static uint32_t PyPointlessSet_eq_cb(pointless_t* p, pointless_value_t* v, void*
 static int PyPointlessSet_contains(PyPointlessSet* s, PyObject* key)
 {
 	const char* error = 0;
-	uint32_t hash = pyobject_hash(key, &error);
+	uint32_t hash = pyobject_hash(key, s->pp->p.header->version, &error);
 
 	if (error) {
 		PyErr_Format(PyExc_ValueError, "pointless hash error: %s", error);

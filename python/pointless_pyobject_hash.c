@@ -1,6 +1,7 @@
 #include "../pointless_ext.h"
 
 typedef struct {
+	uint32_t version;
 	uint32_t depth;
 	const char** error;
 } pyobject_hash_state_t;
@@ -38,18 +39,32 @@ static uint32_t pyobject_hash_tuple(PyObject* py_object, pyobject_hash_state_t* 
 static uint32_t pyobject_hash_unicode(PyObject* py_object, pyobject_hash_state_t* state)
 {
 	Py_UNICODE* s = PyUnicode_AS_UNICODE(py_object);
+	uint32_t hash = 0;
 
-#ifdef Py_UNICODE_WIDE
-	return pointless_hash_unicode_ucs4_v0((uint32_t*)s);
-#else
-	return pointless_hash_unicode_ucs2_v0((uint16_t*)s);
-#endif
+	switch (state->version) {
+		#ifdef Py_UNICODE_WIDE
+		case 0: hash = pointless_hash_unicode_ucs4_v0((uint32_t*)s); break;
+		case 1: hash = pointless_hash_unicode_ucs4_v1((uint32_t*)s); break;
+		#else
+		case 0: hash = pointless_hash_unicode_ucs2_v0((uint16_t*)s); break;
+		case 1: hash = pointless_hash_unicode_ucs2_v1((uint16_t*)s); break;
+		#endif
+	}
+
+	return hash;
 }
 
 static uint32_t pyobject_hash_string(PyObject* py_object, pyobject_hash_state_t* state)
 {
 	char* s = PyString_AS_STRING(py_object);
-	return pointless_hash_string_v0((uint8_t*)s);
+	uint32_t hash = 0;
+
+	switch (state->version) {
+		case 0: hash = pointless_hash_string_v0((uint8_t*)s); break;
+		case 1: hash = pointless_hash_string_v1((uint8_t*)s); break;
+	}
+
+	return hash;
 }
 
 static uint32_t pyobject_hash_pypointlessbitvector(PyObject* py_object, pyobject_hash_state_t* state)
@@ -186,9 +201,10 @@ static uint32_t pyobject_hash_rec(PyObject* py_object, pyobject_hash_state_t* st
 	return 0;
 }
 
-uint32_t pyobject_hash(PyObject* py_object, const char** error)
+uint32_t pyobject_hash(PyObject* py_object, uint32_t version, const char** error)
 {
 	pyobject_hash_state_t state;
+	state.version = version;
 	state.depth = 0;
 	state.error = error;
 	return pyobject_hash_rec(py_object, &state);
@@ -206,11 +222,17 @@ PyObject* pointless_pyobject_hash(PyObject* self, PyObject* args)
 {
 	PyObject* object = 0;
 	const char* error = 0;
+	int version = POINTLESS_FILE_FORMAT_LATEST_VERSION;
 
-	if (!PyArg_ParseTuple(args, "O:pyobject_hash", &object))
+	if (!PyArg_ParseTuple(args, "O|i:pyobject_hash", &object, &version))
 		return 0;
 
-	uint32_t hash = pyobject_hash(object, &error);
+	if (!(POINTLESS_FILE_FORMAT_OLDEST_VERSION <= version && version <= POINTLESS_FILE_FORMAT_LATEST_VERSION)) {
+		PyErr_Format(PyExc_ValueError, "unsupported version");
+		return 0;
+	}
+
+	uint32_t hash = pyobject_hash(object, version, &error);
 
 	if (error) {
 		PyErr_Format(PyExc_ValueError, "PyObject hashing error: %s", error);
