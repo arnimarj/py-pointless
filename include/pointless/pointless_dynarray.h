@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 #include <pointless/pointless_malloc.h>
+#include <pointless/pointless_int_ops.h>
 
 typedef struct {
 	void* _data;

@@ -8,4 +8,6 @@ int sizet_mult(size_t a, size_t b, size_t* out);
 int u64_mult(uint64_t a, uint64_t b, uint64_t* out);
 int u32_mult(uint32_t a, uint32_t b, uint32_t* out);
 
+int sizet_add_3(size_t a, size_t b, size_t c, size_t* out);
+
 #endif

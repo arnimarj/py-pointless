@@ -73,6 +73,7 @@ setup(
 				'src/pointless_validate_heap.c',
 				'src/pointless_validate_hash_table.c',
 				'src/pointless_malloc.c',
+				'src/pointless_int_ops.c',
 			],
 
 			extra_compile_args = extra_compile_args,
