@@ -2,46 +2,68 @@
 
 // the multiply overflow check is from "Secure Coding in C and C++", chapter 5
 
-int sizet_mult(size_t a, size_t b, size_t* out)
+intop_sizet sizet_mult(intop_sizet a, intop_sizet b)
 {
-	if (a != 0 && b > SIZE_MAX / a)
-		return 0;
+	intop_sizet c;
 
-	*out = a * b;
-	return 1;
+	if (a.is_overflow || b.is_overflow || (a.value != 0 && b.value > SIZE_MAX / a.value) || (b.value != 0 && a.value > SIZE_MAX / b.value)) {
+		c.is_overflow = 1;
+		c.value = 0;
+	} else {
+		c.is_overflow = 0;
+		c.value = a.value * b.value;
+	}
+
+	return c;
 }
 
-int u64_mult(uint64_t a, uint64_t b, uint64_t* out)
+intop_u64 u64_mult(intop_u64 a, intop_u64 b)
 {
-	if (a != 0 && b > UINT64_MAX / a)
-		return 0;
+	intop_u64 c;
 
-	*out = a * b;
-	return 1;
+	if (a.is_overflow || b.is_overflow || (a.value != 0 && b.value > UINT64_MAX / a.value) || (b.value != 0 && a.value > UINT64_MAX / b.value)) {
+		c.is_overflow = 1;
+		c.value = 0;
+	} else {
+		c.is_overflow = 0;
+		c.value = a.value * b.value;
+	}
+
+	return c;
 }
 
-int u32_mult(uint32_t a, uint32_t b, uint32_t* out)
+intop_u32 u32_mult(intop_u32 a, intop_u32 b)
 {
-	if (a != 0 && b > UINT32_MAX / a)
-		return 0;
+	intop_u32 c;
 
-	*out = a * b;
-	return 1;
+	if (a.is_overflow || b.is_overflow || (a.value != 0 && b.value > UINT32_MAX / a.value) || (b.value != 0 && a.value > UINT32_MAX / b.value)) {
+		c.is_overflow = 1;
+		c.value = 0;
+	} else {
+		c.is_overflow = 0;
+		c.value = a.value * b.value;
+	}
+
+	return c;
 }
 
-int sizet_add_2(size_t a, size_t b, size_t* out)
+intop_sizet sizet_add(intop_sizet a, intop_sizet b)
 {
-	// sum = lhs + rhs
-	// overflow iff: sum < lhs or sum < rhs
-	*out = a + b;
-	return (*out >= a && *out >= b);
-}
+	intop_sizet c;
 
-int sizet_add_3(size_t a, size_t b, size_t c, size_t* out)
-{
-	return (sizet_add_2(a, b, out) && sizet_add_2(*out, c, out));
-}
+	if (a.is_overflow || b.is_overflow) {
+		c.is_overflow = 1;
+		c.value = 0;
+	} else {
+		// sum = lhs + rhs
+		// overflow iff: sum < lhs or sum < rhs
+		c.value = a.value + b.value;
+		c.is_overflow = (c.value < a.value && c.value < b.value);
+	}
 
+	return c;
+
+}
 
 // I took the effort to write a Python program to validate these. All critique welcome.
 /*
@@ -97,4 +119,25 @@ for c, (i, j) in enumerate(itertools.product(xrange(0, 2**16, stride), xrange(0,
 	a, _a = mult_overflow_good(i, j)
 	b, _b = mult_overflow_c(i, j)
 
+	assert(a == b)
+	assert(_a == _b)
+
 */
+
+intop_sizet intop_sizet_(size_t v)
+{
+	intop_sizet r = {0, v};
+	return r;
+}
+
+intop_u32 intop_u32_(uint32_t v)
+{
+	intop_u32 r = {0, v};
+	return r;
+}
+
+intop_u64 intop_u64_(uint64_t v)
+{
+	intop_u64 r = {0, v};
+	return r;
+}

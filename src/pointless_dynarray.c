@@ -27,31 +27,29 @@ void pointless_dynarray_pop(pointless_dynarray_t* a)
 // debug stuff
 // #include <stdio.h>
 
-static int next_size(size_t n_alloc, size_t* next_n_alloc)
+static intop_sizet next_size(size_t n_alloc)
 {
 	size_t small_add[] = {1, 1, 2, 2, 4, 4, 4, 8, 8, 10, 11, 12, 13, 14, 15, 16};
 	size_t a = n_alloc / 16;
 	size_t b = n_alloc;
 	size_t c = (n_alloc < 16) ? small_add[n_alloc] : 0;
 
-	return sizet_add_3(a, b, c, next_n_alloc);
+	// (a + b) + c
+	return sizet_add(sizet_add(intop_sizet_(a), intop_sizet_(b)), intop_sizet_(c));
 }
 
 int pointless_dynarray_push(pointless_dynarray_t* a, void* i)
 {
 	if (a->n_items == a->n_alloc) {
-		size_t next_n_alloc = 0;
-		size_t next_n_bytes = 0;
+		// get next allocation size, in terms of items and bytes, with overflow check
+		intop_sizet next_n_alloc = next_size(a->n_alloc);
+		intop_sizet next_n_bytes = sizet_mult(next_n_alloc, intop_sizet_(a->item_size));
 
-		// integer-add overflow
-		if (!next_size(a->n_alloc, &next_n_alloc))
+		if (next_n_bytes.is_overflow)
 			return 0;
 
-		// integer-mult overflow
-		if (!sizet_mult(a->item_size, next_n_alloc, &next_n_bytes))
-			return 0;
-
-		void* next_data = pointless_realloc(a->_data, next_n_bytes);
+		// we're good
+		void* next_data = pointless_realloc(a->_data, next_n_bytes.value);
 
 		if (next_data == 0) {
 			// fprintf(stderr, "ERROR: failure to grow vector of %zu items to %zu items, each item being %zu bytes\n", a->n_alloc, next_n_alloc, a->item_size);
@@ -59,7 +57,7 @@ int pointless_dynarray_push(pointless_dynarray_t* a, void* i)
 		}
 
 		a->_data = next_data;
-		a->n_alloc = next_n_alloc;
+		a->n_alloc = next_n_alloc.value;
 	}
 
 	memcpy((char*)a->_data + a->item_size * a->n_items, i, a->item_size);

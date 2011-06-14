@@ -4,10 +4,34 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-int sizet_mult(size_t a, size_t b, size_t* out);
-int u64_mult(uint64_t a, uint64_t b, uint64_t* out);
-int u32_mult(uint32_t a, uint32_t b, uint32_t* out);
+// values
+typedef struct {
+	int is_overflow;
+	size_t value;
+} intop_sizet;
 
-int sizet_add_3(size_t a, size_t b, size_t c, size_t* out);
+typedef struct {
+	int is_overflow;
+	uint32_t value;
+} intop_u32;
+
+typedef struct {
+	int is_overflow;
+	uint64_t value;
+} intop_u64;
+
+// multiply
+intop_sizet sizet_mult(intop_sizet a, intop_sizet b);
+intop_u64 u64_mult(intop_u64 a, intop_u64 b);
+intop_u32 u32_mult(intop_u32, intop_u32 b);
+
+// add
+intop_sizet sizet_add(intop_sizet a, intop_sizet b);
+
+// value constructors
+intop_sizet intop_sizet_(size_t v);
+intop_u32 intop_u32_(uint32_t v);
+intop_u64 intop_u64_(uint64_t v);
 
 #endif
+
