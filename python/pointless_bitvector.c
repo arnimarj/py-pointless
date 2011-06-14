@@ -419,8 +419,19 @@ static PyObject* PyPointlessBitvector_append(PyPointlessBitvector* self, PyObjec
 	return Py_None;
 }
 
+static PyObject* PyPointlessBitvector_sizeof(PyPointlessBitvector* self)
+{
+	size_t s = sizeof(PyPointlessBitvector);
+
+	if (!self->is_pointless)
+		s += self->primitive_n_bytes_alloc;
+
+	return PyLong_FromSize_t(s);
+}
+
 static PyMethodDef PyPointlessBitvector_methods[] = {
-	{"append",      (PyCFunction)PyPointlessBitvector_append,  METH_VARARGS, ""},
+	{"append",      (PyCFunction)PyPointlessBitvector_append, METH_VARARGS, ""},
+	{"__sizeof__",  (PyCFunction)PyPointlessBitvector_sizeof, METH_NOARGS,  ""},
 	{NULL, NULL}
 };
 
