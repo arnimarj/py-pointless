@@ -68,7 +68,7 @@ static uint32_t pointless_is_container(pointless_value_t* v)
 	return 0;
 }
 
-static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, pointless_value_t* v, uint32_t count, uint32_t depth);
+static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, pointless_value_t* v, Word_t count, uint32_t depth);
 
 //static void print_depth(uint32_t depth)
 //{
@@ -77,18 +77,18 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 //		printf("   ");
 //}
 
-static void process_child(pointless_cycle_marker_state_t* state, uint32_t v_id, pointless_value_t* w, uint32_t count, uint32_t depth)
+static void process_child(pointless_cycle_marker_state_t* state, uint32_t v_id, pointless_value_t* w, Word_t count, uint32_t depth)
 {
 	// if w not in visited: visit(w, cnt)
 	uint32_t w_id = pointless_container_id(state->p, w);
-	//print_depth(depth); printf("process_child(w = %u, count = %u)\n", w_id, count);
+	//print_depth(depth); printf("process_child(w = %u, count = %llu)\n", w_id, (unsigned long long)count);
 
 	Word_t* PValue = 0;
 	JLG(PValue, state->visited_judy, (Word_t)w_id);
 
 	if (PValue == 0) {
 		//print_depth(depth); printf(" w is not in visited\n");
-		//print_depth(depth); printf("  visit(w, %u)\n", count);
+		//print_depth(depth); printf("  visit(w, %llu)\n", (unsigned long long)count);
 
 		pointless_cycle_marker_visit(state, w, count, depth + 1);
 
@@ -134,14 +134,14 @@ static void process_child(pointless_cycle_marker_state_t* state, uint32_t v_id, 
 	}
 }
 
-static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, pointless_value_t* v, uint32_t count, uint32_t depth)
+static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, pointless_value_t* v, Word_t count, uint32_t depth)
 {
 	if (depth >= POINTLESS_MAX_DEPTH) {
 		state->error = "maximum recursion depth reached";
 		return;
 	}
 
-	if (count >= pointless_n_containers(state->p)) {
+	if (count >= (Word_t)pointless_n_containers(state->p)) {
 		state->error = "internal error: pre-order count exceeds number of containers";
 		return;
 	}
@@ -150,7 +150,7 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 	if (!pointless_is_container(v))
 		return;
 
-	//print_depth(depth); printf("pointless_cycle_marker_visit(v = %u, count = %u):\n", pointless_container_id(state->p, v), count);
+	//print_depth(depth); printf("pointless_cycle_marker_visit(v = %u, count = %llu):\n", pointless_container_id(state->p, v), (unsigned long long)count);
 
 	uint32_t v_id = pointless_container_id(state->p, v);
 
@@ -163,9 +163,9 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 		return;
 	}
 
-	*PValue = (Word_t)count;
+	*PValue = count;
 
-	//print_depth(depth); printf(" root[%u] = %u\n", v_id, count);
+	//print_depth(depth); printf(" root[%u] = %llu\n", v_id, (unsigned long long)count);
 
 	// visited[v] = count
 	PValue = 0;
@@ -176,15 +176,15 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 		return;
 	}
 
-	*PValue = (Word_t)count;
+	*PValue = count;
 
-	//print_depth(depth); printf(" visited[%u] = %u\n", v_id, count);
+	//print_depth(depth); printf(" visited[%u] = %llu\n", v_id, (unsigned long long)count);
 
 	// count += 1
-	//print_depth(depth); printf(" count = %u + 1\n", count);
+	//print_depth(depth); printf(" count = %llu + 1\n", (unsigned long long)count);
 	count += 1;
 
-	if (count >= pointless_n_containers(state->p)) {
+	if (count >= (Word_t)pointless_n_containers(state->p)) {
 		state->error = "internal error: pre-order count exceeds number of containers";
 		return;
 	}
