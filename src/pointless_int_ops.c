@@ -233,14 +233,13 @@ static void intop_eval_Em(intop_eval_context_t* context)
 	if (intop_check_error(context))
 		return;
 
-	if (!intop_eval_check_bounds(context))
-		return;
-
-	if (context->tokens[context->i].type == intop_eval_PLUS) {
-		intop_eval_push(context, &context->tokens[context->i]);
+	if (intop_eval_check_bounds(context) && context->tokens[context->i].type == intop_eval_PLUS) {
+		int i = context->i;
 		context->i += 1;
 		intop_eval_T(context);
 		intop_eval_Em(context);
+
+		intop_eval_push(context, &context->tokens[i]);
 	}
 }
 
@@ -260,14 +259,13 @@ static void intop_eval_Tm(intop_eval_context_t* context)
 	if (intop_check_error(context))
 		return;
 
-	if (!intop_eval_check_bounds(context))
-		return;
-
-	if (context->tokens[context->i].type == intop_eval_MULT) {
-		intop_eval_push(context, &context->tokens[context->i]);
+	if (intop_eval_check_bounds(context) && context->tokens[context->i].type == intop_eval_MULT) {
+		int i = context->i;
 		context->i += 1;
 		intop_eval_F(context);
 		intop_eval_Tm(context);
+
+		intop_eval_push(context, &context->tokens[i]);
 	}
 }
 
@@ -334,6 +332,7 @@ int intop_eval_compile(const char* s, intop_eval_context_t* context, const char*
 	context->i = 0;
 	context->n = 0;
 	context->s_n = 0;
+	context->e_n = 0;
 	context->s_error = 0;
 	context->i_error = 0;
 
@@ -370,7 +369,7 @@ int intop_eval_compile(const char* s, intop_eval_context_t* context, const char*
 				s += 1;
 				break;
 			case '*':
-				context->tokens[context->n].type = intop_eval_PLUS;
+				context->tokens[context->n].type = intop_eval_MULT;
 				context->n += 1;
 				s += 1;
 				break;
@@ -381,6 +380,7 @@ int intop_eval_compile(const char* s, intop_eval_context_t* context, const char*
 				s += 1;
 				n_variables += 1;
 				break;
+			case '0':
 			case '1':
 			case '2':
 			case '3':
@@ -443,14 +443,59 @@ int intop_eval_compile(const char* s, intop_eval_context_t* context, const char*
 	return 1;
 }
 
-int intop_eval_eval(intop_eval_context_t* context, const char** error, ...)
+int intop_eval_eval(intop_eval_context_t* context, uint64_t* r, const char** error, ...)
 {
 	// reset context
-	context->s_n = 0;
+	context->e_n = 0;
 	context->s_error = 0;
 	context->i_error = 0;
 
-	// TBD
-	*error = "not implemented";
-	return 0;
+	intop_u64 a, b;
+	int i;
+
+	for (i = 0; i < context->s_n; i++) {
+		switch (context->stack[i].type) {
+			case intop_eval_NUMBER:
+				context->eval[context->e_n] = context->stack[i];
+				context->e_n += 1;
+				break;
+			case intop_eval_PLUS:
+				assert(context->e_n >= 2);
+				assert(context->eval[context->e_n - 1].type == intop_eval_NUMBER);
+				assert(context->eval[context->e_n - 2].type == intop_eval_NUMBER);
+				a = context->eval[context->e_n - 1].number;
+				b = context->eval[context->e_n - 2].number;
+				context->eval[context->e_n - 2].type = intop_eval_NUMBER;
+				context->eval[context->e_n - 2].number = u64_add(a, b);
+				context->e_n -= 1;
+				break;
+			case intop_eval_MULT:
+				assert(context->e_n >= 2);
+				assert(context->eval[context->e_n - 1].type == intop_eval_NUMBER);
+				assert(context->eval[context->e_n - 2].type == intop_eval_NUMBER);
+				a = context->eval[context->e_n - 1].number;
+				b = context->eval[context->e_n - 2].number;
+				context->eval[context->e_n - 2].type = intop_eval_NUMBER;
+				context->eval[context->e_n - 2].number = u64_mult(a, b);
+				context->e_n -= 1;
+				break;
+
+			default:
+				*error = "not supported yet";
+				return 0;
+		}
+	}
+
+	if (context->e_n != 1 || context->eval[0].type != intop_eval_NUMBER) {
+		*error = "compile/eval error";
+		return 0;
+	}
+
+	if (context->eval[0].number.is_overflow) {
+		*error = "eval overflow";
+		return 0;
+	}
+
+	*r = context->eval[0].number.value;
+	return 1;
 }

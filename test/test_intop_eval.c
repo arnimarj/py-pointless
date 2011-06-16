@@ -13,13 +13,22 @@ int main(int argc, const char** argv)
 
 	intop_eval_context_t context;
 	const char* error = 0;
+	uint64_t r = 0;
 	int i = intop_eval_compile(argv[1], &context, &error);
 
 
 	if (i) {
-		printf("RESULT: success\n");
+		printf("COMPILE: success\n");
 	} else {
-		printf("FAILURE: %s\n", error);
+		printf("COMPILE: %s\n", error);
+	}
+
+	i = intop_eval_eval(&context, &r, &error);
+
+	if (i) {
+		printf("EVAL: success [%llu]\n", (unsigned long long)r);
+	} else {
+		printf("EVAL: %s\n", error);
 	}
 
 	exit(EXIT_SUCCESS);

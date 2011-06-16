@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include <errno.h>
+#include <assert.h>
 
 // values
 typedef struct {
@@ -62,9 +63,13 @@ typedef struct {
 	int n;
 	intop_eval_token_t tokens[intop_eval_MAX_N];
 
-	// result stack
+	// compile stack
 	intop_eval_token_t stack[intop_eval_MAX_N];
 	int s_n;
+
+	//eval stack
+	intop_eval_token_t eval[intop_eval_MAX_N];
+	int e_n;
 
 	// error
 	const char* s_error;
@@ -72,6 +77,6 @@ typedef struct {
 } intop_eval_context_t;
 
 int intop_eval_compile(const char* s, intop_eval_context_t* context, const char** error);
-int intop_eval_eval(intop_eval_context_t* context, const char** error, ...);
+int intop_eval_eval(intop_eval_context_t* context, uint64_t* r, const char** error, ...);
 
 #endif
