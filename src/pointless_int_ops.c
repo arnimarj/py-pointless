@@ -65,6 +65,42 @@ intop_sizet sizet_add(intop_sizet a, intop_sizet b)
 
 }
 
+intop_u32 u32_add(intop_u32 a, intop_u32 b)
+{
+	intop_u32 c;
+
+	if (a.is_overflow || b.is_overflow) {
+		c.is_overflow = 1;
+		c.value = 0;
+	} else {
+		// sum = lhs + rhs
+		// overflow iff: sum < lhs or sum < rhs
+		c.value = a.value + b.value;
+		c.is_overflow = (c.value < a.value && c.value < b.value);
+	}
+
+	return c;
+
+}
+
+intop_u64 u64_add(intop_u64 a, intop_u64 b)
+{
+	intop_u64 c;
+
+	if (a.is_overflow || b.is_overflow) {
+		c.is_overflow = 1;
+		c.value = 0;
+	} else {
+		// sum = lhs + rhs
+		// overflow iff: sum < lhs or sum < rhs
+		c.value = a.value + b.value;
+		c.is_overflow = (c.value < a.value && c.value < b.value);
+	}
+
+	return c;
+
+}
+
 // I took the effort to write a Python program to validate these. All critique welcome.
 /*
 #!/usr/bin/python
@@ -140,4 +176,281 @@ intop_u64 intop_u64_(uint64_t v)
 {
 	intop_u64 r = {0, v};
 	return r;
+}
+
+// E = T+T
+// T = E*E
+// F = (E)|fall(E)|tala
+//
+// becomes...
+//
+// E  := TE'
+// E' := +TE'|e
+// T  := FT'
+// T' := *FT'|e
+// F  := (E)|tala|variable
+
+static void intop_eval_E(intop_eval_context_t* context);
+static void intop_eval_Em(intop_eval_context_t* context);
+static void intop_eval_T(intop_eval_context_t* context);
+static void intop_eval_Tm(intop_eval_context_t* context);
+static void intop_eval_F(intop_eval_context_t* context);
+
+static int intop_check_error(intop_eval_context_t* context)
+{
+	return (context->s_error != 0);
+}
+
+static int intop_eval_check_bounds(intop_eval_context_t* context)
+{
+	return (context->i < intop_eval_MAX_N);
+}
+
+static void intop_eval_push(intop_eval_context_t* context, intop_eval_token_t* token)
+{
+	if (context->s_n == intop_eval_MAX_N) {
+		context->s_error = "result stack overflow";
+		context->i_error = context->i;
+		return;
+	}
+
+	context->stack[context->s_n++] = *token;
+}
+
+// E  := TE'
+static void intop_eval_E(intop_eval_context_t* context)
+{
+	if (intop_check_error(context))
+		return;
+
+	intop_eval_T(context);
+	intop_eval_Em(context);
+}
+
+// E' := +TE'|e
+static void intop_eval_Em(intop_eval_context_t* context)
+{
+	if (intop_check_error(context))
+		return;
+
+	if (!intop_eval_check_bounds(context))
+		return;
+
+	if (context->tokens[context->i].type == intop_eval_PLUS) {
+		intop_eval_push(context, &context->tokens[context->i]);
+		context->i += 1;
+		intop_eval_T(context);
+		intop_eval_Em(context);
+	}
+}
+
+// T  := FT'
+static void intop_eval_T(intop_eval_context_t* context)
+{
+	if (intop_check_error(context))
+		return;
+
+	intop_eval_F(context);
+	intop_eval_Tm(context);
+}
+
+// T' := *FT'|e
+static void intop_eval_Tm(intop_eval_context_t* context)
+{
+	if (intop_check_error(context))
+		return;
+
+	if (!intop_eval_check_bounds(context))
+		return;
+
+	if (context->tokens[context->i].type == intop_eval_MULT) {
+		intop_eval_push(context, &context->tokens[context->i]);
+		context->i += 1;
+		intop_eval_F(context);
+		intop_eval_Tm(context);
+	}
+}
+
+static void intop_eval_F(intop_eval_context_t* context)
+{
+	if (intop_check_error(context))
+		return;
+
+	if (!intop_eval_check_bounds(context))
+		goto failure;
+
+	if (context->tokens[context->i].type == intop_eval_NUMBER) {
+		intop_eval_push(context, &context->tokens[context->i]);
+		goto success;
+	}
+
+	if (context->tokens[context->i].type == intop_eval_VARIABLE) {
+		intop_eval_push(context, &context->tokens[context->i]);
+		goto success;
+	}
+
+	if (context->tokens[context->i].type != intop_eval_LPAREN)
+		goto failure;
+
+	context->i += 1;
+	intop_eval_E(context);
+
+	if (intop_check_error(context))
+		return;
+
+	if (!intop_eval_check_bounds(context) || context->tokens[context->i].type != intop_eval_RPAREN) {
+		context->s_error = "expected ')'";
+		context->i_error = context->i;
+		return;
+	}
+
+success:
+	context->i += 1;
+	return;
+
+failure:
+
+	context->s_error = "expected '(', number or variable";
+	context->i_error = context->i;
+
+}
+
+static int parse_number(const char* s, uint64_t* n)
+{
+	char* endptr = 0;
+	errno = 0;
+	unsigned long long int n_ = strtoull(s, &endptr, 10);
+
+	if ((n_ == ULLONG_MAX && errno != 0) || *endptr != 0)
+		return 0;
+
+	*n = (uint64_t)n_;
+	return 1;
+}
+
+int intop_eval_compile(const char* s, intop_eval_context_t* context, const char** error)
+{
+	// initialize context
+	context->i = 0;
+	context->n = 0;
+	context->s_n = 0;
+	context->s_error = 0;
+	context->i_error = 0;
+
+	int n_variables = 0;
+
+	// tokenize
+	char token[32];
+	int i_token = 0;
+
+	while (*s) {
+		if (context->n >= intop_eval_MAX_N) {
+			*error = "too many tokens";
+			return 0;
+		}
+
+		switch (*s) {
+			case '(':
+				context->tokens[context->n].type = intop_eval_LPAREN;
+				context->n += 1;
+				s += 1;
+				break;
+			case ')':
+				context->tokens[context->n].type = intop_eval_RPAREN;
+				context->n += 1;
+				s += 1;
+				break;
+			case ' ':
+			case '\t':
+				s += 1;
+				break;
+			case '+':
+				context->tokens[context->n].type = intop_eval_PLUS;
+				context->n += 1;
+				s += 1;
+				break;
+			case '*':
+				context->tokens[context->n].type = intop_eval_PLUS;
+				context->n += 1;
+				s += 1;
+				break;
+			case 'x':
+				context->tokens[context->n].type = intop_eval_VARIABLE;
+				context->tokens[context->n].var_index = n_variables;
+				context->n += 1;
+				s += 1;
+				n_variables += 1;
+				break;
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				while (*s && isdigit(*s) && i_token < 31) {
+					token[i_token] = *s;
+					i_token += 1;
+					s += 1;
+				}
+
+				if (i_token == 31) {
+					*error = "too big of a number";
+					return 0;
+				}
+
+				token[i_token] = 0;
+
+				context->tokens[context->n].type = intop_eval_NUMBER;
+				context->tokens[context->n].number.is_overflow = 0;
+				context->tokens[context->n].number.value = atoi(token);
+
+				if (!parse_number(token, &context->tokens[context->n].number.value)) {
+					*error = "invalid number";
+					return 0;
+				}
+
+				i_token = 0;
+				context->n += 1;
+
+				break;
+
+			default:
+				*error = "invalid token";
+				return 0;
+		}
+	}
+
+	if (context->n == 0) {
+		*error = "no tokens";
+		return 0;
+	}
+
+	intop_eval_E(context);
+
+	if (intop_check_error(context)) {
+		*error = context->s_error;
+		return 0;
+	}
+
+	if (context->i != context->n) {
+		*error = "some parsing error";
+		return 0;
+	}
+
+	return 1;
+}
+
+int intop_eval_eval(intop_eval_context_t* context, const char** error, ...)
+{
+	// reset context
+	context->s_n = 0;
+	context->s_error = 0;
+	context->i_error = 0;
+
+	// TBD
+	*error = "not implemented";
+	return 0;
 }
