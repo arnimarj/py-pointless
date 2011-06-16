@@ -180,7 +180,7 @@ intop_u64 intop_u64_(uint64_t v)
 
 // E = T+T
 // T = E*E
-// F = (E)|fall(E)|tala
+// F = (E)|x|number
 //
 // becomes...
 //
@@ -188,7 +188,7 @@ intop_u64 intop_u64_(uint64_t v)
 // E' := +TE'|e
 // T  := FT'
 // T' := *FT'|e
-// F  := (E)|tala|variable
+// F  := (E)|x|number
 
 static void intop_eval_E(intop_eval_context_t* context);
 static void intop_eval_Em(intop_eval_context_t* context);
@@ -460,15 +460,6 @@ int intop_eval_eval(intop_eval_context_t* context, uint64_t* r, const char** err
 				context->e_n += 1;
 				break;
 			case intop_eval_PLUS:
-				assert(context->e_n >= 2);
-				assert(context->eval[context->e_n - 1].type == intop_eval_NUMBER);
-				assert(context->eval[context->e_n - 2].type == intop_eval_NUMBER);
-				a = context->eval[context->e_n - 1].number;
-				b = context->eval[context->e_n - 2].number;
-				context->eval[context->e_n - 2].type = intop_eval_NUMBER;
-				context->eval[context->e_n - 2].number = u64_add(a, b);
-				context->e_n -= 1;
-				break;
 			case intop_eval_MULT:
 				assert(context->e_n >= 2);
 				assert(context->eval[context->e_n - 1].type == intop_eval_NUMBER);
@@ -476,12 +467,14 @@ int intop_eval_eval(intop_eval_context_t* context, uint64_t* r, const char** err
 				a = context->eval[context->e_n - 1].number;
 				b = context->eval[context->e_n - 2].number;
 				context->eval[context->e_n - 2].type = intop_eval_NUMBER;
-				context->eval[context->e_n - 2].number = u64_mult(a, b);
+				context->eval[context->e_n - 2].number = (context->stack[i].type == intop_eval_PLUS) ? u64_add(a, b) : u64_mult(a, b);
 				context->e_n -= 1;
 				break;
-
-			default:
+			case intop_eval_VARIABLE:
 				*error = "not supported yet";
+				return 0;
+			default:
+				*error = "invalid token";
 				return 0;
 		}
 	}
