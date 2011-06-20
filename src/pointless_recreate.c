@@ -263,8 +263,13 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 	return POINTLESS_CREATE_VALUE_FAIL;
 }
 
-int pointless_recreate(const char* fname_in, const char* fname_out, const char** error)
+static int pointless_recreate_(const char* fname_in, const char* fname_out, const char** error, int bits)
 {
+	if (bits != 32 && bits != 64) {
+		*error = "internal error";
+		return 0;
+	}
+
 	pointless_t p;
 	pointless_create_t c;
 	pointless_recreate_state_t state;
@@ -286,7 +291,10 @@ int pointless_recreate(const char* fname_in, const char* fname_out, const char**
 
 	is_p = 1;
 
-	pointless_create_begin(&c);
+	if (bits == 32)
+		pointless_create_begin_32(&c);
+	else
+		pointless_create_begin_64(&c);
 
 	is_c = 1;
 
@@ -337,4 +345,14 @@ error:
 	pointless_free(state.map_r_c_mapping);
 
 	return retval;
+}
+
+int pointless_recreate_32(const char* fname_in, const char* fname_out, const char** error)
+{
+	return pointless_recreate_(fname_in, fname_out, error, 32);
+}
+
+int pointless_recreate_64(const char* fname_in, const char* fname_out, const char** error)
+{
+	return pointless_recreate_(fname_in, fname_out, error, 64);
 }

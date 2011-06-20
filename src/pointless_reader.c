@@ -523,7 +523,7 @@ uint32_t pointless_reader_set_iter_hash(pointless_t* p, pointless_value_t* s, ui
 {
 	assert(s->type == POINTLESS_SET_VALUE);
 	pointless_set_header_t* header = (pointless_set_header_t*)PC_HEAP_OFFSET	(p, set_offsets, s->data.data_u32);
-	assert(hearader->hash_vector.type == POINTLESS_VECTOR_U32);
+	assert(header->hash_vector.type == POINTLESS_VECTOR_U32);
 	assert(header->key_vector.type == POINTLESS_VECTOR_VALUE_HASHABLE);
 
 	assert((size_t)header % 4 == 0);

@@ -195,7 +195,7 @@ cleanup:
 	return retval;
 }
 
-void pointless_create_begin(pointless_create_t* c)
+static void pointless_create_begin_(pointless_create_t* c, uint32_t version)
 {
 	c->root = UINT32_MAX;
 
@@ -213,7 +213,17 @@ void pointless_create_begin(pointless_create_t* c)
 	c->bitvector_map_judy = 0;
 	c->unicode_map_judy_count = 0;
 	c->bitvector_map_judy_count = 0;
-	c->version = POINTLESS_FF_VERSION_OFFSET_32_NEWHASH;
+	c->version = version;
+}
+
+void pointless_create_begin_32(pointless_create_t* c)
+{
+	pointless_create_begin_(c, POINTLESS_FF_VERSION_OFFSET_32_NEWHASH);
+}
+
+void pointless_create_begin_64(pointless_create_t* c)
+{
+	pointless_create_begin_(c, POINTLESS_FF_VERSION_OFFSET_64_NEWHASH);
 }
 
 static void pointless_create_value_free(pointless_create_t* c, uint32_t i)

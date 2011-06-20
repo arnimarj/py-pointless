@@ -20,7 +20,8 @@
 #include <pointless/pointless_hash_table.h>
 
 // creation
-void pointless_create_begin(pointless_create_t* c);
+void pointless_create_begin_32(pointless_create_t* c);
+void pointless_create_begin_64(pointless_create_t* c);
 void pointless_create_end(pointless_create_t* c);
 int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, const char** error);
 int pointless_create_output_and_end_b(pointless_create_t* c, void** buf, size_t* buflen, const char** error);
