@@ -10,8 +10,12 @@
 #include <pointless/pointless_malloc.h>
 #include <pointless/pointless_dynarray.h>
 
-#define POINTLESS_FILE_FORMAT_OLDEST_VERSION 0
-#define POINTLESS_FILE_FORMAT_LATEST_VERSION 1
+#define POINTLESS_FILE_FORMAT_OLDEST_VERSION_ 0
+#define POINTLESS_FILE_FORMAT_LATEST_VERSION_ 2
+
+#define POINTLESS_FF_VERSION_OFFSET_32_OLDHASH 0
+#define POINTLESS_FF_VERSION_OFFSET_32_NEWHASH 1
+#define POINTLESS_FF_VERSION_OFFSET_64_NEWHASH 2
 
 #define ASSERT_CONCAT_(a, b) a##b
 #define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
@@ -80,6 +84,9 @@
 #define POINTLESS_BOOLEAN 23
 #define POINTLESS_NULL    24
 
+#define PC_HEAP_OFFSET(p, offsets, i) ((char*)((p)->heap_ptr) + ((p)->is_32_offset ? ((p)->offsets##_32[i]) : ((p)->offsets##_64[i])))
+#define PC_OFFSET(p, offsets, i)      (                         ((p)->is_32_offset ? ((p)->offsets##_32[i]) : ((p)->offsets##_64[i])))
+
 typedef union {
 	int32_t data_i32;
 	uint32_t data_u32;
@@ -135,11 +142,11 @@ uint32_t: n_maps
 
 pointless_value_t[n_inline_values_and_refs]
 
-uint32_t unicode_offsets[n_unicode]
-uint32_t vector_offsets[n_vector]
-uint32_t bitvector_offsets[n_bitvectors]
-uint32_t set_offsets[n_sets]
-uint32_t map_offsets[n_maps]
+uint32/64_t unicode_offsets[n_unicode]
+uint32/64_t vector_offsets[n_vector]
+uint32/64_t bitvector_offsets[n_bitvectors]
+uint32/64_t set_offsets[n_sets]
+uint32/64_t map_offsets[n_maps]
 
 <HEAP>
 */
@@ -168,11 +175,20 @@ typedef struct {
 	pointless_header_t* header;
 
 	// offset vectors
-	uint32_t* unicode_offsets;
-	uint32_t* vector_offsets;
-	uint32_t* bitvector_offsets;
-	uint32_t* set_offsets;
-	uint32_t* map_offsets;
+	uint32_t* unicode_offsets_32;
+	uint32_t* vector_offsets_32;
+	uint32_t* bitvector_offsets_32;
+	uint32_t* set_offsets_32;
+	uint32_t* map_offsets_32;
+
+	uint64_t* unicode_offsets_64;
+	uint64_t* vector_offsets_64;
+	uint64_t* bitvector_offsets_64;
+	uint64_t* set_offsets_64;
+	uint64_t* map_offsets_64;
+
+	int is_32_offset;
+	int is_64_offset;
 
 	// base heap pointer
 	void* heap_ptr;
@@ -194,12 +210,12 @@ typedef struct {
 	pointless_value_t value_vector;
 } __attribute__ ((aligned (4))) pointless_map_header_t;
 
-STATIC_ASSERT(sizeof(pointless_value_data_t) == 4, "pointless_value_data_t must be 4 bytes");
-STATIC_ASSERT(sizeof(pointless_value_t) == 8, "pointless_value_t must be 8 bytes");
+STATIC_ASSERT(sizeof(pointless_value_data_t)   == 4, "pointless_value_data_t must be 4 bytes");
+STATIC_ASSERT(sizeof(pointless_value_t)        == 8, "pointless_value_t must be 8 bytes");
 STATIC_ASSERT(sizeof(pointless_create_value_t) == 8, "pointless_create_value_t must be 8 bytes");
-STATIC_ASSERT(sizeof(pointless_header_t) == 32, "pointless_header_t must be 8 bytes");
-STATIC_ASSERT(sizeof(pointless_set_header_t) == 24, "pointless_set_header_t must be 8 bytes");
-STATIC_ASSERT(sizeof(pointless_map_header_t) == 32, "pointless_map_header_t must be 8 bytes");
+STATIC_ASSERT(sizeof(pointless_header_t)       == 32, "pointless_header_t must be 32 bytes");
+STATIC_ASSERT(sizeof(pointless_set_header_t)   == 24, "pointless_set_header_t must be 24 bytes");
+STATIC_ASSERT(sizeof(pointless_map_header_t)   == 32, "pointless_map_header_t must be 32 bytes");
 
 // pointless-owned vector
 typedef struct {

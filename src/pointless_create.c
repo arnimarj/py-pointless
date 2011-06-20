@@ -6,11 +6,19 @@ typedef struct {
 	void* user;
 } pointless_create_cb_t;
 
-static uint32_t align_next_4(uint32_t v)
+static uint32_t align_next_4_32(uint32_t v)
 {
 	while (v % 4)
 		v += 1;
 	
+	return v;
+}
+
+static uint64_t align_next_4_64(uint64_t v)
+{
+	while (v % 4)
+		v += 1;
+
 	return v;
 }
 
@@ -205,7 +213,7 @@ void pointless_create_begin(pointless_create_t* c)
 	c->bitvector_map_judy = 0;
 	c->unicode_map_judy_count = 0;
 	c->bitvector_map_judy_count = 0;
-	c->version = POINTLESS_FILE_FORMAT_LATEST_VERSION;
+	c->version = POINTLESS_FF_VERSION_OFFSET_32_NEWHASH;
 }
 
 static void pointless_create_value_free(pointless_create_t* c, uint32_t i)
@@ -748,6 +756,23 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 	// return value
 	int retval = 1;
 
+	// different version of offset
+	int is_32_offset = 0;
+	int is_64_offset = 0;
+
+	switch (c->version) {
+		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
+		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
+			is_32_offset = 1;
+			break;
+		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
+			is_64_offset = 1;
+			break;
+		default:
+			*error = "unsupported version";
+			return 0;
+	}
+
 	// bitmask for each value, used in cycle-detection
 	void* priv_vector_bitmask = 0;
 	void* outside_vector_bitmask = 0;
@@ -915,27 +940,30 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 	header.n_bitvector = c->bitvector_map_judy_count;
 	header.n_set = n_sets;
 	header.n_map = n_maps;
-	header.version = POINTLESS_FILE_FORMAT_LATEST_VERSION;
+	header.version = c->version;
 
 	// write it out
 	if (!(*cb->write)(&header, sizeof(header), cb->user, error))
 		goto error_cleanup;
 
 	// current offset value, refs are relative to heap base
-	uint32_t current_offset = 0;
+	uint32_t current_offset_32 = 0;
+	uint64_t current_offset_64 = 0;
 
 	// write out offset vectors, first unicodes
 	uint32_t debug_n_unicode = 0;
+
+	#define PC_WRITE_OFFSET() if (is_32_offset && !(*cb->write)(&current_offset_32, sizeof(current_offset_32), cb->user, error)) {goto error_cleanup;} if (is_64_offset && !(*cb->write)(&current_offset_64, sizeof(current_offset_64), cb->user, error)) {goto error_cleanup;}
+	#define PC_INCREMENT_OFFSET(f) {current_offset_32 += (f); current_offset_64 += (f);}
+	#define PC_ALIGN_OFFSET() {current_offset_32 = align_next_4_32(current_offset_32); current_offset_64 = align_next_4_64(current_offset_64);}
 
 	for (i = 0; i < n_values; i++) {
 		if (cv_value_type(i) == POINTLESS_UNICODE) {
 			assert(cv_value_data_u32(i) == debug_n_unicode);
 
-			if (!(*cb->write)(&current_offset, sizeof(current_offset), cb->user, error))
-				goto error_cleanup;
-
-			current_offset += sizeof(uint32_t) + (*((uint32_t*)cv_unicode_at(i)) + 1) * sizeof(pointless_char_t);
-			current_offset = align_next_4(current_offset);
+			PC_WRITE_OFFSET();
+			PC_INCREMENT_OFFSET(sizeof(uint32_t) + (*((uint32_t*)cv_unicode_at(i)) + 1) * sizeof(pointless_char_t));
+			PC_ALIGN_OFFSET();
 			debug_n_unicode += 1;
 		}
 	}
@@ -989,11 +1017,9 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 				break;
 		}
 
-		if (!(*cb->write)(&current_offset, sizeof(current_offset), cb->user, error))
-			goto error_cleanup;
-
-		current_offset += vector_heap_size;
-		current_offset = align_next_4(current_offset);
+		PC_WRITE_OFFSET();
+		PC_INCREMENT_OFFSET(vector_heap_size);
+		PC_ALIGN_OFFSET();
 		debug_n_priv_vectors += 1;
 	}
 
@@ -1042,11 +1068,9 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 				break;
 		}
 
-		if (!(*cb->write)(&current_offset, sizeof(current_offset), cb->user, error))
-			goto error_cleanup;
-
-		current_offset += vector_heap_size;
-		current_offset = align_next_4(current_offset);
+		PC_WRITE_OFFSET();
+		PC_INCREMENT_OFFSET(vector_heap_size);
+		PC_ALIGN_OFFSET();
 		debug_n_outside_vectors += 1;
 	}
 
@@ -1059,11 +1083,9 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 		if (cv_value_type(i) == POINTLESS_BITVECTOR) {
 			assert(cv_value_data_u32(i) == debug_n_bitvectors);
 
-			if (!(*cb->write)(&current_offset, sizeof(current_offset), cb->user, error))
-				goto error_cleanup;
-
-			current_offset += sizeof(uint32_t) + ICEIL(*((uint32_t*)cv_bitvector_at(i)), 8);
-			current_offset = align_next_4(current_offset);
+			PC_WRITE_OFFSET();
+			PC_INCREMENT_OFFSET(sizeof(uint32_t) + ICEIL(*((uint32_t*)cv_bitvector_at(i)), 8));
+			PC_ALIGN_OFFSET();
 			debug_n_bitvectors += 1;
 		}
 	}
@@ -1077,11 +1099,9 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 		if (cv_value_type(i) == POINTLESS_SET_VALUE) {
 			assert(cv_value_data_u32(i) == debug_n_sets);
 
-			if (!(*cb->write)(&current_offset, sizeof(current_offset), cb->user, error))
-				goto error_cleanup;
-
-			current_offset += sizeof(pointless_set_header_t);
-			current_offset = align_next_4(current_offset);
+			PC_WRITE_OFFSET();
+			PC_INCREMENT_OFFSET(sizeof(pointless_set_header_t));
+			PC_ALIGN_OFFSET();
 			debug_n_sets += 1;
 		}
 	}
@@ -1093,11 +1113,9 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 		if (cv_value_type(i) == POINTLESS_MAP_VALUE_VALUE) {
 			assert(cv_value_data_u32(i) == debug_n_maps);
 
-			if (!(*cb->write)(&current_offset, sizeof(current_offset), cb->user, error))
-				goto error_cleanup;
-
-			current_offset += sizeof(pointless_map_header_t);
-			current_offset = align_next_4(current_offset);
+			PC_WRITE_OFFSET();
+			PC_INCREMENT_OFFSET(sizeof(pointless_map_header_t));
+			PC_ALIGN_OFFSET();
 			debug_n_maps += 1;
 		}
 	}

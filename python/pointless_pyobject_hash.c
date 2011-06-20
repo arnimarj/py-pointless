@@ -222,12 +222,12 @@ PyObject* pointless_pyobject_hash(PyObject* self, PyObject* args)
 {
 	PyObject* object = 0;
 	const char* error = 0;
-	int version = POINTLESS_FILE_FORMAT_LATEST_VERSION;
+	int version = POINTLESS_FILE_FORMAT_LATEST_VERSION_;
 
 	if (!PyArg_ParseTuple(args, "O|i:pyobject_hash", &object, &version))
 		return 0;
 
-	if (!(POINTLESS_FILE_FORMAT_OLDEST_VERSION <= version && version <= POINTLESS_FILE_FORMAT_LATEST_VERSION)) {
+	if (!(POINTLESS_FILE_FORMAT_OLDEST_VERSION_ <= version && version <= POINTLESS_FILE_FORMAT_LATEST_VERSION_)) {
 		PyErr_Format(PyExc_ValueError, "unsupported version");
 		return 0;
 	}

@@ -11,10 +11,23 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 	p->header = (pointless_header_t*)buf;
 
 	// check for version
-	if (!(POINTLESS_FILE_FORMAT_OLDEST_VERSION <= p->header->version && p->header->version <= POINTLESS_FILE_FORMAT_LATEST_VERSION)) {
-		*error = "file version not supported";
-		return 0;
+	p->is_32_offset = 0;
+	p->is_64_offset = 0;
+
+	switch (p->header->version) {
+		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
+		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
+			p->is_32_offset = 1;
+			break;
+		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
+			p->is_64_offset = 1;
+			break;
+		default:
+			*error = "file version not supported";
+			return 0;
 	}
+
+
 
 	// right, we need some number of bytes for the offset vectors
 	uint64_t mandatory_size = sizeof(pointless_header_t);
@@ -30,15 +43,26 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 	}
 
 	// offset vectors
-	p->unicode_offsets   = (uint32_t*)(p->header + 1);
-	p->vector_offsets    = (uint32_t*)(p->unicode_offsets + p->header->n_unicode);
-	p->bitvector_offsets = (uint32_t*)(p->vector_offsets + p->header->n_vector);
-	p->set_offsets       = (uint32_t*)(p->bitvector_offsets + p->header->n_bitvector);
-	p->map_offsets       = (uint32_t*)(p->set_offsets + p->header->n_set);
+	p->unicode_offsets_32   = (uint32_t*)(p->header + 1);
+	p->vector_offsets_32    = (uint32_t*)(p->unicode_offsets_32   + p->header->n_unicode);
+	p->bitvector_offsets_32 = (uint32_t*)(p->vector_offsets_32    + p->header->n_vector);
+	p->set_offsets_32       = (uint32_t*)(p->bitvector_offsets_32 + p->header->n_bitvector);
+	p->map_offsets_32       = (uint32_t*)(p->set_offsets_32       + p->header->n_set);
+
+	p->unicode_offsets_64   = (uint64_t*)(p->header + 1);
+	p->vector_offsets_64    = (uint64_t*)(p->unicode_offsets_64   + p->header->n_unicode);
+	p->bitvector_offsets_64 = (uint64_t*)(p->vector_offsets_64    + p->header->n_vector);
+	p->set_offsets_64       = (uint64_t*)(p->bitvector_offsets_64 + p->header->n_bitvector);
+	p->map_offsets_64       = (uint64_t*)(p->set_offsets_64       + p->header->n_set);
 
 	// our heap
 	p->heap_len = (buflen - mandatory_size);
-	p->heap_ptr = (void*)(p->map_offsets + p->header->n_map);
+	p->heap_ptr = 0;
+
+	if (p->is_32_offset)
+		p->heap_ptr = (void*)(p->map_offsets_32 + p->header->n_map);
+	else
+		p->heap_ptr = (void*)(p->map_offsets_64 + p->header->n_map);
 
 	// let us validate the damn thing
 	pointless_validate_context_t context;
@@ -127,16 +151,14 @@ pointless_value_t* pointless_root(pointless_t* p)
 uint32_t pointless_reader_unicode_len(pointless_t* p, pointless_value_t* v)
 {
 	assert(v->data.data_u32 < p->header->n_unicode);
-	uint32_t offset = p->unicode_offsets[v->data.data_u32];
-	uint32_t* u_len = (uint32_t*)((char*)p->heap_ptr + offset);
+	uint32_t* u_len = (uint32_t*)PC_HEAP_OFFSET(p, unicode_offsets, v->data.data_u32);
 	return *u_len;
 }
 
 static pointless_char_t* pointless_reader_unicode_value(pointless_t* p, pointless_value_t* v)
 {
 	assert(v->data.data_u32 < p->header->n_unicode);
-	uint32_t offset = p->unicode_offsets[v->data.data_u32];
-	uint32_t* u_len = (uint32_t*)((char*)p->heap_ptr + offset);
+	uint32_t* u_len = (uint32_t*)PC_HEAP_OFFSET(p, unicode_offsets, v->data.data_u32);
 	return (pointless_char_t*)(u_len + 1);
 }
 
@@ -164,8 +186,7 @@ uint32_t pointless_reader_vector_n_items(pointless_t* p, pointless_value_t* v)
 		return 0;
 
 	assert(v->data.data_u32 < p->header->n_vector);
-	uint32_t offset = p->vector_offsets[v->data.data_u32];
-	uint32_t* v_len = (uint32_t*)((char*)p->heap_ptr + offset);
+	uint32_t* v_len = (uint32_t*)PC_HEAP_OFFSET(p, vector_offsets, v->data.data_u32);
 
 	return *v_len;
 }
@@ -176,8 +197,7 @@ static void* pointless_reader_vector_base_ptr(pointless_t* p, pointless_value_t*
 		return 0;
 
 	assert(v->data.data_u32 < p->header->n_vector);
-	uint32_t offset = p->vector_offsets[v->data.data_u32];
-	uint32_t* v_len = (uint32_t*)((char*)p->heap_ptr + offset);
+	uint32_t* v_len = (uint32_t*)PC_HEAP_OFFSET(p, vector_offsets, v->data.data_u32);
 	return (void*)(v_len + 1);
 }
 
@@ -271,7 +291,7 @@ uint32_t pointless_reader_bitvector_n_bits(pointless_t* p, pointless_value_t* v)
 
 	if (v->type == POINTLESS_BITVECTOR) {
 		assert(v->data.data_u32 < p->header->n_bitvector);
-		buffer = (void*)((char*)p->heap_ptr + p->bitvector_offsets[v->data.data_u32]);
+		buffer = (void*)PC_HEAP_OFFSET(p, bitvector_offsets, v->data.data_u32);
 	}
 
 	assert((size_t)buffer % 4 == 0);
@@ -287,7 +307,7 @@ uint32_t pointless_reader_bitvector_is_set(pointless_t* p, pointless_value_t* v,
 
 	if (v->type == POINTLESS_BITVECTOR) {
 		assert(v->data.data_u32 < p->header->n_bitvector);
-		buffer = (void*)((char*)p->heap_ptr + p->bitvector_offsets[v->data.data_u32]);
+		buffer = (void*)PC_HEAP_OFFSET(p, bitvector_offsets, v->data.data_u32);
 	}
 
 	assert((size_t)buffer % 4 == 0);
@@ -297,15 +317,14 @@ uint32_t pointless_reader_bitvector_is_set(pointless_t* p, pointless_value_t* v,
 
 void* pointless_reader_bitvector_buffer(pointless_t* p, pointless_value_t* v)
 {
-	return (void*)((char*)p->heap_ptr + p->bitvector_offsets[v->data.data_u32]);
+	return (void*)PC_HEAP_OFFSET(p, bitvector_offsets, v->data.data_u32);
 }
 
 // sets
 uint32_t pointless_reader_set_n_items(pointless_t* p, pointless_value_t* s)
 {
 	assert(s->type == POINTLESS_SET_VALUE);
-	uint32_t offset = p->set_offsets[s->data.data_u32];
-	pointless_set_header_t* header = (pointless_set_header_t*)((char*)p->heap_ptr + offset);
+	pointless_set_header_t* header = (pointless_set_header_t*)PC_HEAP_OFFSET(p, set_offsets, s->data.data_u32);
 	assert((size_t)header % 4 == 0);
 	return header->n_items;
 }
@@ -313,8 +332,7 @@ uint32_t pointless_reader_set_n_items(pointless_t* p, pointless_value_t* s)
 uint32_t pointless_reader_set_n_buckets(pointless_t* p, pointless_value_t* s)
 {
 	assert(s->type == POINTLESS_SET_VALUE);
-	uint32_t offset = p->set_offsets[s->data.data_u32];
-	pointless_set_header_t* header = (pointless_set_header_t*)((char*)p->heap_ptr + offset);
+	pointless_set_header_t* header = (pointless_set_header_t*)PC_HEAP_OFFSET(p, set_offsets, s->data.data_u32);
 	assert(pointless_reader_vector_n_items(p, &header->key_vector) == pointless_reader_vector_n_items(p, &header->hash_vector));
 	assert((size_t)header % 4 == 0);
 	return pointless_reader_vector_n_items(p, &header->key_vector);
@@ -323,8 +341,7 @@ uint32_t pointless_reader_set_n_buckets(pointless_t* p, pointless_value_t* s)
 uint32_t pointless_reader_set_iter(pointless_t* p, pointless_value_t* s, pointless_value_t** k, uint32_t* iter_state)
 {
 	assert(s->type == POINTLESS_SET_VALUE);
-	uint32_t offset = p->set_offsets[s->data.data_u32];
-	pointless_set_header_t* header = (pointless_set_header_t*)((char*)p->heap_ptr + offset);
+	pointless_set_header_t* header = (pointless_set_header_t*)PC_HEAP_OFFSET(p, set_offsets, s->data.data_u32);
 	assert((size_t)header % 4 == 0);
 	assert(header->key_vector.type == POINTLESS_VECTOR_VALUE_HASHABLE);
 	uint32_t n_buckets = pointless_reader_vector_n_items(p, &header->key_vector);
@@ -350,8 +367,7 @@ void pointless_reader_set_lookup(pointless_t* p, pointless_value_t* s, pointless
 
 	// this must be a set
 	assert(s->type == POINTLESS_SET_VALUE);
-	uint32_t offset = p->set_offsets[s->data.data_u32];
-	pointless_set_header_t* header = (pointless_set_header_t*)((char*)p->heap_ptr + offset);
+	pointless_set_header_t* header = (pointless_set_header_t*)PC_HEAP_OFFSET(p, set_offsets, s->data.data_u32);
 	assert((size_t)header % 4 == 0);
 
 	// value hash
@@ -376,8 +392,7 @@ void pointless_reader_set_lookup_ext(pointless_t* p, pointless_value_t* s, uint3
 {
 	// this must be a set
 	assert(s->type == POINTLESS_SET_VALUE);
-	uint32_t offset = p->set_offsets[s->data.data_u32];
-	pointless_set_header_t* header = (pointless_set_header_t*)((char*)p->heap_ptr + offset);
+	pointless_set_header_t* header = (pointless_set_header_t*)PC_HEAP_OFFSET(p, set_offsets, s->data.data_u32);
 	assert((size_t)header % 4 == 0);
 
 	// other info
@@ -399,8 +414,7 @@ pointless_value_t* pointless_set_hash_vector(pointless_t* p, pointless_value_t* 
 {
 	// this must be a set
 	assert(s->type == POINTLESS_SET_VALUE);
-	uint32_t offset = p->set_offsets[s->data.data_u32];
-	pointless_set_header_t* header = (pointless_set_header_t*)((char*)p->heap_ptr + offset);
+	pointless_set_header_t* header = (pointless_set_header_t*)PC_HEAP_OFFSET(p, set_offsets, s->data.data_u32);
 	assert((size_t)header % 4 == 0);
 
 	return &header->hash_vector;
@@ -410,8 +424,7 @@ pointless_value_t* pointless_set_key_vector(pointless_t* p, pointless_value_t* s
 {
 	// this must be a set
 	assert(s->type == POINTLESS_SET_VALUE);
-	uint32_t offset = p->set_offsets[s->data.data_u32];
-	pointless_set_header_t* header = (pointless_set_header_t*)((char*)p->heap_ptr + offset);
+	pointless_set_header_t* header = (pointless_set_header_t*)PC_HEAP_OFFSET(p, set_offsets, s->data.data_u32);
 	assert((size_t)header % 4 == 0);
 
 	return &header->key_vector;
@@ -420,8 +433,7 @@ pointless_value_t* pointless_set_key_vector(pointless_t* p, pointless_value_t* s
 uint32_t pointless_reader_map_n_items(pointless_t* p, pointless_value_t* m)
 {
 	assert(m->type == POINTLESS_MAP_VALUE_VALUE);
-	uint32_t offset = p->map_offsets[m->data.data_u32];
-	pointless_map_header_t* header = (pointless_map_header_t*)((char*)p->heap_ptr + offset);
+	pointless_map_header_t* header = (pointless_map_header_t*)PC_HEAP_OFFSET(p, map_offsets, m->data.data_u32);
 	assert((size_t)header % 4 == 0);
 	return header->n_items;
 }
@@ -429,8 +441,7 @@ uint32_t pointless_reader_map_n_items(pointless_t* p, pointless_value_t* m)
 uint32_t pointless_reader_map_n_buckets(pointless_t* p, pointless_value_t* m)
 {
 	assert(m->type == POINTLESS_MAP_VALUE_VALUE);
-	uint32_t offset = p->map_offsets[m->data.data_u32];
-	pointless_map_header_t* header = (pointless_map_header_t*)((char*)p->heap_ptr + offset);
+	pointless_map_header_t* header = (pointless_map_header_t*)PC_HEAP_OFFSET(p, map_offsets, m->data.data_u32);
 	assert(pointless_reader_vector_n_items(p, &header->hash_vector) == pointless_reader_vector_n_items(p, &header->key_vector));
 	assert(pointless_reader_vector_n_items(p, &header->key_vector) == pointless_reader_vector_n_items(p, &header->value_vector));
 	assert((size_t)header % 4 == 0);
@@ -441,8 +452,7 @@ uint32_t pointless_reader_map_n_buckets(pointless_t* p, pointless_value_t* m)
 uint32_t pointless_reader_map_iter(pointless_t* p, pointless_value_t* m, pointless_value_t** k, pointless_value_t** v, uint32_t* iter_state)
 {
 	assert(m->type == POINTLESS_MAP_VALUE_VALUE);
-	uint32_t offset = p->map_offsets[m->data.data_u32];
-	pointless_map_header_t* header = (pointless_map_header_t*)((char*)p->heap_ptr + offset);
+	pointless_map_header_t* header = (pointless_map_header_t*)PC_HEAP_OFFSET(p, map_offsets, m->data.data_u32);
 	assert(header->key_vector.type == POINTLESS_VECTOR_VALUE_HASHABLE);
 	assert(header->value_vector.type == POINTLESS_VECTOR_VALUE || header->value_vector.type == POINTLESS_VECTOR_VALUE_HASHABLE);
 	uint32_t n_buckets = pointless_reader_vector_n_items(p, &header->key_vector);
@@ -463,8 +473,7 @@ uint32_t pointless_reader_map_iter(pointless_t* p, pointless_value_t* m, pointle
 void pointless_reader_map_iter_hash_init(pointless_t* p, pointless_value_t* m, uint32_t hash, pointless_hash_iter_state_t* iter_state)
 {
 	assert(m->type == POINTLESS_MAP_VALUE_VALUE);
-	uint32_t offset = p->map_offsets[m->data.data_u32];
-	pointless_map_header_t* header = (pointless_map_header_t*)((char*)p->heap_ptr + offset);
+	pointless_map_header_t* header = (pointless_map_header_t*)PC_HEAP_OFFSET(p, map_offsets, m->data.data_u32);
 	assert(header->hash_vector.type == POINTLESS_VECTOR_U32);
 	uint32_t n_buckets = pointless_reader_vector_n_items(p, &header->hash_vector);
 	assert((size_t)header % 4 == 0);
@@ -474,8 +483,7 @@ void pointless_reader_map_iter_hash_init(pointless_t* p, pointless_value_t* m, u
 uint32_t pointless_reader_map_iter_hash(pointless_t* p, pointless_value_t* m, uint32_t hash, pointless_value_t** kk, pointless_value_t** vv, pointless_hash_iter_state_t* iter_state)
 {
 	assert(m->type == POINTLESS_MAP_VALUE_VALUE);
-	uint32_t offset = p->map_offsets[m->data.data_u32];
-	pointless_map_header_t* header = (pointless_map_header_t*)((char*)p->heap_ptr + offset);
+	pointless_map_header_t* header = (pointless_map_header_t*)PC_HEAP_OFFSET(p, map_offsets, m->data.data_u32);
 	assert(header->hash_vector.type == POINTLESS_VECTOR_U32);
 	assert(header->key_vector.type == POINTLESS_VECTOR_VALUE_HASHABLE);
 	assert(header->value_vector.type == POINTLESS_VECTOR_VALUE || header->value_vector.type == POINTLESS_VECTOR_VALUE_HASHABLE);
@@ -504,8 +512,7 @@ uint32_t pointless_reader_map_iter_hash(pointless_t* p, pointless_value_t* m, ui
 void pointless_reader_set_iter_hash_init(pointless_t* p, pointless_value_t* s, uint32_t hash, pointless_hash_iter_state_t* iter_state)
 {
 	assert(s->type == POINTLESS_SET_VALUE);
-	uint32_t offset = p->set_offsets[s->data.data_u32];
-	pointless_set_header_t* header = (pointless_set_header_t*)((char*)p->heap_ptr + offset);
+	pointless_set_header_t* header = (pointless_set_header_t*)PC_HEAP_OFFSET(p, set_offsets, s->data.data_u32);
 	assert(header->hash_vector.type == POINTLESS_VECTOR_U32);
 	uint32_t n_buckets = pointless_reader_vector_n_items(p, &header->hash_vector);
 	assert((size_t)header % 4 == 0);
@@ -515,9 +522,8 @@ void pointless_reader_set_iter_hash_init(pointless_t* p, pointless_value_t* s, u
 uint32_t pointless_reader_set_iter_hash(pointless_t* p, pointless_value_t* s, uint32_t hash, pointless_value_t** kk, pointless_hash_iter_state_t* iter_state)
 {
 	assert(s->type == POINTLESS_SET_VALUE);
-	uint32_t offset = p->set_offsets[s->data.data_u32];
-	pointless_set_header_t* header = (pointless_set_header_t*)((char*)p->heap_ptr + offset);
-	assert(header->hash_vector.type == POINTLESS_VECTOR_U32);
+	pointless_set_header_t* header = (pointless_set_header_t*)PC_HEAP_OFFSET	(p, set_offsets, s->data.data_u32);
+	assert(hearader->hash_vector.type == POINTLESS_VECTOR_U32);
 	assert(header->key_vector.type == POINTLESS_VECTOR_VALUE_HASHABLE);
 
 	assert((size_t)header % 4 == 0);
@@ -549,8 +555,7 @@ void pointless_reader_map_lookup(pointless_t* p, pointless_value_t* m, pointless
 
 	// this must be a map
 	assert(m->type == POINTLESS_MAP_VALUE_VALUE);
-	uint32_t offset = p->map_offsets[m->data.data_u32];
-	pointless_map_header_t* header = (pointless_map_header_t*)((char*)p->heap_ptr + offset);
+	pointless_map_header_t* header = (pointless_map_header_t*)PC_HEAP_OFFSET(p, map_offsets, m->data.data_u32);
 	assert((size_t)header % 4 == 0);
 
 	// value hash
@@ -579,8 +584,7 @@ void pointless_reader_map_lookup_ext(pointless_t* p, pointless_value_t* m, uint3
 {
 	// this must be a map
 	assert(m->type == POINTLESS_MAP_VALUE_VALUE);
-	uint32_t offset = p->map_offsets[m->data.data_u32];
-	pointless_map_header_t* header = (pointless_map_header_t*)((char*)p->heap_ptr + offset);
+	pointless_map_header_t* header = (pointless_map_header_t*)PC_HEAP_OFFSET(p, map_offsets, m->data.data_u32);
 	assert((size_t)header % 4 == 0);
 
 	// other info
@@ -606,8 +610,7 @@ pointless_value_t* pointless_map_hash_vector(pointless_t* p, pointless_value_t* 
 {
 	// this must be a map
 	assert(m->type == POINTLESS_MAP_VALUE_VALUE);
-	uint32_t offset = p->map_offsets[m->data.data_u32];
-	pointless_map_header_t* header = (pointless_map_header_t*)((char*)p->heap_ptr + offset);
+	pointless_map_header_t* header = (pointless_map_header_t*)PC_HEAP_OFFSET(p, map_offsets, m->data.data_u32);
 	assert((size_t)header % 4 == 0);
 
 	return &header->hash_vector;
@@ -617,8 +620,7 @@ pointless_value_t* pointless_map_key_vector(pointless_t* p, pointless_value_t* m
 {
 	// this must be a map
 	assert(m->type == POINTLESS_MAP_VALUE_VALUE);
-	uint32_t offset = p->map_offsets[m->data.data_u32];
-	pointless_map_header_t* header = (pointless_map_header_t*)((char*)p->heap_ptr + offset);
+	pointless_map_header_t* header = (pointless_map_header_t*)PC_HEAP_OFFSET(p, map_offsets, m->data.data_u32);
 	assert((size_t)header % 4 == 0);
 
 	return &header->key_vector;
@@ -628,8 +630,7 @@ pointless_value_t* pointless_map_value_vector(pointless_t* p, pointless_value_t*
 {
 	// this must be a map
 	assert(m->type == POINTLESS_MAP_VALUE_VALUE);
-	uint32_t offset = p->map_offsets[m->data.data_u32];
-	pointless_map_header_t* header = (pointless_map_header_t*)((char*)p->heap_ptr + offset);
+	pointless_map_header_t* header = (pointless_map_header_t*)PC_HEAP_OFFSET(p, map_offsets, m->data.data_u32);
 	assert((size_t)header % 4 == 0);
 
 	return &header->value_vector;

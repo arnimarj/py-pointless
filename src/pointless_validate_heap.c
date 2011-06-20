@@ -6,7 +6,7 @@ static int32_t pointless_validate_vector_heap(pointless_validate_context_t* cont
 {
 	assert(v->data.data_u32 < context->p->header->n_vector);
 
-	uint32_t offset = context->p->vector_offsets[v->data.data_u32];
+	uint64_t offset = PC_OFFSET(context->p, vector_offsets, v->data.data_u32);
 
 	POINTLESS_REQUIRE_HEAP(offset, sizeof(uint32_t), "vector header too large for heap");
 
@@ -52,7 +52,7 @@ static int32_t pointless_validate_vector_heap(pointless_validate_context_t* cont
 static int32_t pointless_validate_bitvector_heap(pointless_validate_context_t* context, pointless_value_t* v, const char** error)
 {
 	assert(v->data.data_u32 < context->p->header->n_vector);
-	uint32_t offset = context->p->bitvector_offsets[v->data.data_u32];
+	uint64_t offset = PC_OFFSET(context->p, bitvector_offsets, v->data.data_u32);
 
 	// uint32_t | bits
 	POINTLESS_REQUIRE_HEAP(offset, sizeof(uint32_t), "bitvector too large for heap");
@@ -67,7 +67,7 @@ static int32_t pointless_validate_bitvector_heap(pointless_validate_context_t* c
 static int32_t pointless_validate_unicode_heap(pointless_validate_context_t* context, pointless_value_t* v, const char** error)
 {
 	assert(v->data.data_u32 < context->p->header->n_unicode);
-	uint32_t offset = context->p->unicode_offsets[v->data.data_u32];
+	uint64_t offset = PC_OFFSET(context->p, unicode_offsets, v->data.data_u32);
 
 	// uint32_t | pointless_char_t * (len + 1)
 	POINTLESS_REQUIRE_HEAP(offset, sizeof(uint32_t), "unicode too large for heap");
@@ -116,7 +116,7 @@ static int32_t pointless_validate_set_heap(pointless_validate_context_t* context
 {
 	// simple stuff, not allowed to check children
 	assert(v->data.data_u32 < context->p->header->n_set);
-	uint32_t offset = context->p->set_offsets[v->data.data_u32];
+	uint64_t offset = PC_OFFSET(context->p, set_offsets, v->data.data_u32);
 
 	// get header
 	POINTLESS_REQUIRE_HEAP(offset, sizeof(pointless_set_header_t), "set header too large for heap");
@@ -140,7 +140,7 @@ static int32_t pointless_validate_map_heap(pointless_validate_context_t* context
 {
 	// simple stuff first
 	assert(v->data.data_u32 < context->p->header->n_map);
-	uint32_t offset = context->p->map_offsets[v->data.data_u32];
+	uint32_t offset = PC_OFFSET(context->p, map_offsets, v->data.data_u32);
 
 	// get header
 	POINTLESS_REQUIRE_HEAP(offset, sizeof(pointless_map_header_t), "map header too large for heap");
