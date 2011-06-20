@@ -38,12 +38,22 @@ static void measure_load_time(const char* fname)
 	pointless_close(&p);
 }
 
-static void run_re_create(const char* fname_in, const char* fname_out)
+static void run_re_create_32(const char* fname_in, const char* fname_out)
 {
 	const char* error = 0;
 
-	if (!pointless_recreate(fname_in, fname_out, &error)) {
-		fprintf(stderr, "pointless_recreate() failure: %s\n", error);
+	if (!pointless_recreate_32(fname_in, fname_out, &error)) {
+		fprintf(stderr, "pointless_recreate_32() failure: %s\n", error);
+		exit(EXIT_FAILURE);
+	}
+}
+
+static void run_re_create_64(const char* fname_in, const char* fname_out)
+{
+	const char* error = 0;
+
+	if (!pointless_recreate_64(fname_in, fname_out, &error)) {
+		fprintf(stderr, "pointless_recreate_64() failure: %s\n", error);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -52,58 +62,65 @@ static void print_usage_exit()
 {
 	fprintf(stderr, "usage: ./pointless_util OPTIONS\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "   --unit-test\n");
-	fprintf(stderr, "   --performance-test\n");
+	fprintf(stderr, "   --unit-test-32\n");
+	fprintf(stderr, "   --unit-test-64\n");
+	fprintf(stderr, "   --test-performance-32\n");
+	fprintf(stderr, "   --test-performance-64\n");
 	fprintf(stderr, "   --measure-load-time pointless.map\n");
 	fprintf(stderr, "   --test-hash\n");
 	fprintf(stderr, "   --dump-file pointless.map\n");
-	fprintf(stderr, "   --re-create pointless_in.map pointless_out.map\n");
+	fprintf(stderr, "   --re-create-32 pointless_in.map pointless_out.map\n");
+	fprintf(stderr, "   --re-create-64 pointless_in.map pointless_out.map\n");
 	exit(EXIT_FAILURE);
 }
 
-static void run_unit_test()
+static void run_unit_test(create_begin_cb cb)
 {
-	create_wrapper("very_simple.map", create_very_simple);
+	create_wrapper("very_simple.map", cb, create_very_simple);
 	print_map("very_simple.map");
 
-	create_wrapper("simple.map", create_simple);
+	create_wrapper("simple.map", cb, create_simple);
 	print_map("simple.map");
 
-	create_wrapper("tuple.map", create_tuple);
+	create_wrapper("tuple.map", cb, create_tuple);
 	print_map("tuple.map");
 
-	create_wrapper("set.map", create_set);
+	create_wrapper("set.map", cb, create_set);
 	query_wrapper("set.map", query_set);
 	print_map("set.map");
 
-	create_wrapper("special_a.map", create_special_a);
+	create_wrapper("special_a.map", cb, create_special_a);
 	print_map("special_a.map");
 
-	create_wrapper("special_b.map", create_special_b);
+	create_wrapper("special_b.map", cb, create_special_b);
 	print_map("special_b.map");
 
-	create_wrapper("special_c.map", create_special_c);
+	create_wrapper("special_c.map", cb, create_special_c);
 	print_map("special_c.map");
 
-	create_wrapper("special_d.map", create_special_d);
+	create_wrapper("special_d.map", cb, create_special_d);
 	print_map("special_d.map");
 	query_wrapper("special_d.map", query_special_d);
 	print_map("special_d.map");
 }
 
-static void run_performance_test()
+static void run_performance_test(create_begin_cb cb)
 {
-	create_wrapper("set_1M.map", create_1M_set);
+	create_wrapper("set_1M.map", cb, create_1M_set);
 	query_wrapper("set_1M.map", query_1M_set);
 }
 
 int main(int argc, char** argv)
 {
 	if (argc == 2) {
-		if (strcmp(argv[1], "--unit-test") == 0)
-			run_unit_test();
-		else if (strcmp(argv[1], "--test-performance") == 0)
-			run_performance_test();
+		if (strcmp(argv[1], "--unit-test-32") == 0)
+			run_unit_test(pointless_create_begin_32);
+		else if (strcmp(argv[1], "--unit-test-64") == 0)
+			run_unit_test(pointless_create_begin_64);
+		else if (strcmp(argv[1], "--test-performance-32") == 0)
+			run_performance_test(pointless_create_begin_32);
+		else if (strcmp(argv[1], "--test-performance-64") == 0)
+			run_performance_test(pointless_create_begin_64);
 		else if (strcmp(argv[1], "--test-hash") == 0)
 			validate_hash_semantics();
 		else
@@ -116,8 +133,10 @@ int main(int argc, char** argv)
 		else
 			print_usage_exit();
 	} else if (argc == 4) {
-		if (strcmp(argv[1], "--re-create") == 0)
-			run_re_create(argv[2], argv[3]);
+		if (strcmp(argv[1], "--re-create-32") == 0)
+			run_re_create_32(argv[2], argv[3]);
+		else if (strcmp(argv[1], "--re-create-64") == 0)
+			run_re_create_64(argv[2], argv[3]);
 		else
 			print_usage_exit();
 	} else {

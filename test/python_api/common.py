@@ -7,7 +7,7 @@ def ImportPointlessExt():
 
 	try:
 		# sys.path = ['/home/arni/py-pointless/trunk/build/lib.cygwin-1.7.1-i686-2.6/']
-		sys.path = ['/home/arni/dohop/trunk/pointless/py-pointless/build/lib.linux-x86_64-2.6']
+		sys.path = ['/home/arni/dohop/trunk/cpython/py-pointless/build/lib.linux-x86_64-2.7']
 		import pointless as _pointless
 	finally:
 		sys.path = p
