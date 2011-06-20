@@ -49,8 +49,16 @@ static uint32_t pointless_hash_reader_unicode(pointless_t* p, pointless_value_t*
 	uint32_t hash = 0;
 
 	switch (p->header->version) {
-		case 0: hash = pointless_hash_unicode_ucs4_v0(s); break;
-		case 1: hash = pointless_hash_unicode_ucs4_v1(s); break;
+		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
+			hash = pointless_hash_unicode_ucs4_v0(s);
+			break;
+		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
+		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
+			hash = pointless_hash_unicode_ucs4_v1(s);
+			break;
+		default:
+			assert(0);
+			break;
 	}
 
 	return hash;
@@ -63,8 +71,16 @@ static uint32_t pointless_hash_create_unicode(pointless_create_t* c, pointless_c
 	uint32_t hash = 0;
 
 	switch (c->version) {
-		case 0: hash = pointless_hash_unicode_ucs4_v0(s); break;
-		case 1: hash = pointless_hash_unicode_ucs4_v1(s); break;
+		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
+			hash = pointless_hash_unicode_ucs4_v0(s);
+			break;
+		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
+		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
+			hash = pointless_hash_unicode_ucs4_v1(s);
+			break;
+		default:
+			assert(0);
+			break;
 	}
 
 	return hash;
