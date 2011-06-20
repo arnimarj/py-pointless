@@ -51,7 +51,8 @@ int32_t pointless_hash_table_validate(pointless_t* p, uint32_t n_items, uint32_t
 	}
 
 	// right, all the hashes match, now, make sure they are in the right place
-	for (i = 0; i < n_buckets; i++) {		if (key_vector[i].type == POINTLESS_EMPTY_SLOT)
+	for (i = 0; i < n_buckets; i++) {
+		if (key_vector[i].type == POINTLESS_EMPTY_SLOT)
 			continue;
 
 		uint32_t probe_i = pointless_hash_table_probe(p, hash_vector[i], &key_vector[i], n_buckets, hash_vector, key_vector, error);

@@ -430,7 +430,7 @@ PyObject* pointless_write_object(PyObject* self, PyObject* args)
 	if (!PyArg_ParseTuple(args, "Os:write_object", &object, &fname))
 		return 0;
 
-	pointless_create_begin(&state.c);
+	pointless_create_begin_64(&state.c);
 
 	pointless_export_py(&state, object);
 

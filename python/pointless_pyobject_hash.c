@@ -43,11 +43,21 @@ static uint32_t pyobject_hash_unicode(PyObject* py_object, pyobject_hash_state_t
 
 	switch (state->version) {
 		#ifdef Py_UNICODE_WIDE
-		case 0: hash = pointless_hash_unicode_ucs4_v0((uint32_t*)s); break;
-		case 1: hash = pointless_hash_unicode_ucs4_v1((uint32_t*)s); break;
+		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
+			hash = pointless_hash_unicode_ucs4_v0((uint32_t*)s);
+			break;
+		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
+		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
+			hash = pointless_hash_unicode_ucs4_v1((uint32_t*)s);
+			break;
 		#else
-		case 0: hash = pointless_hash_unicode_ucs2_v0((uint16_t*)s); break;
-		case 1: hash = pointless_hash_unicode_ucs2_v1((uint16_t*)s); break;
+		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
+			hash = pointless_hash_unicode_ucs2_v0((uint16_t*)s);
+			break;
+		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
+		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
+			hash = pointless_hash_unicode_ucs2_v1((uint16_t*)s);
+			break;
 		#endif
 	}
 
@@ -60,8 +70,13 @@ static uint32_t pyobject_hash_string(PyObject* py_object, pyobject_hash_state_t*
 	uint32_t hash = 0;
 
 	switch (state->version) {
-		case 0: hash = pointless_hash_string_v0((uint8_t*)s); break;
-		case 1: hash = pointless_hash_string_v1((uint8_t*)s); break;
+		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
+			hash = pointless_hash_string_v0((uint8_t*)s);
+			break;
+		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
+		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
+			hash = pointless_hash_string_v1((uint8_t*)s);
+			break;
 	}
 
 	return hash;

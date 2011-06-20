@@ -208,7 +208,7 @@ typedef struct {
 	PyTypeObject* PyPointlessPrimVectorType_ptr;
 } PyPointless_CAPI;
 
-#define POINTLESS_API_MAGIC 0xC6D89E23
+#define POINTLESS_API_MAGIC 0xC6D89E24
 
 static PyPointless_CAPI* PyPointlessAPI = 0;
 static int PyPointlessAPI_magic = 0;

@@ -23,7 +23,6 @@ static void measure_load_time(const char* fname)
 	pointless_t p;
 	const char* error = 0;
 
-
 	clock_t t_0 = clock();
 
 	if (!pointless_open_f(&p, fname, 0, &error)) {
@@ -71,6 +70,7 @@ static void print_usage_exit()
 	fprintf(stderr, "   --dump-file pointless.map\n");
 	fprintf(stderr, "   --re-create-32 pointless_in.map pointless_out.map\n");
 	fprintf(stderr, "   --re-create-64 pointless_in.map pointless_out.map\n");
+	fprintf(stderr, "   --measure-32-64-bit-difference pointless.map [...]\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -110,9 +110,43 @@ static void run_performance_test(create_begin_cb cb)
 	query_wrapper("set_1M.map", query_1M_set);
 }
 
+static uint64_t measure_32_64_difference(const char* fname)
+{
+	pointless_t p;
+	const char* error = 0;
+
+	if (!pointless_open_f(&p, fname, 0, &error)) {
+		fprintf(stderr, "pointless_open_f() failure: %s\n", error);
+		exit(EXIT_FAILURE);
+	}
+
+	uint64_t increase = 0;
+
+	increase += p.header->n_unicode;
+	increase += p.header->n_vector;
+	increase += p.header->n_bitvector;
+	increase += p.header->n_set;
+	increase += p.header->n_map;
+
+	increase *= 4;
+
+	pointless_close(&p);
+
+	return increase;
+}
+
 int main(int argc, char** argv)
 {
-	if (argc == 2) {
+	if (argc >= 3 && strcmp(argv[1], "--measure-32-64-bit-difference") == 0) {
+		int i;
+
+		uint64_t s = 0;
+
+		for (i = 2; i < argc; i++)
+			s += measure_32_64_difference(argv[i]);
+
+		printf("%llu\n", (unsigned long long)s);
+	} else if (argc == 2) {
 		if (strcmp(argv[1], "--unit-test-32") == 0)
 			run_unit_test(pointless_create_begin_32);
 		else if (strcmp(argv[1], "--unit-test-64") == 0)
@@ -132,6 +166,7 @@ int main(int argc, char** argv)
 			measure_load_time(argv[2]);
 		else
 			print_usage_exit();
+
 	} else if (argc == 4) {
 		if (strcmp(argv[1], "--re-create-32") == 0)
 			run_re_create_32(argv[2], argv[3]);
