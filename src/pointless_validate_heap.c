@@ -140,7 +140,7 @@ static int32_t pointless_validate_map_heap(pointless_validate_context_t* context
 {
 	// simple stuff first
 	assert(v->data.data_u32 < context->p->header->n_map);
-	uint32_t offset = PC_OFFSET(context->p, map_offsets, v->data.data_u32);
+	uint64_t offset = PC_OFFSET(context->p, map_offsets, v->data.data_u32);
 
 	// get header
 	POINTLESS_REQUIRE_HEAP(offset, sizeof(pointless_map_header_t), "map header too large for heap");
