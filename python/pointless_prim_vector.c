@@ -43,7 +43,7 @@ static int parse_pyobject_number(PyObject* v, int* is_signed, int64_t* i, uint64
 
 	// negative int
 	if (!(ii == -1 && PyErr_Occurred()) && ii < 0) {
-		*is_signed = 0;
+		*is_signed = 1;
 		*i = (int64_t)ii;
 		return 1;
 	}
