@@ -1,17 +1,19 @@
 #!/usr/bin/python
 
-import sys, random, unittest, types
+import sys, random, unittest, types, itertools
 
 from common import pointless
 
-def RandomPrimVector(n, tc, pointless):
+def RandomPrimVector(n, tc):
 	ranges = {
 		'i8':  [-128, 127],
 		'u8':  [   0, 255],
 		'i16': [-600, 600],
 		'u16': [   0, 1200],
-		'i32': [  -1, 33000],
-		'u32': [   0, 66000],
+		'i32': [  -2**31, 2**31-1],
+		'u32': [   0, 2**32-1],
+		'i64': [  -2**63, 2**63-1],
+		'u64': [  0, 2**64-1],
 		'f':   [None, None]
 	}
 
@@ -37,7 +39,7 @@ class TestPrimVector(unittest.TestCase):
 
 					sys.stdout.flush()
 
-				v = RandomPrimVector(i, tc, pointless)
+				v = RandomPrimVector(i, tc)
 				w = list(v)
 
 				for i in xrange(len(w)):
@@ -68,7 +70,7 @@ class TestPrimVector(unittest.TestCase):
 
 					sys.stdout.flush()
 
-				v = RandomPrimVector(i, tc, pointless)
+				v = RandomPrimVector(i, tc)
 				w = list(v)
 
 				for i in xrange(100):
@@ -100,7 +102,7 @@ class TestPrimVector(unittest.TestCase):
 
 					sys.stdout.flush()
 
-				v = RandomPrimVector(i, tc, pointless)
+				v = RandomPrimVector(i, tc)
 				w = list(v)
 
 				for i in xrange(100):
@@ -178,7 +180,7 @@ class TestPrimVector(unittest.TestCase):
 
 			self.assert_(a == v_min and b == 0 and c == v_max)
 
-			for aa, bb in zip(v, vv):
+			for aa, bb in itertools.izip(v, vv):
 				self.assert_(aa == bb)
 
 		# illegal values, which must fail
@@ -201,7 +203,7 @@ class TestPrimVector(unittest.TestCase):
 
 			self.assert_(len(v) == len(vv))
 
-			for aa, bb in zip(v, vv):
+			for aa, bb in itertools.izip(v, vv):
 				self.assert_(aa == bb)
 
 			v = pointless.PointlessPrimVector('f')
@@ -240,7 +242,7 @@ class TestPrimVector(unittest.TestCase):
 					pr_v.sort()
 
 					self.assert_(len(py_v) == len(pr_v))
-					self.assert_(all(a == b for a, b in zip(py_v, pr_v)))
+					self.assert_(all(a == b for a, b in itertool.izip(py_v, pr_v)))
 
 					py_v = [random.uniform(-10000.0, +10000.0) for i in xrange(n)]
 					random.shuffle(py_v)
@@ -250,7 +252,7 @@ class TestPrimVector(unittest.TestCase):
 					pr_v.sort()
 
 					self.assert_(len(py_v) == len(pr_v))
-					self.assert_(all(close_enough(a, b) for a, b in zip(py_v, pr_v)))
+					self.assert_(all(close_enough(a, b) for a, b in itertools.izip(py_v, pr_v)))
 
 	def testProjSort(self):
 		# pure python projection sort
@@ -275,8 +277,12 @@ class TestPrimVector(unittest.TestCase):
 			i_max = random.randint(i_min, i_min + 60000)
 			py_proj = range(i_min, i_max)
 
-			tc = ['i32', 'u32']
+			tc = ['i64', 'u64']
 
+			if i_max < 2**32:
+				tc.append('u32')
+			if i_max < 2**31:
+				tc.append('i32')
 			if i_max < 2**16:
 				tc.append('u16')
 			if i_max < 2**15:
@@ -299,7 +305,7 @@ class TestPrimVector(unittest.TestCase):
 
 			# create 1 to 16 value vectors
 			n_attributes = random.randint(1, 16)
-			pp_vv = [RandomPrimVector(i_max, None, pointless) for i in xrange(n_attributes)]
+			pp_vv = [RandomPrimVector(i_max, None) for i in xrange(n_attributes)]
 			py_vv = [list(pp_vv[i]) for i in xrange(n_attributes)]
 
 			sys.stdout.write('.')
@@ -311,7 +317,7 @@ class TestPrimVector(unittest.TestCase):
 
 			self.assert_(len(py_proj) == len(pp_proj))
 
-			for a, b in zip(py_proj, pp_proj):
+			for a, b in itertools.izip(py_proj, pp_proj):
 				if a != b:
 					t_a = [pp_vv[i][a] for i in xrange(n_attributes)]
 					t_b = [py_vv[i][b] for i in xrange(n_attributes)]
@@ -337,13 +343,13 @@ class TestPrimVector(unittest.TestCase):
 			sys.stdout.flush()
 
 			for n in n_random:
-				v_in = RandomPrimVector(n, tc, pointless)
+				v_in = RandomPrimVector(n, tc)
 				buffer = v_in.serialize()
 				v_out = pointless.PointlessPrimVector(buffer = buffer)
 
 				self.assert_(v_in.typecode == v_out.typecode)
 				self.assert_(len(v_in) == len(v_out))
-				self.assert_(a == b for a, b in zip(v_in, v_out))
+				self.assert_(a == b for a, b in itertools.izip(v_in, v_out))
 
 	def testSlice(self):
 		# vector types, and their ranges
@@ -363,8 +369,8 @@ class TestPrimVector(unittest.TestCase):
 			if len(v_a) != len(v_b):
 				return False
 
-			for a, b in zip(v_a, v_b):
-				if type(a) == types.FloatType and type(b) == types.FloatType:
+			for a, b in itertools.izip(v_a, v_b):
+				if isinstance(a, types.FloatType) and isinstance(b, types.FloatType):
 					if not (abs(a - b) < 0.001):
 						return False
 				elif a != b:

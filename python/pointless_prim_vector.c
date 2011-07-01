@@ -41,7 +41,8 @@ static int parse_pyobject_number(PyObject* v, int* is_signed, int64_t* i, uint64
 
 	ii = PyLong_AsLongLong(v);
 
-	if (!(ii != -1 || !PyErr_Occurred()) && ii < 0) {
+	// negative int
+	if (!(ii == -1 && PyErr_Occurred()) && ii < 0) {
 		*is_signed = 0;
 		*i = (int64_t)ii;
 		return 1;
@@ -1264,21 +1265,20 @@ static int prim_sort_proj_cmp(int a, int b, int* c, void* user)
 {
 	prim_sort_proj_state_t* state = (prim_sort_proj_state_t*)user;
 
-	int is_signed = 0;
-	int64_t i_a_i = 0, i_b_i = 0;
 	uint64_t i_a_u = 0, i_b_u = 0;
 
 	uint32_t i;
 
+	// projection vector contains only positive valuesa
 	switch (state->p_t) {
-		case _POINTLESS_PRIM_VECTOR_TYPE_I8:  i_a_i = ((int8_t*)state->p_b)[a];   i_b_i = ((int8_t*)state->p_b)[b];   is_signed = 1; break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U8:  i_a_u = ((uint8_t*)state->p_b)[a];  i_b_u = ((uint8_t*)state->p_b)[b];  is_signed = 0; break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_I16: i_a_i = ((int16_t*)state->p_b)[a];  i_b_i = ((int16_t*)state->p_b)[b];  is_signed = 1; break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U16: i_a_u = ((uint16_t*)state->p_b)[a]; i_b_u = ((uint16_t*)state->p_b)[b]; is_signed = 0; break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_I32: i_a_i = ((int32_t*)state->p_b)[a];  i_b_i = ((int32_t*)state->p_b)[b];  is_signed = 1; break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U32: i_a_u = ((uint32_t*)state->p_b)[a]; i_b_u = ((uint32_t*)state->p_b)[b]; is_signed = 0; break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_I64: i_a_i = ((int64_t*)state->p_b)[a];  i_b_i = ((int64_t*)state->p_b)[b];  is_signed = 1; break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U64: i_a_u = ((uint64_t*)state->p_b)[a]; i_b_u = ((uint64_t*)state->p_b)[b]; is_signed = 0; break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I8:  i_a_u = ((int8_t*)state->p_b)[a];   i_b_u = ((int8_t*)state->p_b)[b];   break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U8:  i_a_u = ((uint8_t*)state->p_b)[a];  i_b_u = ((uint8_t*)state->p_b)[b];  break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I16: i_a_u = ((int16_t*)state->p_b)[a];  i_b_u = ((int16_t*)state->p_b)[b];  break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U16: i_a_u = ((uint16_t*)state->p_b)[a]; i_b_u = ((uint16_t*)state->p_b)[b]; break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I32: i_a_u = ((int32_t*)state->p_b)[a];  i_b_u = ((int32_t*)state->p_b)[b];  break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U32: i_a_u = ((uint32_t*)state->p_b)[a]; i_b_u = ((uint32_t*)state->p_b)[b]; break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I64: i_a_u = ((int64_t*)state->p_b)[a];  i_b_u = ((int64_t*)state->p_b)[b];  break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U64: i_a_u = ((uint64_t*)state->p_b)[a]; i_b_u = ((uint64_t*)state->p_b)[b]; break;
 		default: assert(0); break;
 	}
 
@@ -1287,58 +1287,31 @@ static int prim_sort_proj_cmp(int a, int b, int* c, void* user)
 	for (i = 0; i < state->n && *c == 0; i++) {
 		switch (state->v_t[i]) {
 			case _POINTLESS_PRIM_VECTOR_TYPE_I8:
-				if (is_signed)
-					*c = SORT_CMP(int8_t, state->v_b[i], i_a_i, i_b_i);
-				else
-					*c = SORT_CMP(int8_t, state->v_b[i], i_a_u, i_a_u);
+				*c = SORT_CMP(int8_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_U8:
-				if (is_signed)
-					*c = SORT_CMP(uint8_t, state->v_b[i], i_a_i, i_b_i);
-				else
-					*c = SORT_CMP(uint8_t, state->v_b[i], i_a_u, i_b_u);
+				*c = SORT_CMP(uint8_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_I16:
-				if (is_signed)
-					*c = SORT_CMP(int16_t, state->v_b[i], i_a_i, i_b_i);
-				else
-					*c = SORT_CMP(int16_t, state->v_b[i], i_a_u, i_b_u);
+				*c = SORT_CMP(int16_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_U16:
-				if (is_signed)
-					*c = SORT_CMP(uint16_t, state->v_b[i], i_a_i, i_b_i);
-				else
-					*c = SORT_CMP(uint16_t, state->v_b[i], i_a_u, i_b_u);
+				*c = SORT_CMP(uint16_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_I32:
-				if (is_signed)
-					*c = SORT_CMP(int32_t, state->v_b[i], i_a_i, i_b_i);
-				else
-					*c = SORT_CMP(int32_t, state->v_b[i], i_a_u, i_b_u);
+				*c = SORT_CMP(int32_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_U32:
-				if (is_signed)
-					*c = SORT_CMP(uint32_t, state->v_b[i], i_a_i, i_b_i);
-				else
-					*c = SORT_CMP(uint32_t, state->v_b[i], i_a_u, i_b_u);
+				*c = SORT_CMP(uint32_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_I64:
-				if (is_signed)
-					*c = SORT_CMP(int64_t, state->v_b[i], i_a_i, i_b_i);
-				else
-					*c = SORT_CMP(int64_t, state->v_b[i], i_a_u, i_b_u);
+				*c = SORT_CMP(int64_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_U64:
-				if (is_signed)
-					*c = SORT_CMP(uint64_t, state->v_b[i], i_a_i, i_b_i);
-				else
-					*c = SORT_CMP(uint64_t, state->v_b[i], i_a_u, i_b_u);
+				*c = SORT_CMP(uint64_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
-				if (is_signed)
-					*c = SORT_CMP(float, state->v_b[i], i_a_i, i_b_i);
-				else
-					*c = SORT_CMP(float, state->v_b[i], i_a_u, i_b_u);
+				*c = SORT_CMP(float, state->v_b[i], i_a_u, i_b_u);
 				break;
 		}
 	}
