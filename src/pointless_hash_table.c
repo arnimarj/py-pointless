@@ -20,7 +20,7 @@ uint32_t pointless_hash_compute_n_buckets(uint32_t n_items)
 	return next_power_of_2(n_items + n_items / 2);
 }
 
-uint32_t pointless_hash_table_probe_priv(pointless_t* p, uint32_t value_hash, pointless_value_t* value, uint32_t n_buckets, uint32_t* hash_vector, pointless_value_t* key_vector, pointless_eq_cb cb, void* user, const char** error)
+static uint32_t pointless_hash_table_probe_priv(pointless_t* p, uint32_t value_hash, pointless_value_t* value, uint32_t n_buckets, uint32_t* hash_vector, pointless_value_t* key_vector, pointless_eq_cb cb, void* user, const char** error)
 {
 	// we use the same probing strategy as Python
 	// 1) number of buckets is a power-of-2
@@ -43,10 +43,14 @@ uint32_t pointless_hash_table_probe_priv(pointless_t* p, uint32_t value_hash, po
 			// test key equality
 			uint32_t is_equal;
 
-			if (cb)
-				is_equal = ((*cb)(p, &key_vector[bucket], user, error) != 0);
-			else
-				is_equal = (pointless_cmp_reader(p, value, p, &key_vector[bucket], error) == 0);
+			if (cb) {
+				pointless_complete_value_t v_a = pointless_value_to_complete(&key_vector[bucket]);
+				is_equal = ((*cb)(p, &v_a, user, error) != 0);
+			} else {
+				pointless_complete_value_t v_a = pointless_value_to_complete(value);
+				pointless_complete_value_t v_b = pointless_value_to_complete(&key_vector[bucket]);
+				is_equal = (pointless_cmp_reader(p, &v_a, p, &v_b, error) == 0);
+			}
 
 			if (*error)
 				return POINTLESS_HASH_TABLE_PROBE_ERROR;

@@ -1,22 +1,51 @@
 #include "../pointless_ext.h"
 
-static int64_t pointless_prim_vector_int_item_at(PyPointlessPrimVector* v, uint32_t i)
+static int pointless_prim_vector_uint_item_at(PyPointlessPrimVector* v, uint32_t i, uint64_t* output)
 {
 	void* data = pointless_dynarray_item_at(&v->array, i);
+	int is_signed = 0;
+	int64_t v_signed = 0;
 
 	switch (v->type) {
-		case POINTLESS_PRIM_VECTOR_TYPE_I8:
-			return (int64_t)(*((int8_t*)data));
-		case POINTLESS_PRIM_VECTOR_TYPE_U8:
-			return (int64_t)(*((uint8_t*)data));
-		case POINTLESS_PRIM_VECTOR_TYPE_I16:
-			return (int64_t)(*((int16_t*)data));
-		case POINTLESS_PRIM_VECTOR_TYPE_U16:
-			return (int64_t)(*((uint16_t*)data));
-		case POINTLESS_PRIM_VECTOR_TYPE_I32:
-			return (int64_t)(*((int32_t*)data));
-		case POINTLESS_PRIM_VECTOR_TYPE_U32:
-			return (int64_t)(*((uint32_t*)data));
+		case _POINTLESS_PRIM_VECTOR_TYPE_I8:
+			is_signed = 1;
+			v_signed = (int64_t)(*((int8_t*)data));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I16:
+			is_signed = 1;
+			v_signed = (int64_t)(*((int16_t*)data));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I32:
+			is_signed = 1;
+			v_signed = (int64_t)(*((int32_t*)data));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I64:
+			is_signed = 1;
+			v_signed = (int64_t)(*((int64_t*)data));
+			break;
+	}
+
+	if (is_signed) {
+		if (v_signed < 0)
+			return 0;
+
+		*output = (uint64_t)v_signed;
+		return 1;
+	}
+
+	switch (v->type) {
+		case _POINTLESS_PRIM_VECTOR_TYPE_U8:
+			*output = (uint64_t)(*((int8_t*)data));
+			return 1;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U16:
+			*output = (uint64_t)(*((int16_t*)data));
+			return 1;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U32:
+			*output = (uint64_t)(*((int32_t*)data));
+			return 1;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U64:
+			*output = (uint64_t)(*((int64_t*)data));
+			return 1;
 	}
 
 	assert(0);
@@ -54,6 +83,10 @@ static int my_cmp_i32(int a, int b, int* c, void* user)
 	{ MY_CMP_RET(int32_t); }
 static int my_cmp_u32(int a, int b, int* c, void* user)
 	{ MY_CMP_RET(uint32_t); }
+static int my_cmp_i64(int a, int b, int* c, void* user)
+	{ MY_CMP_RET(int64_t); }
+static int my_cmp_u64(int a, int b, int* c, void* user)
+	{ MY_CMP_RET(uint64_t); }
 static int my_cmp_f(int a, int b, int* c, void* user)
 	{ MY_CMP_RET(float); }
 
@@ -71,19 +104,23 @@ static void my_swap(int a, int b, void* user)
 static qsort_cmp_ pointless_db_utils_get_cmp(uint32_t type)
 {
 	switch (type) {
-		case POINTLESS_PRIM_VECTOR_TYPE_I8:
+		case _POINTLESS_PRIM_VECTOR_TYPE_I8:
 			return my_cmp_i8;
-		case POINTLESS_PRIM_VECTOR_TYPE_U8:
+		case _POINTLESS_PRIM_VECTOR_TYPE_U8:
 			return my_cmp_u8;
-		case POINTLESS_PRIM_VECTOR_TYPE_I16:
+		case _POINTLESS_PRIM_VECTOR_TYPE_I16:
 			return my_cmp_i16;
-		case POINTLESS_PRIM_VECTOR_TYPE_U16:
+		case _POINTLESS_PRIM_VECTOR_TYPE_U16:
 			return my_cmp_u16;
-		case POINTLESS_PRIM_VECTOR_TYPE_I32:
+		case _POINTLESS_PRIM_VECTOR_TYPE_I32:
 			return my_cmp_i32;
-		case POINTLESS_PRIM_VECTOR_TYPE_U32:
+		case _POINTLESS_PRIM_VECTOR_TYPE_U32:
 			return my_cmp_u32;
-		case POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
+		case _POINTLESS_PRIM_VECTOR_TYPE_I64:
+			return my_cmp_i64;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U64:
+			return my_cmp_u64;
+		case _POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
 			return my_cmp_f;
 	}
 
@@ -111,7 +148,7 @@ PyObject* pointless_db_array_sort(PyObject* o, PyObject* args)
 		return 0;
 	}
 
-	if (array->type != POINTLESS_PRIM_VECTOR_TYPE_U32) {
+	if (array->type != _POINTLESS_PRIM_VECTOR_TYPE_U32) {
 		PyErr_Format(PyExc_TypeError, "%s: array must be u32", __func__);
 		return 0;
 	}
@@ -140,9 +177,14 @@ PyObject* pointless_db_array_sort(PyObject* o, PyObject* args)
 	}
 
 	for (k = 0; k < pointless_dynarray_n_items(&array->array); k++) {
-		int64_t v = pointless_prim_vector_int_item_at(array, k);
+		uint64_t index = 0;
 
-		if (!(0 <= v && v < (int64_t)n_items_0)) {
+		if (!pointless_prim_vector_uint_item_at(array, k, &index)) {
+			PyErr_Format(PyExc_TypeError, "%s: array element out of bounds", __func__);
+			return 0;
+		}
+
+		if (!(0 <= index && index < (uint64_t)n_items_0)) {
 			PyErr_Format(PyExc_TypeError, "%s: array element out of bounds", __func__);
 			return 0;
 		}

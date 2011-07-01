@@ -234,13 +234,15 @@ static void pointless_create_value_free(pointless_create_t* c, uint32_t i)
 			assert(cv_is_outside_vector(i) == 0);
 			pointless_dynarray_destroy(&cv_priv_vector_at(i)->vector);
 			break;
-		case POINTLESS_VECTOR_I8:
-		case POINTLESS_VECTOR_U8:
-		case POINTLESS_VECTOR_I16:
-		case POINTLESS_VECTOR_U16:
-		case POINTLESS_VECTOR_I32:
-		case POINTLESS_VECTOR_U32:
-		case POINTLESS_VECTOR_FLOAT:
+		case _POINTLESS_VECTOR_I8:
+		case _POINTLESS_VECTOR_U8:
+		case _POINTLESS_VECTOR_I16:
+		case _POINTLESS_VECTOR_U16:
+		case _POINTLESS_VECTOR_I32:
+		case _POINTLESS_VECTOR_U64:
+		case _POINTLESS_VECTOR_I64:
+		case _POINTLESS_VECTOR_U32:
+		case _POINTLESS_VECTOR_FLOAT:
 			if (cv_is_outside_vector(i) == 0)
 				pointless_dynarray_destroy(&cv_priv_vector_at(i)->vector);
 			break;
@@ -339,25 +341,31 @@ static int pointless_serialize_vector_outside(pointless_create_t* c, uint32_t ve
 		return 0;
 
 	switch (cv_value_type(vector)) {
-		case POINTLESS_VECTOR_I8:
+		case _POINTLESS_VECTOR_I8:
 			w_len = sizeof(int8_t);
 			break;
-		case POINTLESS_VECTOR_U8:
+		case _POINTLESS_VECTOR_U8:
 			w_len = sizeof(uint8_t);
 			break;
-		case POINTLESS_VECTOR_I16:
+		case _POINTLESS_VECTOR_I16:
 			w_len = sizeof(int16_t);
 			break;
-		case POINTLESS_VECTOR_U16:
+		case _POINTLESS_VECTOR_U16:
 			w_len = sizeof(uint16_t);
 			break;
-		case POINTLESS_VECTOR_I32:
+		case _POINTLESS_VECTOR_I32:
 			w_len = sizeof(int32_t);
 			break;
-		case POINTLESS_VECTOR_U32:
+		case _POINTLESS_VECTOR_U32:
 			w_len = sizeof(uint32_t);
 			break;
-		case POINTLESS_VECTOR_FLOAT:
+		case _POINTLESS_VECTOR_I64:
+			w_len = sizeof(int64_t);
+			break;
+		case _POINTLESS_VECTOR_U64:
+			w_len = sizeof(uint64_t);
+			break;
+		case _POINTLESS_VECTOR_FLOAT:
 			w_len = sizeof(float);
 			break;
 		default:
@@ -408,25 +416,31 @@ static int pointless_serialize_vector_priv(pointless_create_t* c, uint32_t vecto
 	// if we have a native vector, we can write it in a single write call
 	if (is_native) {
 		switch (cv_value_type(vector)) {
-			case POINTLESS_VECTOR_I8:
+			case _POINTLESS_VECTOR_I8:
 				w_len = sizeof(int8_t);
 				break;
-			case POINTLESS_VECTOR_U8:
+			case _POINTLESS_VECTOR_U8:
 				w_len = sizeof(uint8_t);
 				break;
-			case POINTLESS_VECTOR_I16:
+			case _POINTLESS_VECTOR_I16:
 				w_len = sizeof(int16_t);
 				break;
-			case POINTLESS_VECTOR_U16:
+			case _POINTLESS_VECTOR_U16:
 				w_len = sizeof(uint16_t);
 				break;
-			case POINTLESS_VECTOR_I32:
+			case _POINTLESS_VECTOR_I32:
 				w_len = sizeof(int32_t);
 				break;
-			case POINTLESS_VECTOR_U32:
+			case _POINTLESS_VECTOR_U32:
 				w_len = sizeof(uint32_t);
 				break;
-			case POINTLESS_VECTOR_FLOAT:
+			case _POINTLESS_VECTOR_I64:
+				w_len = sizeof(int64_t);
+				break;
+			case _POINTLESS_VECTOR_U64:
+				w_len = sizeof(uint64_t);
+				break;
+			case _POINTLESS_VECTOR_FLOAT:
 				w_len = sizeof(float);
 				break;
 			default:
@@ -456,37 +470,37 @@ static int pointless_serialize_vector_priv(pointless_create_t* c, uint32_t vecto
 
 			// translate the value
 			switch (cv_value_type(vector)) {
-				case POINTLESS_VECTOR_I8:
+				case _POINTLESS_VECTOR_I8:
 					assert(cv_value_type(items[i]) == POINTLESS_I32 || cv_value_type(items[i]) == POINTLESS_U32);
 					value.i8 = (int8_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
 					w_len = sizeof(value.i8);
 					break;
-				case POINTLESS_VECTOR_U8:
+				case _POINTLESS_VECTOR_U8:
 					assert(cv_value_type(items[i]) == POINTLESS_I32 || cv_value_type(items[i]) == POINTLESS_U32);
 					value.u8 = (uint8_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
 					w_len = sizeof(value.u8);
 					break;
-				case POINTLESS_VECTOR_I16:
+				case _POINTLESS_VECTOR_I16:
 					assert(cv_value_type(items[i]) == POINTLESS_I32 || cv_value_type(items[i]) == POINTLESS_U32);
 					value.i16 = (int16_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
 					w_len = sizeof(value.i16);
 					break;
-				case POINTLESS_VECTOR_U16:
+				case _POINTLESS_VECTOR_U16:
 					assert(cv_value_type(items[i]) == POINTLESS_I32 || cv_value_type(items[i]) == POINTLESS_U32);
 					value.u16 = (uint16_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
 					w_len = sizeof(value.u16);
 					break;
-				case POINTLESS_VECTOR_I32:
+				case _POINTLESS_VECTOR_I32:
 					assert(cv_value_type(items[i]) == POINTLESS_I32 || cv_value_type(items[i]) == POINTLESS_U32);
 					value.i32 = (int32_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
 					w_len = sizeof(value.i32);
 					break;
-				case POINTLESS_VECTOR_U32:
+				case _POINTLESS_VECTOR_U32:
 					assert(cv_value_type(items[i]) == POINTLESS_I32 || cv_value_type(items[i]) == POINTLESS_U32);
 					value.u32 = (uint32_t)pointless_create_get_int_as_int64(cv_value_at(items[i]));
 					w_len = sizeof(value.u32);
 					break;
-				case POINTLESS_VECTOR_FLOAT:
+				case _POINTLESS_VECTOR_FLOAT:
 					assert(cv_value_type(items[i]) == POINTLESS_FLOAT);
 					value.f = cv_float_at(items[i]);
 					w_len = sizeof(value.f);
@@ -537,7 +551,7 @@ static int pointless_serialize_set(pointless_create_cb_t* cb, pointless_create_t
 	header.hash_vector = pointless_create_to_read_value(c, hash_vector_handle, n_priv_vectors);
 	header.key_vector = pointless_create_to_read_value(c, keys_vector_handle, n_priv_vectors);
 
-	assert(header.hash_vector.type == POINTLESS_VECTOR_U32);
+	assert(header.hash_vector.type == _POINTLESS_VECTOR_U32);
 	assert(header.key_vector.type == POINTLESS_VECTOR_VALUE_HASHABLE);
 
 	if (!(cb->write)(&header, sizeof(header), cb->user, error))
@@ -564,7 +578,7 @@ static int pointless_serialize_map(pointless_create_cb_t* cb, pointless_create_t
 	header.key_vector = pointless_create_to_read_value(c, keys_vector_handle, n_priv_vectors);
 	header.value_vector = pointless_create_to_read_value(c, values_vector_handle, n_priv_vectors);
 
-	assert(header.hash_vector.type == POINTLESS_VECTOR_U32);
+	assert(header.hash_vector.type == _POINTLESS_VECTOR_U32);
 	assert(header.key_vector.type == POINTLESS_VECTOR_VALUE_HASHABLE);
 	assert(header.value_vector.type == POINTLESS_VECTOR_VALUE_HASHABLE || header.value_vector.type == POINTLESS_VECTOR_VALUE);
 	assert(pointless_is_vector_type(header.value_vector.type));
@@ -645,28 +659,28 @@ static uint32_t pointless_create_vector_compression(pointless_create_t* c, uint3
 
 	// all floats, simple case
 	if (init_float)
-		return POINTLESS_VECTOR_FLOAT;
+		return _POINTLESS_VECTOR_FLOAT;
 
 	// right, now check for range, first for unsigned ones
 	assert(min_int <= max_int);
 
 	if (min_int >= 0) {
 		if (max_int <= UINT8_MAX)
-			return POINTLESS_VECTOR_U8;
+			return _POINTLESS_VECTOR_U8;
 		else if (max_int <= UINT16_MAX)
-			return POINTLESS_VECTOR_U16;
+			return _POINTLESS_VECTOR_U16;
 		else if (max_int <= UINT32_MAX)
-			return POINTLESS_VECTOR_U32;
+			return _POINTLESS_VECTOR_U32;
 		else
 			assert(0);
 	}
 
 	if (INT8_MIN <= min_int && max_int <= INT8_MAX)
-		return POINTLESS_VECTOR_I8;
+		return _POINTLESS_VECTOR_I8;
 	else if (INT16_MIN <= min_int && max_int <= INT16_MAX)
-		return POINTLESS_VECTOR_I16;
+		return _POINTLESS_VECTOR_I16;
 	else if (INT32_MIN <= min_int && max_int <= INT32_MAX)
-		return POINTLESS_VECTOR_I32;
+		return _POINTLESS_VECTOR_I32;
 
 	// we must have hit something here already
 	assert(0);
@@ -808,13 +822,15 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 
 	for (i = 0; i < n_values; i++) {
 		switch (cv_value_type(i)) {
-			case POINTLESS_VECTOR_I8:
-			case POINTLESS_VECTOR_U8:
-			case POINTLESS_VECTOR_I16:
-			case POINTLESS_VECTOR_U16:
-			case POINTLESS_VECTOR_I32:
-			case POINTLESS_VECTOR_U32:
-			case POINTLESS_VECTOR_FLOAT:
+			case _POINTLESS_VECTOR_I8:
+			case _POINTLESS_VECTOR_U8:
+			case _POINTLESS_VECTOR_I16:
+			case _POINTLESS_VECTOR_U16:
+			case _POINTLESS_VECTOR_I32:
+			case _POINTLESS_VECTOR_U32:
+			case _POINTLESS_VECTOR_I64:
+			case _POINTLESS_VECTOR_U64:
+			case _POINTLESS_VECTOR_FLOAT:
 			case POINTLESS_VECTOR_VALUE:
 				// we only do this for private vector
 				if (cv_is_outside_vector(i)) {
@@ -897,7 +913,7 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 			assert(cv_set_at(i)->serialize_keys < pointless_dynarray_n_items(&c->values));
 
 			// the must be of the expected type
-			assert(cv_value_type(cv_set_at(i)->serialize_hash) == POINTLESS_VECTOR_U32);
+			assert(cv_value_type(cv_set_at(i)->serialize_hash) == _POINTLESS_VECTOR_U32);
 			assert(cv_value_type(cv_set_at(i)->serialize_keys) == POINTLESS_VECTOR_VALUE_HASHABLE);
 
 			// ..and they must be empty
@@ -927,7 +943,7 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 			assert(cv_map_at(i)->serialize_values < pointless_dynarray_n_items(&c->values));
 
 			// they must be of the expected type
-			assert(cv_value_type(cv_map_at(i)->serialize_hash) == POINTLESS_VECTOR_U32);
+			assert(cv_value_type(cv_map_at(i)->serialize_hash) == _POINTLESS_VECTOR_U32);
 			assert(cv_value_type(cv_map_at(i)->serialize_keys) == POINTLESS_VECTOR_VALUE_HASHABLE);
 			assert(cv_value_type(cv_map_at(i)->serialize_values) == POINTLESS_VECTOR_VALUE || cv_value_type(cv_map_at(i)->serialize_values) == POINTLESS_VECTOR_VALUE_HASHABLE);
 
@@ -1001,25 +1017,31 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 			case POINTLESS_VECTOR_VALUE_HASHABLE:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(pointless_value_t);
 				break;
-			case POINTLESS_VECTOR_I8:
+			case _POINTLESS_VECTOR_I8:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(int8_t);
 				break;
-			case POINTLESS_VECTOR_U8:
+			case _POINTLESS_VECTOR_U8:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(uint8_t);
 				break;
-			case POINTLESS_VECTOR_I16:
+			case _POINTLESS_VECTOR_I16:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(int16_t);
 				break;
-			case POINTLESS_VECTOR_U16:
+			case _POINTLESS_VECTOR_U16:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(uint16_t);
 				break;
-			case POINTLESS_VECTOR_I32:
+			case _POINTLESS_VECTOR_I32:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(int32_t);
 				break;
-			case POINTLESS_VECTOR_U32:
+			case _POINTLESS_VECTOR_U32:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(uint32_t);
 				break;
-			case POINTLESS_VECTOR_FLOAT:
+			case _POINTLESS_VECTOR_I64:
+				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(int64_t);
+				break;
+			case _POINTLESS_VECTOR_U64:
+				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(uint64_t);
+				break;
+			case _POINTLESS_VECTOR_FLOAT:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(float);
 				break;
 			default:
@@ -1052,25 +1074,31 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 		uint32_t n_items = cv_outside_vector_at(i)->n_items;
 
 		switch (cv_value_type(i)) {
-			case POINTLESS_VECTOR_I8:
+			case _POINTLESS_VECTOR_I8:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(int8_t);
 				break;
-			case POINTLESS_VECTOR_U8:
+			case _POINTLESS_VECTOR_U8:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(uint8_t);
 				break;
-			case POINTLESS_VECTOR_I16:
+			case _POINTLESS_VECTOR_I16:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(int16_t);
 				break;
-			case POINTLESS_VECTOR_U16:
+			case _POINTLESS_VECTOR_U16:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(uint16_t);
 				break;
-			case POINTLESS_VECTOR_I32:
+			case _POINTLESS_VECTOR_I32:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(int32_t);
 				break;
-			case POINTLESS_VECTOR_U32:
+			case _POINTLESS_VECTOR_U32:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(uint32_t);
 				break;
-			case POINTLESS_VECTOR_FLOAT:
+			case _POINTLESS_VECTOR_I64:
+				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(int64_t);
+				break;
+			case _POINTLESS_VECTOR_U64:
+				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(uint64_t);
+				break;
+			case _POINTLESS_VECTOR_FLOAT:
 				vector_heap_size = sizeof(uint32_t) + n_items * sizeof(float);
 				break;
 			default:
@@ -1149,13 +1177,15 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 					goto error_cleanup;
 
 				break;
-			case POINTLESS_VECTOR_I8:
-			case POINTLESS_VECTOR_U8:
-			case POINTLESS_VECTOR_I16:
-			case POINTLESS_VECTOR_U16:
-			case POINTLESS_VECTOR_I32:
-			case POINTLESS_VECTOR_U32:
-			case POINTLESS_VECTOR_FLOAT:
+			case _POINTLESS_VECTOR_I8:
+			case _POINTLESS_VECTOR_U8:
+			case _POINTLESS_VECTOR_I16:
+			case _POINTLESS_VECTOR_U16:
+			case _POINTLESS_VECTOR_I32:
+			case _POINTLESS_VECTOR_U32:
+			case _POINTLESS_VECTOR_I64:
+			case _POINTLESS_VECTOR_U64:
+			case _POINTLESS_VECTOR_FLOAT:
 				if (!cv_is_outside_vector(i)) {
 					if (!pointless_serialize_vector_priv(c, i, cb, n_priv_vectors, error))
 						goto error_cleanup;
@@ -1167,13 +1197,15 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 	// outside vectors
 	for (i = 0; i < n_values; i++) {
 		switch (cv_value_type(i)) {
-			case POINTLESS_VECTOR_I8:
-			case POINTLESS_VECTOR_U8:
-			case POINTLESS_VECTOR_I16:
-			case POINTLESS_VECTOR_U16:
-			case POINTLESS_VECTOR_I32:
-			case POINTLESS_VECTOR_U32:
-			case POINTLESS_VECTOR_FLOAT:
+			case _POINTLESS_VECTOR_I8:
+			case _POINTLESS_VECTOR_U8:
+			case _POINTLESS_VECTOR_I16:
+			case _POINTLESS_VECTOR_U16:
+			case _POINTLESS_VECTOR_I32:
+			case _POINTLESS_VECTOR_U32:
+			case _POINTLESS_VECTOR_I64:
+			case _POINTLESS_VECTOR_U64:
+			case _POINTLESS_VECTOR_FLOAT:
 				if (cv_is_outside_vector(i)) {
 					if (!pointless_serialize_vector_outside(c, i, cb, error))
 						goto error_cleanup;
@@ -1873,39 +1905,49 @@ uint32_t pointless_create_vector_value(pointless_create_t* c)
 	return pointless_create_vector_priv(c, POINTLESS_VECTOR_VALUE, sizeof(uint32_t));
 }
 
-uint32_t pointless_create_vector_i8(pointless_create_t* c)
+uint32_t _pointless_create_vector_i8(pointless_create_t* c)
 {
-	return pointless_create_vector_priv(c, POINTLESS_VECTOR_I8, sizeof(int8_t));
+	return pointless_create_vector_priv(c, _POINTLESS_VECTOR_I8, sizeof(int8_t));
 }
 
-uint32_t pointless_create_vector_u8(pointless_create_t* c)
+uint32_t _pointless_create_vector_u8(pointless_create_t* c)
 {
-	return pointless_create_vector_priv(c, POINTLESS_VECTOR_U8, sizeof(uint8_t));
+	return pointless_create_vector_priv(c, _POINTLESS_VECTOR_U8, sizeof(uint8_t));
 }
 
-uint32_t pointless_create_vector_i16(pointless_create_t* c)
+uint32_t _pointless_create_vector_i16(pointless_create_t* c)
 {
-	return pointless_create_vector_priv(c, POINTLESS_VECTOR_I16, sizeof(int16_t));
+	return pointless_create_vector_priv(c, _POINTLESS_VECTOR_I16, sizeof(int16_t));
 }
 
-uint32_t pointless_create_vector_u16(pointless_create_t* c)
+uint32_t _pointless_create_vector_u16(pointless_create_t* c)
 {
-	return pointless_create_vector_priv(c, POINTLESS_VECTOR_U16, sizeof(uint16_t));
+	return pointless_create_vector_priv(c, _POINTLESS_VECTOR_U16, sizeof(uint16_t));
 }
 
-uint32_t pointless_create_vector_i32(pointless_create_t* c)
+uint32_t _pointless_create_vector_i32(pointless_create_t* c)
 {
-	return pointless_create_vector_priv(c, POINTLESS_VECTOR_I32, sizeof(int32_t));
+	return pointless_create_vector_priv(c, _POINTLESS_VECTOR_I32, sizeof(int32_t));
 }
 
-uint32_t pointless_create_vector_u32(pointless_create_t* c)
+uint32_t _pointless_create_vector_u32(pointless_create_t* c)
 {
-	return pointless_create_vector_priv(c, POINTLESS_VECTOR_U32, sizeof(uint32_t));
+	return pointless_create_vector_priv(c, _POINTLESS_VECTOR_U32, sizeof(uint32_t));
 }
 
-uint32_t pointless_create_vector_float(pointless_create_t* c)
+uint32_t _pointless_create_vector_i64(pointless_create_t* c)
 {
-	return pointless_create_vector_priv(c, POINTLESS_VECTOR_FLOAT, sizeof(float));
+	return pointless_create_vector_priv(c, _POINTLESS_VECTOR_I64, sizeof(int64_t));
+}
+
+uint32_t _pointless_create_vector_u64(pointless_create_t* c)
+{
+	return pointless_create_vector_priv(c, _POINTLESS_VECTOR_U64, sizeof(uint64_t));
+}
+
+uint32_t _pointless_create_vector_float(pointless_create_t* c)
+{
+	return pointless_create_vector_priv(c, _POINTLESS_VECTOR_FLOAT, sizeof(float));
 }
 
 static uint32_t pointless_create_vector_append_priv(pointless_create_t* c, uint32_t vector, uint32_t vector_type, void* v)
@@ -1934,39 +1976,49 @@ uint32_t pointless_create_vector_value_append(pointless_create_t* c, uint32_t ve
 	return pointless_create_vector_append_priv(c, vector, POINTLESS_VECTOR_VALUE, &v);
 }
 
-uint32_t pointless_create_vector_i8_append(pointless_create_t* c, uint32_t vector, int8_t v)
+uint32_t _pointless_create_vector_i8_append(pointless_create_t* c, uint32_t vector, int8_t v)
 {
-	return pointless_create_vector_append_priv(c, vector, POINTLESS_VECTOR_I8, &v);
+	return pointless_create_vector_append_priv(c, vector, _POINTLESS_VECTOR_I8, &v);
 }
 
-uint32_t pointless_create_vector_u8_append(pointless_create_t* c, uint32_t vector, uint8_t v)
+uint32_t _pointless_create_vector_u8_append(pointless_create_t* c, uint32_t vector, uint8_t v)
 {
-	return pointless_create_vector_append_priv(c, vector, POINTLESS_VECTOR_U8, &v);
+	return pointless_create_vector_append_priv(c, vector, _POINTLESS_VECTOR_U8, &v);
 }
 
-uint32_t pointless_create_vector_i16_append(pointless_create_t* c, uint32_t vector, int16_t v)
+uint32_t _pointless_create_vector_i16_append(pointless_create_t* c, uint32_t vector, int16_t v)
 {
-	return pointless_create_vector_append_priv(c, vector, POINTLESS_VECTOR_I16, &v);
+	return pointless_create_vector_append_priv(c, vector, _POINTLESS_VECTOR_I16, &v);
 }
 
-uint32_t pointless_create_vector_u16_append(pointless_create_t* c, uint32_t vector, uint16_t v)
+uint32_t _pointless_create_vector_u16_append(pointless_create_t* c, uint32_t vector, uint16_t v)
 {
-	return pointless_create_vector_append_priv(c, vector, POINTLESS_VECTOR_U16, &v);
+	return pointless_create_vector_append_priv(c, vector, _POINTLESS_VECTOR_U16, &v);
 }
 
-uint32_t pointless_create_vector_i32_append(pointless_create_t* c, uint32_t vector, int32_t v)
+uint32_t _pointless_create_vector_i32_append(pointless_create_t* c, uint32_t vector, int32_t v)
 {
-	return pointless_create_vector_append_priv(c, vector, POINTLESS_VECTOR_I32, &v);
+	return pointless_create_vector_append_priv(c, vector, _POINTLESS_VECTOR_I32, &v);
 }
 
-uint32_t pointless_create_vector_u32_append(pointless_create_t* c, uint32_t vector, uint32_t v)
+uint32_t _pointless_create_vector_u32_append(pointless_create_t* c, uint32_t vector, uint32_t v)
 {
-	return pointless_create_vector_append_priv(c, vector, POINTLESS_VECTOR_U32, &v);
+	return pointless_create_vector_append_priv(c, vector, _POINTLESS_VECTOR_U32, &v);
 }
 
-uint32_t pointless_create_vector_float_append(pointless_create_t* c, uint32_t vector, float v)
+uint32_t _pointless_create_vector_i64_append(pointless_create_t* c, uint32_t vector, int64_t v)
 {
-	return pointless_create_vector_append_priv(c, vector, POINTLESS_VECTOR_FLOAT, &v);
+	return pointless_create_vector_append_priv(c, vector, _POINTLESS_VECTOR_I64, &v);
+}
+
+uint32_t _pointless_create_vector_u64_append(pointless_create_t* c, uint32_t vector, uint64_t v)
+{
+	return pointless_create_vector_append_priv(c, vector, _POINTLESS_VECTOR_U64, &v);
+}
+
+uint32_t _pointless_create_vector_float_append(pointless_create_t* c, uint32_t vector, float v)
+{
+	return pointless_create_vector_append_priv(c, vector, _POINTLESS_VECTOR_FLOAT, &v);
 }
 
 void pointless_create_vector_value_set(pointless_create_t* c, uint32_t vector, uint32_t i, uint32_t v)
@@ -1988,7 +2040,7 @@ static uint32_t pointless_create_vector_transfer_priv(pointless_create_t* c, uin
 
 uint32_t pointless_create_vector_u32_transfer(pointless_create_t* c, uint32_t vector, uint32_t* v, uint32_t n)
 {
-	assert(cv_value_type(vector) == POINTLESS_VECTOR_U32);
+	assert(cv_value_type(vector) == _POINTLESS_VECTOR_U32);
 	return pointless_create_vector_transfer_priv(c, vector, v, n);
 }
 
@@ -2055,39 +2107,49 @@ cleanup:
 	return POINTLESS_CREATE_VALUE_FAIL;
 }
 
-uint32_t pointless_create_vector_i8_owner(pointless_create_t* c, int8_t* items, uint32_t n_items)
+uint32_t _pointless_create_vector_i8_owner(pointless_create_t* c, int8_t* items, uint32_t n_items)
 {
-	return pointless_create_vector_owner_priv(c, POINTLESS_VECTOR_I8, items, n_items);
+	return pointless_create_vector_owner_priv(c, _POINTLESS_VECTOR_I8, items, n_items);
 }
 
-uint32_t pointless_create_vector_u8_owner(pointless_create_t* c, uint8_t* items, uint32_t n_items)
+uint32_t _pointless_create_vector_u8_owner(pointless_create_t* c, uint8_t* items, uint32_t n_items)
 {
-	return pointless_create_vector_owner_priv(c, POINTLESS_VECTOR_U8, items, n_items);
+	return pointless_create_vector_owner_priv(c, _POINTLESS_VECTOR_U8, items, n_items);
 }
 
-uint32_t pointless_create_vector_i16_owner(pointless_create_t* c, int16_t* items, uint32_t n_items)
+uint32_t _pointless_create_vector_i16_owner(pointless_create_t* c, int16_t* items, uint32_t n_items)
 {
-	return pointless_create_vector_owner_priv(c, POINTLESS_VECTOR_I16, items, n_items);
+	return pointless_create_vector_owner_priv(c, _POINTLESS_VECTOR_I16, items, n_items);
 }
 
-uint32_t pointless_create_vector_u16_owner(pointless_create_t* c, uint16_t* items, uint32_t n_items)
+uint32_t _pointless_create_vector_u16_owner(pointless_create_t* c, uint16_t* items, uint32_t n_items)
 {
-	return pointless_create_vector_owner_priv(c, POINTLESS_VECTOR_U16, items, n_items);
+	return pointless_create_vector_owner_priv(c, _POINTLESS_VECTOR_U16, items, n_items);
 }
 
-uint32_t pointless_create_vector_i32_owner(pointless_create_t* c, int32_t* items, uint32_t n_items)
+uint32_t _pointless_create_vector_i32_owner(pointless_create_t* c, int32_t* items, uint32_t n_items)
 {
-	return pointless_create_vector_owner_priv(c, POINTLESS_VECTOR_I32, items, n_items);
+	return pointless_create_vector_owner_priv(c, _POINTLESS_VECTOR_I32, items, n_items);
 }
 
-uint32_t pointless_create_vector_u32_owner(pointless_create_t* c, uint32_t* items, uint32_t n_items)
+uint32_t _pointless_create_vector_u32_owner(pointless_create_t* c, uint32_t* items, uint32_t n_items)
 {
-	return pointless_create_vector_owner_priv(c, POINTLESS_VECTOR_U32, items, n_items);
+	return pointless_create_vector_owner_priv(c, _POINTLESS_VECTOR_U32, items, n_items);
 }
 
-uint32_t pointless_create_vector_float_owner(pointless_create_t* c, float* items, uint32_t n_items)
+uint32_t _pointless_create_vector_i64_owner(pointless_create_t* c, int64_t* items, uint32_t n_items)
 {
-	return pointless_create_vector_owner_priv(c, POINTLESS_VECTOR_FLOAT, items, n_items);
+	return pointless_create_vector_owner_priv(c, _POINTLESS_VECTOR_I64, items, n_items);
+}
+
+uint32_t _pointless_create_vector_u64_owner(pointless_create_t* c, uint64_t* items, uint32_t n_items)
+{
+	return pointless_create_vector_owner_priv(c, _POINTLESS_VECTOR_U64, items, n_items);
+}
+
+uint32_t _pointless_create_vector_float_owner(pointless_create_t* c, float* items, uint32_t n_items)
+{
+	return pointless_create_vector_owner_priv(c, _POINTLESS_VECTOR_FLOAT, items, n_items);
 }
 
 uint32_t pointless_create_set(pointless_create_t* c)
@@ -2105,7 +2167,7 @@ uint32_t pointless_create_set(pointless_create_t* c)
 	// create the set value
 	pointless_create_set_t set;
 	pointless_dynarray_init(&set.keys, sizeof(uint32_t));
-	set.serialize_hash = pointless_create_vector_u32(c);
+	set.serialize_hash = _pointless_create_vector_u32(c);
 	set.serialize_keys = pointless_create_vector_value(c);
 
 	// NOTE: possible array leak here on failure
@@ -2167,7 +2229,7 @@ uint32_t pointless_create_map(pointless_create_t* c)
 	pointless_dynarray_init(&map.values, sizeof(uint32_t));
 
 	// allocate the final hash/key/value vectors
-	map.serialize_hash = pointless_create_vector_u32(c);
+	map.serialize_hash = _pointless_create_vector_u32(c);
 	map.serialize_keys = pointless_create_vector_value(c);
 	map.serialize_values = pointless_create_vector_value(c);
 

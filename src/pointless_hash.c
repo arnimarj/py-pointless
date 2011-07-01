@@ -255,28 +255,34 @@ static uint32_t pointless_hash_reader_vector(pointless_t* p, pointless_value_t* 
 	for (i = 0; i < n_items; i++) {
 		switch (v->type) {
 			case POINTLESS_VECTOR_VALUE_HASHABLE:
-				h = pointless_hash_reader(p, &pointless_reader_vector_value(p, v)[i]);
+				h = pointless_hash_reader(p, pointless_reader_vector_value(p, v) + i);
 				break;
-			case POINTLESS_VECTOR_I8:
-				h = pointless_hash_i32((int32_t)(pointless_reader_vector_i8(p, v)[i]));
+			case _POINTLESS_VECTOR_I8:
+				h = pointless_hash_i32((int32_t)(_pointless_reader_vector_i8(p, v)[i]));
 				break;
-			case POINTLESS_VECTOR_U8:
-				h = pointless_hash_u32((uint32_t)(pointless_reader_vector_u8(p, v)[i]));
+			case _POINTLESS_VECTOR_U8:
+				h = pointless_hash_u32((uint32_t)(_pointless_reader_vector_u8(p, v)[i]));
 				break;
-			case POINTLESS_VECTOR_I16:
-				h = pointless_hash_i32((int32_t)(pointless_reader_vector_i16(p, v)[i]));
+			case _POINTLESS_VECTOR_I16:
+				h = pointless_hash_i32((int32_t)(_pointless_reader_vector_i16(p, v)[i]));
 				break;
-			case POINTLESS_VECTOR_U16:
-				h = pointless_hash_u32((uint32_t)(pointless_reader_vector_u16(p, v)[i]));
+			case _POINTLESS_VECTOR_U16:
+				h = pointless_hash_u32((uint32_t)(_pointless_reader_vector_u16(p, v)[i]));
 				break;
-			case POINTLESS_VECTOR_I32:
-				h = pointless_hash_i32(pointless_reader_vector_i32(p, v)[i]);
+			case _POINTLESS_VECTOR_I32:
+				h = pointless_hash_i32(_pointless_reader_vector_i32(p, v)[i]);
 				break;
-			case POINTLESS_VECTOR_U32:
-				h = pointless_hash_u32(pointless_reader_vector_i32(p, v)[i]);
+			case _POINTLESS_VECTOR_U32:
+				h = pointless_hash_u32(_pointless_reader_vector_i32(p, v)[i]);
 				break;
-			case POINTLESS_VECTOR_FLOAT:
-				h = pointless_hash_float(pointless_reader_vector_float(p, v)[i]);
+			case _POINTLESS_VECTOR_I64:
+				h = pointless_hash_i32((int32_t)(_pointless_reader_vector_i64(p, v)[i]));
+				break;
+			case _POINTLESS_VECTOR_U64:
+				h = pointless_hash_u32((uint32_t)(_pointless_reader_vector_u64(p, v)[i]));
+				break;
+			case _POINTLESS_VECTOR_FLOAT:
+				h = pointless_hash_float(_pointless_reader_vector_float(p, v)[i]);
 				break;
 			default:
 				h = 0;
@@ -314,18 +320,24 @@ static uint32_t pointless_hash_create_vector(pointless_create_t* c, pointless_cr
 			vv = &pointless_dynarray_ITEM_AT(pointless_create_value_t, &c->values, ((uint32_t*)items)[i]);
 
 			switch (v->header.type_29) {
-				case POINTLESS_VECTOR_I8:
-				case POINTLESS_VECTOR_I16:
-				case POINTLESS_VECTOR_I32:
+				case _POINTLESS_VECTOR_I8:
+				case _POINTLESS_VECTOR_I16:
+				case _POINTLESS_VECTOR_I32:
 					h = pointless_hash_i32((int32_t)pointless_get_int_as_int64(vv->header.type_29, &vv->data));
 					break;
-				case POINTLESS_VECTOR_U8:
-				case POINTLESS_VECTOR_U16:
-				case POINTLESS_VECTOR_U32:
+				case _POINTLESS_VECTOR_U8:
+				case _POINTLESS_VECTOR_U16:
+				case _POINTLESS_VECTOR_U32:
 					h = pointless_hash_u32((uint32_t)pointless_get_int_as_int64(vv->header.type_29, &vv->data));
 					break;
-				case POINTLESS_VECTOR_FLOAT:
+				case _POINTLESS_VECTOR_FLOAT:
 					h = pointless_hash_float(pointless_value_get_float(vv->header.type_29, &vv->data));
+					break;
+				// value based vectors can't hold 64-bit values
+				case _POINTLESS_VECTOR_U64:
+				case _POINTLESS_VECTOR_I64:
+					h = 0;
+					assert(0);
 					break;
 				default:
 					h = 0;
@@ -338,25 +350,31 @@ static uint32_t pointless_hash_create_vector(pointless_create_t* c, pointless_cr
 					vv = &pointless_dynarray_ITEM_AT(pointless_create_value_t, &c->values, ((uint32_t*)items)[i]);
 					h = pointless_hash_create(c, vv);
 					break;
-				case POINTLESS_VECTOR_I8:
+				case _POINTLESS_VECTOR_I8:
 					h = pointless_hash_i32((int32_t)(((int8_t*)items)[i]));
 					break;
-				case POINTLESS_VECTOR_U8:
+				case _POINTLESS_VECTOR_U8:
 					h = pointless_hash_u32((uint32_t)(((uint8_t*)items)[i]));
 					break;
-				case POINTLESS_VECTOR_I16:
+				case _POINTLESS_VECTOR_I16:
 					h = pointless_hash_i32((int32_t)(((int16_t*)items)[i]));
 					break;
-				case POINTLESS_VECTOR_U16:
+				case _POINTLESS_VECTOR_U16:
 					h = pointless_hash_u32((uint32_t)(((uint16_t*)items)[i]));
 					break;
-				case POINTLESS_VECTOR_I32:
+				case _POINTLESS_VECTOR_I32:
 					h = pointless_hash_i32(((int32_t*)items)[i]);
 					break;
-				case POINTLESS_VECTOR_U32:
+				case _POINTLESS_VECTOR_U32:
 					h = pointless_hash_u32(((uint32_t*)items)[i]);
 					break;
-				case POINTLESS_VECTOR_FLOAT:
+				case _POINTLESS_VECTOR_I64:
+					h = pointless_hash_i32((int32_t)(((int64_t*)items)[i]));
+					break;
+				case _POINTLESS_VECTOR_U64:
+					h = pointless_hash_u32((uint32_t)(((uint64_t*)items)[i]));
+					break;
+				case _POINTLESS_VECTOR_FLOAT:
 					h = pointless_hash_float(((float*)items)[i]);
 					break;
 				default:
@@ -395,13 +413,15 @@ static pointless_hash_reader_cb pointless_hash_reader_func(uint32_t t)
 		case POINTLESS_VECTOR_VALUE:
 			return 0;
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-		case POINTLESS_VECTOR_I8:
-		case POINTLESS_VECTOR_U8:
-		case POINTLESS_VECTOR_I16:
-		case POINTLESS_VECTOR_U16:
-		case POINTLESS_VECTOR_I32:
-		case POINTLESS_VECTOR_U32:
-		case POINTLESS_VECTOR_FLOAT:
+		case _POINTLESS_VECTOR_I8:
+		case _POINTLESS_VECTOR_U8:
+		case _POINTLESS_VECTOR_I16:
+		case _POINTLESS_VECTOR_U16:
+		case _POINTLESS_VECTOR_I32:
+		case _POINTLESS_VECTOR_U32:
+		case _POINTLESS_VECTOR_I64:
+		case _POINTLESS_VECTOR_U64:
+		case _POINTLESS_VECTOR_FLOAT:
 		case POINTLESS_VECTOR_EMPTY:
 			return pointless_hash_reader_vector;
 		case POINTLESS_SET_VALUE:
@@ -438,13 +458,15 @@ static pointless_hash_create_cb pointless_hash_create_func(uint32_t t)
 		case POINTLESS_VECTOR_VALUE:
 			return 0;
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-		case POINTLESS_VECTOR_I8:
-		case POINTLESS_VECTOR_U8:
-		case POINTLESS_VECTOR_I16:
-		case POINTLESS_VECTOR_U16:
-		case POINTLESS_VECTOR_I32:
-		case POINTLESS_VECTOR_U32:
-		case POINTLESS_VECTOR_FLOAT:
+		case _POINTLESS_VECTOR_I8:
+		case _POINTLESS_VECTOR_U8:
+		case _POINTLESS_VECTOR_I16:
+		case _POINTLESS_VECTOR_U16:
+		case _POINTLESS_VECTOR_I32:
+		case _POINTLESS_VECTOR_U32:
+		case _POINTLESS_VECTOR_I64:
+		case _POINTLESS_VECTOR_U64:
+		case _POINTLESS_VECTOR_FLOAT:
 		case POINTLESS_VECTOR_EMPTY:
 			return pointless_hash_create_vector;
 		case POINTLESS_SET_VALUE:

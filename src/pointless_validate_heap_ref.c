@@ -5,13 +5,15 @@ int32_t pointless_validate_inline_invariants(pointless_validate_context_t* conte
 	switch (v->type) {
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-		case POINTLESS_VECTOR_I8:
-		case POINTLESS_VECTOR_U8:
-		case POINTLESS_VECTOR_I16:
-		case POINTLESS_VECTOR_U16:
-		case POINTLESS_VECTOR_I32:
-		case POINTLESS_VECTOR_U32:
-		case POINTLESS_VECTOR_FLOAT:
+		case _POINTLESS_VECTOR_I8:
+		case _POINTLESS_VECTOR_U8:
+		case _POINTLESS_VECTOR_I16:
+		case _POINTLESS_VECTOR_U16:
+		case _POINTLESS_VECTOR_I32:
+		case _POINTLESS_VECTOR_U32:
+		case _POINTLESS_VECTOR_I64:
+		case _POINTLESS_VECTOR_U64:
+		case _POINTLESS_VECTOR_FLOAT:
 		case POINTLESS_BITVECTOR:
 		case POINTLESS_SET_VALUE:
 		case POINTLESS_MAP_VALUE_VALUE:
@@ -80,13 +82,15 @@ int32_t pointless_validate_heap_ref(pointless_validate_context_t* context, point
 			break;
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-		case POINTLESS_VECTOR_I8:
-		case POINTLESS_VECTOR_U8:
-		case POINTLESS_VECTOR_I16:
-		case POINTLESS_VECTOR_U16:
-		case POINTLESS_VECTOR_I32:
-		case POINTLESS_VECTOR_U32:
-		case POINTLESS_VECTOR_FLOAT:
+		case _POINTLESS_VECTOR_I8:
+		case _POINTLESS_VECTOR_U8:
+		case _POINTLESS_VECTOR_I16:
+		case _POINTLESS_VECTOR_U16:
+		case _POINTLESS_VECTOR_I32:
+		case _POINTLESS_VECTOR_U32:
+		case _POINTLESS_VECTOR_I64:
+		case _POINTLESS_VECTOR_U64:
+		case _POINTLESS_VECTOR_FLOAT:
 			if (v->data.data_u32 >= context->p->header->n_vector) {
 				*error = "vector reference out of bounds";
 				return 0;

@@ -52,13 +52,15 @@
 // general/specialized vectors
 #define POINTLESS_VECTOR_VALUE          0
 #define POINTLESS_VECTOR_VALUE_HASHABLE 1
-#define POINTLESS_VECTOR_I8             2
-#define POINTLESS_VECTOR_U8             3
-#define POINTLESS_VECTOR_I16            4
-#define POINTLESS_VECTOR_U16            5
-#define POINTLESS_VECTOR_I32            6
-#define POINTLESS_VECTOR_U32            7
-#define POINTLESS_VECTOR_FLOAT          8
+#define _POINTLESS_VECTOR_I8             2
+#define _POINTLESS_VECTOR_U8             3
+#define _POINTLESS_VECTOR_I16            4
+#define _POINTLESS_VECTOR_U16            5
+#define _POINTLESS_VECTOR_I32            6
+#define _POINTLESS_VECTOR_U32            7
+#define _POINTLESS_VECTOR_I64            25
+#define _POINTLESS_VECTOR_U64            26
+#define _POINTLESS_VECTOR_FLOAT          8
 #define POINTLESS_VECTOR_EMPTY          9
 
 // unicode strings
@@ -84,6 +86,11 @@
 #define POINTLESS_BOOLEAN 23
 #define POINTLESS_NULL    24
 
+// these two are not really supported yet, but are used internally
+#define POINTLESS_I64     27
+#define POINTLESS_U64     28
+
+
 #define PC_HEAP_OFFSET(p, offsets, i) ((char*)((p)->heap_ptr) + ((p)->is_32_offset ? ((p)->offsets##_32[i]) : ((p)->offsets##_64[i])))
 #define PC_OFFSET(p, offsets, i)      (                         ((p)->is_32_offset ? ((p)->offsets##_32[i]) : ((p)->offsets##_64[i])))
 
@@ -104,23 +111,55 @@ typedef union {
 	} __attribute__ ((packed)) bitvector_01_or_10;
 } __attribute__ ((packed)) pointless_value_data_t;
 
+typedef union {
+	int64_t data_i64;
+	uint64_t data_u64;
+	int32_t data_i32;
+	uint32_t data_u32;
+	float data_f;
+
+	// bitvector compression schemes
+	struct {
+		unsigned int n_bits:5;
+		unsigned int bits:27;
+	} __attribute__ ((packed)) bitvector_packed;
+
+	struct {
+		uint16_t n_bits_a;
+		uint16_t n_bits_b;
+	} __attribute__ ((packed)) bitvector_01_or_10;
+} __attribute__ ((packed)) pointless_complete_value_data_t;
+
 // a base value (64-bits)
 typedef struct {
 	uint32_t type;                  // 32
 	pointless_value_data_t data;    // 32
 } __attribute__ ((packed)) pointless_value_t;
 
+// a catch-all base value (96-bits)
+typedef struct {
+	uint32_t type;                                  // 32
+	pointless_complete_value_data_t complete_data;  // 64
+} __attribute__ ((packed)) pointless_complete_value_t;
+
+typedef struct {
+	uint32_t type_29:29;
+	uint32_t is_compressed_vector:1; // true iff: vector was normal, but allows for compression
+	uint32_t is_set_map_vector:1;    // true iff: buffer owned by caller
+	uint32_t is_outside_vector:1;    // true iff: vector is used to hold set/map keys or values
+} pointless_create_value_header_t;
+
 // a base value
 typedef struct {
-	struct {
-		uint32_t type_29:29;
-		uint32_t is_compressed_vector:1; // true iff: vector was normal, but allows for compression
-		uint32_t is_set_map_vector:1;    // true iff: buffer owned by caller
-		uint32_t is_outside_vector:1;    // true iff: vector is used to hold set/map keys or values
-	} header;
-
+	pointless_create_value_header_t header;
 	pointless_value_data_t data;
 } __attribute__ ((packed)) pointless_create_value_t;
+
+// a base value
+typedef struct {
+	pointless_create_value_header_t header;
+	pointless_complete_value_data_t complete_data;
+} __attribute__ ((packed)) pointless_complete_create_value_t;
 
 // convenience macros
 #define ICEIL(a, div) (((a) % (div)) ? (((a) / (div)) + 1) : ((a) / (div)))
@@ -210,12 +249,15 @@ typedef struct {
 	pointless_value_t value_vector;
 } __attribute__ ((aligned (4))) pointless_map_header_t;
 
-STATIC_ASSERT(sizeof(pointless_value_data_t)   == 4, "pointless_value_data_t must be 4 bytes");
-STATIC_ASSERT(sizeof(pointless_value_t)        == 8, "pointless_value_t must be 8 bytes");
-STATIC_ASSERT(sizeof(pointless_create_value_t) == 8, "pointless_create_value_t must be 8 bytes");
-STATIC_ASSERT(sizeof(pointless_header_t)       == 32, "pointless_header_t must be 32 bytes");
-STATIC_ASSERT(sizeof(pointless_set_header_t)   == 24, "pointless_set_header_t must be 24 bytes");
-STATIC_ASSERT(sizeof(pointless_map_header_t)   == 32, "pointless_map_header_t must be 32 bytes");
+STATIC_ASSERT(sizeof(pointless_value_data_t)            == 4,  "pointless_value_data_t must be 4 bytes");
+STATIC_ASSERT(sizeof(pointless_complete_value_data_t)   == 8,  "pointless_complete_value_data_t must be 6 bytes");
+STATIC_ASSERT(sizeof(pointless_value_t)                 == 8,  "pointless_value_t must be 8 bytes");
+STATIC_ASSERT(sizeof(pointless_complete_value_t)        == 12, "pointless_complete_value_t must be 10 bytes");
+STATIC_ASSERT(sizeof(pointless_create_value_t)          == 8,  "pointless_create_value_t must be 8 bytes");
+STATIC_ASSERT(sizeof(pointless_complete_create_value_t) == 12, "pointless_complete_create_value_t must be 10 bytes");
+STATIC_ASSERT(sizeof(pointless_header_t)                == 32, "pointless_header_t must be 32 bytes");
+STATIC_ASSERT(sizeof(pointless_set_header_t)            == 24, "pointless_set_header_t must be 24 bytes");
+STATIC_ASSERT(sizeof(pointless_map_header_t)            == 32, "pointless_map_header_t must be 32 bytes");
 
 // pointless-owned vector
 typedef struct {
@@ -322,12 +364,12 @@ typedef struct {
 #define cv_bitvector_at(v) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->bitvector_values, cv_value_data_u32(v))))
 #define cv_unicode_at(v) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->unicode_values, cv_value_data_u32(v))))
 
-#define cv_get_priv_vector(cv) (&pointless_dynarray_ITEM_AT(pointless_create_vector_priv_t, &c->priv_vector_values, cv->data.data_u32))
-#define cv_get_outside_vector(cv) (&pointless_dynarray_ITEM_AT(pointless_create_vector_outside_t, &c->outside_vector_values, cv->data.data_u32))
-#define cv_get_set(cv) (&pointless_dynarray_ITEM_AT(pointless_create_set_t, &c->set_values, cv->data.data_u32))
-#define cv_get_map(cv) (&pointless_dynarray_ITEM_AT(pointless_create_map_t, &c->map_values, cv->data.data_u32))
-#define cv_get_bitvector(cv) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->bitvector_values, cv->data.data_u32)))
-#define cv_get_unicode(cv) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->unicode_values, cv->data.data_u32)))
+#define cv_get_priv_vector(cv) (&pointless_dynarray_ITEM_AT(pointless_create_vector_priv_t, &c->priv_vector_values, (cv)->data.data_u32))
+#define cv_get_outside_vector(cv) (&pointless_dynarray_ITEM_AT(pointless_create_vector_outside_t, &c->outside_vector_values, (cv)->data.data_u32))
+#define cv_get_set(cv) (&pointless_dynarray_ITEM_AT(pointless_create_set_t, &c->set_values, (cv)->data.data_u32))
+#define cv_get_map(cv) (&pointless_dynarray_ITEM_AT(pointless_create_map_t, &c->map_values, (cv)->data.data_u32))
+#define cv_get_bitvector(cv) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->bitvector_values, (cv)->data.data_u32)))
+#define cv_get_unicode(cv) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->unicode_values, (cv)->data.data_u32)))
 
 // top-level type checkers
 size_t pointless_vector_item_size(uint32_t type);
@@ -378,11 +420,11 @@ int32_t pointless_cmp_unicode_ucs4_ucs2(uint32_t* a, uint16_t* b);
 int32_t pointless_cmp_unicode_ascii_ucs4(uint8_t* a, uint32_t* b);
 int32_t pointless_cmp_unicode_ucs4_ascii(uint32_t* a, uint8_t* b);
 int32_t pointless_cmp_unicode_ascii_ascii(uint8_t* a, uint8_t* b);
-int32_t pointless_cmp_reader(pointless_t* p_a, pointless_value_t* a, pointless_t* p_b, pointless_value_t* b, const char** error);
-int32_t pointless_cmp_reader_acyclic(pointless_t* p_a, pointless_value_t* a, pointless_t* p_b, pointless_value_t* b);
+int32_t pointless_cmp_reader(pointless_t* p_a, pointless_complete_value_t* a, pointless_t* p_b, pointless_complete_value_t* b, const char** error);
+int32_t pointless_cmp_reader_acyclic(pointless_t* p_a, pointless_complete_value_t* a, pointless_t* p_b, pointless_complete_value_t* b);
 int32_t pointless_cmp_create(pointless_create_t* c, uint32_t a, uint32_t b, const char** error);
 
 // equality test callback
-typedef uint32_t (*pointless_eq_cb)(pointless_t* p, pointless_value_t* v, void* user, const char** error);
+typedef uint32_t (*pointless_eq_cb)(pointless_t* p, pointless_complete_value_t* v, void* user, const char** error);
 
 #endif

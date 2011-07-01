@@ -27,7 +27,7 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 			return 0;
 	}
 
-
+	printf("version: %i\n", (int)p->header->version);
 
 	// right, we need some number of bytes for the offset vectors
 	uint64_t mandatory_size = sizeof(pointless_header_t);
@@ -208,81 +208,99 @@ pointless_value_t* pointless_reader_vector_value(pointless_t* p, pointless_value
 	return (pointless_value_t*)pointless_reader_vector_base_ptr(p, v);
 }
 
-int8_t* pointless_reader_vector_i8(pointless_t* p, pointless_value_t* v)
+int8_t* _pointless_reader_vector_i8(pointless_t* p, pointless_value_t* v)
 {
-	assert(v->type == POINTLESS_VECTOR_I8);
+	assert(v->type == _POINTLESS_VECTOR_I8);
 	assert((size_t)pointless_reader_vector_base_ptr(p, v) % 4 == 0);
 	return (int8_t*)pointless_reader_vector_base_ptr(p, v);
 }
 
-uint8_t* pointless_reader_vector_u8(pointless_t* p, pointless_value_t* v)
+uint8_t* _pointless_reader_vector_u8(pointless_t* p, pointless_value_t* v)
 {
-	assert(v->type == POINTLESS_VECTOR_U8);
+	assert(v->type == _POINTLESS_VECTOR_U8);
 	assert((size_t)pointless_reader_vector_base_ptr(p, v) % 4 == 0);
 	return (uint8_t*)pointless_reader_vector_base_ptr(p, v);
 }
 
-int16_t* pointless_reader_vector_i16(pointless_t* p, pointless_value_t* v)
+int16_t* _pointless_reader_vector_i16(pointless_t* p, pointless_value_t* v)
 {
-	assert(v->type == POINTLESS_VECTOR_I16);
+	assert(v->type == _POINTLESS_VECTOR_I16);
 	assert((size_t)pointless_reader_vector_base_ptr(p, v) % 4 == 0);
 	return (int16_t*)pointless_reader_vector_base_ptr(p, v);
 }
 
-uint16_t* pointless_reader_vector_u16(pointless_t* p, pointless_value_t* v)
+uint16_t* _pointless_reader_vector_u16(pointless_t* p, pointless_value_t* v)
 {
-	assert(v->type == POINTLESS_VECTOR_U16);
+	assert(v->type == _POINTLESS_VECTOR_U16);
 	assert((size_t)pointless_reader_vector_base_ptr(p, v) % 4 == 0);
 	return (uint16_t*)pointless_reader_vector_base_ptr(p, v);
 }
 
-int32_t* pointless_reader_vector_i32(pointless_t* p, pointless_value_t* v)
+int32_t* _pointless_reader_vector_i32(pointless_t* p, pointless_value_t* v)
 {
-	assert(v->type == POINTLESS_VECTOR_I32);
+	assert(v->type == _POINTLESS_VECTOR_I32);
 	assert((size_t)pointless_reader_vector_base_ptr(p, v) % 4 == 0);
 	return (int32_t*)pointless_reader_vector_base_ptr(p, v);
 }
 
-uint32_t* pointless_reader_vector_u32(pointless_t* p, pointless_value_t* v)
+uint32_t* _pointless_reader_vector_u32(pointless_t* p, pointless_value_t* v)
 {
-	assert(v->type == POINTLESS_VECTOR_U32);
+	assert(v->type == _POINTLESS_VECTOR_U32);
 	assert((size_t)pointless_reader_vector_base_ptr(p, v) % 4 == 0);
 	return (uint32_t*)pointless_reader_vector_base_ptr(p, v);
 }
 
-float* pointless_reader_vector_float(pointless_t* p, pointless_value_t* v)
+int64_t* _pointless_reader_vector_i64(pointless_t* p, pointless_value_t* v)
 {
-	assert(v->type == POINTLESS_VECTOR_FLOAT);
+	assert(v->type == _POINTLESS_VECTOR_I64);
+	assert((size_t)pointless_reader_vector_base_ptr(p, v) % 4 == 0);
+	return (int64_t*)pointless_reader_vector_base_ptr(p, v);
+}
+
+uint64_t* _pointless_reader_vector_u64(pointless_t* p, pointless_value_t* v)
+{
+	assert(v->type == _POINTLESS_VECTOR_U64);
+	assert((size_t)pointless_reader_vector_base_ptr(p, v) % 4 == 0);
+	return (uint64_t*)pointless_reader_vector_base_ptr(p, v);
+}
+
+float* _pointless_reader_vector_float(pointless_t* p, pointless_value_t* v)
+{
+	assert(v->type == _POINTLESS_VECTOR_FLOAT);
 	assert((size_t)pointless_reader_vector_base_ptr(p, v) % 4 == 0);
 	return (float*)pointless_reader_vector_base_ptr(p, v);
 }
 
-pointless_value_t pointless_reader_vector_value_case(pointless_t* p, pointless_value_t* v, uint32_t i)
+pointless_complete_value_t pointless_reader_vector_value_case(pointless_t* p, pointless_value_t* v, uint32_t i)
 {
 	assert(pointless_is_vector_type(v->type));
 
 	switch (v->type) {
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-			return pointless_reader_vector_value(p, v)[i];
-		case POINTLESS_VECTOR_I8:
-			return pointless_value_create_as_read_i32((int32_t)(pointless_reader_vector_i8(p, v)[i]));
-		case POINTLESS_VECTOR_U8:
-			return pointless_value_create_as_read_u32((uint32_t)(pointless_reader_vector_u8(p, v)[i]));
-		case POINTLESS_VECTOR_I16:
-			return pointless_value_create_as_read_i32((int32_t)(pointless_reader_vector_i16(p, v)[i]));
-		case POINTLESS_VECTOR_U16:
-			return pointless_value_create_as_read_u32((uint32_t)(pointless_reader_vector_u16(p, v)[i]));
-		case POINTLESS_VECTOR_I32:
-			return pointless_value_create_as_read_i32(pointless_reader_vector_i32(p, v)[i]);
-		case POINTLESS_VECTOR_U32:
-			return pointless_value_create_as_read_u32(pointless_reader_vector_u32(p, v)[i]);
-		case POINTLESS_VECTOR_FLOAT:
-			return pointless_value_create_as_read_float(pointless_reader_vector_float(p, v)[i]);
+			return pointless_value_to_complete(pointless_reader_vector_value(p, v) + i);
+		case _POINTLESS_VECTOR_I8:
+			return pointless_complete_value_create_as_read_i32((int32_t)(_pointless_reader_vector_i8(p, v)[i]));
+		case _POINTLESS_VECTOR_U8:
+			return pointless_complete_value_create_as_read_u32((uint32_t)(_pointless_reader_vector_u8(p, v)[i]));
+		case _POINTLESS_VECTOR_I16:
+			return pointless_complete_value_create_as_read_i32((int32_t)(_pointless_reader_vector_i16(p, v)[i]));
+		case _POINTLESS_VECTOR_U16:
+			return pointless_complete_value_create_as_read_u32((uint32_t)(_pointless_reader_vector_u16(p, v)[i]));
+		case _POINTLESS_VECTOR_I32:
+			return pointless_complete_value_create_as_read_i32(_pointless_reader_vector_i32(p, v)[i]);
+		case _POINTLESS_VECTOR_U32:
+			return pointless_complete_value_create_as_read_u32(_pointless_reader_vector_u32(p, v)[i]);
+		case _POINTLESS_VECTOR_I64:
+			return pointless_complete_value_create_as_read_i64(_pointless_reader_vector_i64(p, v)[i]);
+		case _POINTLESS_VECTOR_U64:
+			return pointless_complete_value_create_as_read_u64(_pointless_reader_vector_u64(p, v)[i]);
+		case _POINTLESS_VECTOR_FLOAT:
+			return pointless_complete_value_create_as_read_float(_pointless_reader_vector_float(p, v)[i]);
 	}
 
 	assert(0);
-	return pointless_value_create_as_read_null();
+	return pointless_complete_value_create_as_read_null();
 }
 
 uint32_t pointless_reader_bitvector_n_bits(pointless_t* p, pointless_value_t* v)
@@ -374,7 +392,7 @@ void pointless_reader_set_lookup(pointless_t* p, pointless_value_t* s, pointless
 	uint32_t hash = pointless_hash_reader(p, k);
 
 	// other info
-	uint32_t* hash_vector = pointless_reader_vector_u32(p, &header->hash_vector);
+	uint32_t* hash_vector = _pointless_reader_vector_u32(p, &header->hash_vector);
 	pointless_value_t* key_vector = pointless_reader_vector_value(p, &header->key_vector);
 
 	uint32_t n_buckets = pointless_reader_vector_n_items(p, &header->key_vector);
@@ -396,7 +414,7 @@ void pointless_reader_set_lookup_ext(pointless_t* p, pointless_value_t* s, uint3
 	assert((size_t)header % 4 == 0);
 
 	// other info
-	uint32_t* hash_vector = pointless_reader_vector_u32(p, &header->hash_vector);
+	uint32_t* hash_vector = _pointless_reader_vector_u32(p, &header->hash_vector);
 	pointless_value_t* key_vector = pointless_reader_vector_value(p, &header->key_vector);
 
 	uint32_t n_buckets = pointless_reader_vector_n_items(p, &header->key_vector);
@@ -474,7 +492,7 @@ void pointless_reader_map_iter_hash_init(pointless_t* p, pointless_value_t* m, u
 {
 	assert(m->type == POINTLESS_MAP_VALUE_VALUE);
 	pointless_map_header_t* header = (pointless_map_header_t*)PC_HEAP_OFFSET(p, map_offsets, m->data.data_u32);
-	assert(header->hash_vector.type == POINTLESS_VECTOR_U32);
+	assert(header->hash_vector.type == _POINTLESS_VECTOR_U32);
 	uint32_t n_buckets = pointless_reader_vector_n_items(p, &header->hash_vector);
 	assert((size_t)header % 4 == 0);
 	pointless_hash_table_probe_hash_init(p, hash, n_buckets, iter_state);
@@ -484,14 +502,14 @@ uint32_t pointless_reader_map_iter_hash(pointless_t* p, pointless_value_t* m, ui
 {
 	assert(m->type == POINTLESS_MAP_VALUE_VALUE);
 	pointless_map_header_t* header = (pointless_map_header_t*)PC_HEAP_OFFSET(p, map_offsets, m->data.data_u32);
-	assert(header->hash_vector.type == POINTLESS_VECTOR_U32);
+	assert(header->hash_vector.type == _POINTLESS_VECTOR_U32);
 	assert(header->key_vector.type == POINTLESS_VECTOR_VALUE_HASHABLE);
 	assert(header->value_vector.type == POINTLESS_VECTOR_VALUE || header->value_vector.type == POINTLESS_VECTOR_VALUE_HASHABLE);
 
 	assert((size_t)header % 4 == 0);
 
 	// get vector pointers
-	uint32_t* hash_vector = pointless_reader_vector_u32(p, &header->hash_vector);
+	uint32_t* hash_vector = _pointless_reader_vector_u32(p, &header->hash_vector);
 	pointless_value_t* key_vector = pointless_reader_vector_value(p, &header->key_vector);
 	pointless_value_t* value_vector = pointless_reader_vector_value(p, &header->value_vector);
 
@@ -513,7 +531,7 @@ void pointless_reader_set_iter_hash_init(pointless_t* p, pointless_value_t* s, u
 {
 	assert(s->type == POINTLESS_SET_VALUE);
 	pointless_set_header_t* header = (pointless_set_header_t*)PC_HEAP_OFFSET(p, set_offsets, s->data.data_u32);
-	assert(header->hash_vector.type == POINTLESS_VECTOR_U32);
+	assert(header->hash_vector.type == _POINTLESS_VECTOR_U32);
 	uint32_t n_buckets = pointless_reader_vector_n_items(p, &header->hash_vector);
 	assert((size_t)header % 4 == 0);
 	pointless_hash_table_probe_hash_init(p, hash, n_buckets, iter_state);
@@ -523,13 +541,13 @@ uint32_t pointless_reader_set_iter_hash(pointless_t* p, pointless_value_t* s, ui
 {
 	assert(s->type == POINTLESS_SET_VALUE);
 	pointless_set_header_t* header = (pointless_set_header_t*)PC_HEAP_OFFSET	(p, set_offsets, s->data.data_u32);
-	assert(header->hash_vector.type == POINTLESS_VECTOR_U32);
+	assert(header->hash_vector.type == _POINTLESS_VECTOR_U32);
 	assert(header->key_vector.type == POINTLESS_VECTOR_VALUE_HASHABLE);
 
 	assert((size_t)header % 4 == 0);
 
 	// get vector pointers
-	uint32_t* hash_vector = pointless_reader_vector_u32(p, &header->hash_vector);
+	uint32_t* hash_vector = _pointless_reader_vector_u32(p, &header->hash_vector);
 	pointless_value_t* key_vector = pointless_reader_vector_value(p, &header->key_vector);
 
 	// probe until we hit an empty bucket, or a matching hash(again)
@@ -562,7 +580,7 @@ void pointless_reader_map_lookup(pointless_t* p, pointless_value_t* m, pointless
 	uint32_t hash = pointless_hash_reader(p, k);
 
 	// other info
-	uint32_t* hash_vector = pointless_reader_vector_u32(p, &header->hash_vector);
+	uint32_t* hash_vector = _pointless_reader_vector_u32(p, &header->hash_vector);
 	pointless_value_t* key_vector = pointless_reader_vector_value(p, &header->key_vector);
 	pointless_value_t* value_vector = pointless_reader_vector_value(p, &header->value_vector);
 
@@ -588,7 +606,7 @@ void pointless_reader_map_lookup_ext(pointless_t* p, pointless_value_t* m, uint3
 	assert((size_t)header % 4 == 0);
 
 	// other info
-	uint32_t* hash_vector = pointless_reader_vector_u32(p, &header->hash_vector);
+	uint32_t* hash_vector = _pointless_reader_vector_u32(p, &header->hash_vector);
 	pointless_value_t* key_vector = pointless_reader_vector_value(p, &header->key_vector);
 	pointless_value_t* value_vector = pointless_reader_vector_value(p, &header->value_vector);
 
@@ -657,13 +675,15 @@ uint32_t pointless_container_id(pointless_t* p, pointless_value_t* c)
 			return 0;
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-		case POINTLESS_VECTOR_I8:
-		case POINTLESS_VECTOR_U8:
-		case POINTLESS_VECTOR_I16:
-		case POINTLESS_VECTOR_U16:
-		case POINTLESS_VECTOR_I32:
-		case POINTLESS_VECTOR_U32:
-		case POINTLESS_VECTOR_FLOAT:
+		case _POINTLESS_VECTOR_I8:
+		case _POINTLESS_VECTOR_U8:
+		case _POINTLESS_VECTOR_I16:
+		case _POINTLESS_VECTOR_U16:
+		case _POINTLESS_VECTOR_I32:
+		case _POINTLESS_VECTOR_U32:
+		case _POINTLESS_VECTOR_I64:
+		case _POINTLESS_VECTOR_U64:
+		case _POINTLESS_VECTOR_FLOAT:
 			return 1 + c->data.data_u32;
 		case POINTLESS_SET_VALUE:
 			return 1 + c->data.data_u32 + p->header->n_vector;

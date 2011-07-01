@@ -105,13 +105,15 @@ typedef struct {
 	uint32_t iter_state;
 } PyPointlessMapItemIter;
 
-#define POINTLESS_PRIM_VECTOR_TYPE_I8 0
-#define POINTLESS_PRIM_VECTOR_TYPE_U8 1
-#define POINTLESS_PRIM_VECTOR_TYPE_I16 2
-#define POINTLESS_PRIM_VECTOR_TYPE_U16 3
-#define POINTLESS_PRIM_VECTOR_TYPE_I32 4
-#define POINTLESS_PRIM_VECTOR_TYPE_U32 5
-#define POINTLESS_PRIM_VECTOR_TYPE_FLOAT 6
+#define _POINTLESS_PRIM_VECTOR_TYPE_I8 0
+#define _POINTLESS_PRIM_VECTOR_TYPE_U8 1
+#define _POINTLESS_PRIM_VECTOR_TYPE_I16 2
+#define _POINTLESS_PRIM_VECTOR_TYPE_U16 3
+#define _POINTLESS_PRIM_VECTOR_TYPE_I32 4
+#define _POINTLESS_PRIM_VECTOR_TYPE_U32 5
+#define _POINTLESS_PRIM_VECTOR_TYPE_FLOAT 6
+#define _POINTLESS_PRIM_VECTOR_TYPE_I64 7
+#define _POINTLESS_PRIM_VECTOR_TYPE_U64 8
 
 typedef struct {
 	PyObject_HEAD
@@ -136,6 +138,8 @@ PyPointlessMap* PyPointlessMap_New(PyPointless* pp, pointless_value_t* v);
 
 PyObject* pypointless_i32(PyPointless* p, int32_t v);
 PyObject* pypointless_u32(PyPointless* p, uint32_t v);
+PyObject* pypointless_i64(PyPointless* p, int64_t v);
+PyObject* pypointless_u64(PyPointless* p, uint64_t v);
 PyObject* pypointless_float(PyPointless* p, float v);
 PyObject* pypointless_value_unicode(pointless_t* p, pointless_value_t* v);
 PyObject* pypointless_value(PyPointless* p, pointless_value_t* v);
@@ -143,7 +147,7 @@ PyObject* pypointless_value(PyPointless* p, pointless_value_t* v);
 PyObject* PyPointless_str(PyObject* py_object);
 PyObject* PyPointless_repr(PyObject* py_object);
 
-uint32_t pypointless_cmp_eq(pointless_t* p, pointless_value_t* v, PyObject* py_object, const char** error);
+uint32_t pypointless_cmp_eq(pointless_t* p, pointless_complete_value_t* v, PyObject* py_object, const char** error);
 uint32_t pyobject_hash(PyObject* py_object, uint32_t version, const char** error);
 uint32_t pointless_pybitvector_hash(PyPointlessBitvector* bitvector);
 

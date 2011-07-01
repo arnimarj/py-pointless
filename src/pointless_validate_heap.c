@@ -18,25 +18,31 @@ static int32_t pointless_validate_vector_heap(pointless_validate_context_t* cont
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
 			item_len = sizeof(pointless_value_t);
 			break;
-		case POINTLESS_VECTOR_I8:
+		case _POINTLESS_VECTOR_I8:
 			item_len = sizeof(int8_t);
 			break;
-		case POINTLESS_VECTOR_U8:
+		case _POINTLESS_VECTOR_U8:
 			item_len = sizeof(uint8_t);
 			break;
-		case POINTLESS_VECTOR_I16:
+		case _POINTLESS_VECTOR_I16:
 			item_len = sizeof(int16_t);
 			break;
-		case POINTLESS_VECTOR_U16:
+		case _POINTLESS_VECTOR_U16:
 			item_len = sizeof(uint16_t);
 			break;
-		case POINTLESS_VECTOR_I32:
+		case _POINTLESS_VECTOR_I32:
 			item_len = sizeof(int32_t);
 			break;
-		case POINTLESS_VECTOR_U32:
+		case _POINTLESS_VECTOR_U32:
 			item_len = sizeof(uint32_t);
 			break;
-		case POINTLESS_VECTOR_FLOAT:
+		case _POINTLESS_VECTOR_I64:
+			item_len = sizeof(int64_t);
+			break;
+		case _POINTLESS_VECTOR_U64:
+			item_len = sizeof(uint64_t);
+			break;
+		case _POINTLESS_VECTOR_FLOAT:
 			item_len = sizeof(float);
 			break;
 		default:
@@ -123,7 +129,7 @@ static int32_t pointless_validate_set_heap(pointless_validate_context_t* context
 	pointless_set_header_t* header = (pointless_set_header_t*)((char*)context->p->heap_ptr + offset);
 
 	// hash/key vectors must be of a certain type
-	if (header->hash_vector.type != POINTLESS_VECTOR_U32) {
+	if (header->hash_vector.type != _POINTLESS_VECTOR_U32) {
 		*error = "set hash vector not of type POINTLESS_VECTOR_U32";
 		return 0;
 	}
@@ -147,7 +153,7 @@ static int32_t pointless_validate_map_heap(pointless_validate_context_t* context
 	pointless_map_header_t* header = (pointless_map_header_t*)((char*)context->p->heap_ptr + offset);
 
 	// hash/key vectors must be of a certain type
-	if (header->hash_vector.type != POINTLESS_VECTOR_U32) {
+	if (header->hash_vector.type != _POINTLESS_VECTOR_U32) {
 		*error = "map hash vector not of type POINTLESS_VECTOR_U32";
 		return 0;
 	}
@@ -170,13 +176,15 @@ int32_t pointless_validate_heap_value(pointless_validate_context_t* context, poi
 	switch (v->type) {
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-		case POINTLESS_VECTOR_I8:
-		case POINTLESS_VECTOR_U8:
-		case POINTLESS_VECTOR_I16:
-		case POINTLESS_VECTOR_U16:
-		case POINTLESS_VECTOR_I32:
-		case POINTLESS_VECTOR_U32:
-		case POINTLESS_VECTOR_FLOAT:
+		case _POINTLESS_VECTOR_I8:
+		case _POINTLESS_VECTOR_U8:
+		case _POINTLESS_VECTOR_I16:
+		case _POINTLESS_VECTOR_U16:
+		case _POINTLESS_VECTOR_I32:
+		case _POINTLESS_VECTOR_U32:
+		case _POINTLESS_VECTOR_I64:
+		case _POINTLESS_VECTOR_U64:
+		case _POINTLESS_VECTOR_FLOAT:
 			return pointless_validate_vector_heap(context, v, error);
 		case POINTLESS_VECTOR_EMPTY:
 			break;

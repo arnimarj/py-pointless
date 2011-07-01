@@ -170,7 +170,9 @@ void query_set(pointless_t* p)
 		}
 
 		// they must be equal
-		c = pointless_cmp_reader(0, &k, p, kk, &error);
+		pointless_complete_value_t _k = pointless_value_to_complete(&k);
+		pointless_complete_value_t _kk = pointless_value_to_complete(kk);
+		c = pointless_cmp_reader(0, &_k, p, &_kk, &error);
 
 		if (error) {
 			fprintf(stderr, "pointless_cmp_reader(): %s\n", error);
@@ -306,7 +308,7 @@ void create_special_c(pointless_create_t* c)
 
 static uint32_t create_special_d_0(pointless_create_t* c)
 {
-	uint32_t v = pointless_create_vector_u32(c), i;
+	uint32_t v = _pointless_create_vector_u32(c), i;
 
 	if (v == POINTLESS_CREATE_VALUE_FAIL) {
 		fprintf(stderr, "create_special_d_0(): pointless_create_vector_u32() failure\n");
@@ -314,7 +316,7 @@ static uint32_t create_special_d_0(pointless_create_t* c)
 	}
 
 	for (i = 0; i < SPECIAL_D_N; i++) {
-		if (pointless_create_vector_u32_append(c, v, i) == POINTLESS_CREATE_VALUE_FAIL) {
+		if (_pointless_create_vector_u32_append(c, v, i) == POINTLESS_CREATE_VALUE_FAIL) {
 			fprintf(stderr, "create_special_d_0(): pointless_create_vector_u32_append() failure\n");
 			exit(EXIT_FAILURE);
 		}
@@ -331,7 +333,7 @@ static uint32_t create_special_d_1(pointless_create_t* c, uint32_t* buffer)
 	for (i = 0; i < SPECIAL_D_N; i++)
 		buffer[i] = i;
 
-	v = pointless_create_vector_u32_owner(c, buffer, SPECIAL_D_N);
+	v = _pointless_create_vector_u32_owner(c, buffer, SPECIAL_D_N);
 
 	if (v == POINTLESS_CREATE_VALUE_FAIL) {
 		fprintf(stderr, "create_special_d_1(): pointless_create_vector_u32_owner() failure\n");
@@ -355,7 +357,7 @@ static uint32_t create_special_d_2(pointless_create_t* c)
 	for (i = 0; i < SPECIAL_D_N; i++)
 		u32_buffer[i] = i;
 
-	v = pointless_create_vector_u32(c);
+	v = _pointless_create_vector_u32(c);
 
 	if (v == POINTLESS_CREATE_VALUE_FAIL) {
 		fprintf(stderr, "create_special_d_2(): pointless_create_vector_u32() failure\n");
@@ -466,7 +468,8 @@ void query_special_d(pointless_t* p)
 	uint32_t i, j;
 
 	for (i = 0; i < 4 * SPECIAL_D_I; i += 4) {
-		pointless_value_t v = pointless_reader_vector_value_case(p, root, i);
+		pointless_complete_value_t _v = pointless_reader_vector_value_case(p, root, i);
+		pointless_value_t v = pointless_value_from_complete(&_v);
 
 		if (!pointless_is_vector_type(v.type)) {
 			fprintf(stderr, "query_special_d(): root[%u] is not a vector\n", i);
@@ -479,7 +482,8 @@ void query_special_d(pointless_t* p)
 		}
 
 		for (j = 0; j < SPECIAL_D_N; j++) {
-			pointless_value_t vv = pointless_reader_vector_value_case(p, &v, j);
+			pointless_complete_value_t _vv = pointless_reader_vector_value_case(p, &v, j);
+			pointless_value_t vv = pointless_value_from_complete(&_vv);
 
 			if (vv.type != POINTLESS_U32 && vv.type != POINTLESS_I32) {
 				fprintf(stderr, "query_special_d(): root[%u][%u] is not i32/u32 (%u)\n", i, j, vv.type);

@@ -10,6 +10,18 @@ static PyObject* pointless_int_to_python(int64_t v)
 		return PyErr_Format(PyExc_ValueError, "this particular integer value not supported by python");
 }
 
+static PyObject* pointless_uint_to_python(uint64_t v)
+{
+	if (v <= LONG_MAX)
+		return PyInt_FromLong((long)v);
+	else if (v <= LLONG_MAX)
+		return PyLong_FromLongLong((PY_LONG_LONG)v);
+	else if (v <= ULLONG_MAX)
+		return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG)v);
+	else
+		return PyErr_Format(PyExc_ValueError, "this particular integer value not supported by python");
+}
+
 PyObject* pypointless_i32(PyPointless* p, int32_t i32)
 {
 	return pointless_int_to_python((int64_t)i32);
@@ -17,7 +29,17 @@ PyObject* pypointless_i32(PyPointless* p, int32_t i32)
 
 PyObject* pypointless_u32(PyPointless* p, uint32_t u32)
 {
-	return pointless_int_to_python((int64_t)u32);
+	return pointless_uint_to_python((uint64_t)u32);
+}
+
+PyObject* pypointless_i64(PyPointless* p, int64_t i64)
+{
+	return pointless_int_to_python(i64);
+}
+
+PyObject* pypointless_u64(PyPointless* p, uint64_t u64)
+{
+	return pointless_uint_to_python(u64);
 }
 
 PyObject* pypointless_float(PyPointless* p, float f)
@@ -63,13 +85,15 @@ PyObject* pypointless_value(PyPointless* p, pointless_value_t* v)
 	switch (v->type) {
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-		case POINTLESS_VECTOR_I8:
-		case POINTLESS_VECTOR_U8:
-		case POINTLESS_VECTOR_I16:
-		case POINTLESS_VECTOR_U16:
-		case POINTLESS_VECTOR_I32:
-		case POINTLESS_VECTOR_U32:
-		case POINTLESS_VECTOR_FLOAT:
+		case _POINTLESS_VECTOR_I8:
+		case _POINTLESS_VECTOR_U8:
+		case _POINTLESS_VECTOR_I16:
+		case _POINTLESS_VECTOR_U16:
+		case _POINTLESS_VECTOR_I32:
+		case _POINTLESS_VECTOR_U32:
+		case _POINTLESS_VECTOR_I64:
+		case _POINTLESS_VECTOR_U64:
+		case _POINTLESS_VECTOR_FLOAT:
 		case POINTLESS_VECTOR_EMPTY:
 			return (PyObject*)PyPointlessVector_New(p, v, 0, pointless_reader_vector_n_items(&p->p, v));
 

@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include <pointless/pointless_defs.h>
+#include <pointless/pointless_value.h>
 
 #define POINTLESS_HASH_TABLE_PROBE_MISS UINT32_MAX
 #define POINTLESS_HASH_TABLE_PROBE_ERROR (UINT32_MAX-1)

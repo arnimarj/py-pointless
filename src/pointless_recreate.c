@@ -57,13 +57,15 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 	switch (v->type) {
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-		case POINTLESS_VECTOR_I8:
-		case POINTLESS_VECTOR_U8:
-		case POINTLESS_VECTOR_I16:
-		case POINTLESS_VECTOR_U16:
-		case POINTLESS_VECTOR_I32:
-		case POINTLESS_VECTOR_U32:
-		case POINTLESS_VECTOR_FLOAT:
+		case _POINTLESS_VECTOR_I8:
+		case _POINTLESS_VECTOR_U8:
+		case _POINTLESS_VECTOR_I16:
+		case _POINTLESS_VECTOR_U16:
+		case _POINTLESS_VECTOR_I32:
+		case _POINTLESS_VECTOR_U32:
+		case _POINTLESS_VECTOR_I64:
+		case _POINTLESS_VECTOR_U64:
+		case _POINTLESS_VECTOR_FLOAT:
 			handle = state->vector_r_c_mapping[v->data.data_u32];
 			break;
 		case POINTLESS_UNICODE:
@@ -121,32 +123,40 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 			}
 
 			return handle;
-		case POINTLESS_VECTOR_I8:
-			POINTLESS_RECREATE_FUNC_3(pointless_create_vector_i8_owner, state->c, pointless_reader_vector_i8(state->p, v), n_items);
+		case _POINTLESS_VECTOR_I8:
+			POINTLESS_RECREATE_FUNC_3(_pointless_create_vector_i8_owner, state->c, _pointless_reader_vector_i8(state->p, v), n_items);
 			state->vector_r_c_mapping[v->data.data_u32] = handle;
 			return handle;
-		case POINTLESS_VECTOR_U8:
-			POINTLESS_RECREATE_FUNC_3(pointless_create_vector_u8_owner, state->c, pointless_reader_vector_u8(state->p, v), n_items);
+		case _POINTLESS_VECTOR_U8:
+			POINTLESS_RECREATE_FUNC_3(_pointless_create_vector_u8_owner, state->c, _pointless_reader_vector_u8(state->p, v), n_items);
 			state->vector_r_c_mapping[v->data.data_u32] = handle;
 			return handle;
-		case POINTLESS_VECTOR_I16:
-			POINTLESS_RECREATE_FUNC_3(pointless_create_vector_i16_owner, state->c, pointless_reader_vector_i16(state->p, v), n_items);
+		case _POINTLESS_VECTOR_I16:
+			POINTLESS_RECREATE_FUNC_3(_pointless_create_vector_i16_owner, state->c, _pointless_reader_vector_i16(state->p, v), n_items);
 			state->vector_r_c_mapping[v->data.data_u32] = handle;
 			return handle;
-		case POINTLESS_VECTOR_U16:
-			POINTLESS_RECREATE_FUNC_3(pointless_create_vector_u16_owner, state->c, pointless_reader_vector_u16(state->p, v), n_items);
+		case _POINTLESS_VECTOR_U16:
+			POINTLESS_RECREATE_FUNC_3(_pointless_create_vector_u16_owner, state->c, _pointless_reader_vector_u16(state->p, v), n_items);
 			state->vector_r_c_mapping[v->data.data_u32] = handle;
 			return handle;
-		case POINTLESS_VECTOR_I32:
-			POINTLESS_RECREATE_FUNC_3(pointless_create_vector_i32_owner, state->c, pointless_reader_vector_i32(state->p, v), n_items);
+		case _POINTLESS_VECTOR_I32:
+			POINTLESS_RECREATE_FUNC_3(_pointless_create_vector_i32_owner, state->c, _pointless_reader_vector_i32(state->p, v), n_items);
 			state->vector_r_c_mapping[v->data.data_u32] = handle;
 			return handle;
-		case POINTLESS_VECTOR_U32:
-			POINTLESS_RECREATE_FUNC_3(pointless_create_vector_u32_owner, state->c, pointless_reader_vector_u32(state->p, v), n_items);
+		case _POINTLESS_VECTOR_U32:
+			POINTLESS_RECREATE_FUNC_3(_pointless_create_vector_u32_owner, state->c, _pointless_reader_vector_u32(state->p, v), n_items);
 			state->vector_r_c_mapping[v->data.data_u32] = handle;
 			return handle;
-		case POINTLESS_VECTOR_FLOAT:
-			POINTLESS_RECREATE_FUNC_3(pointless_create_vector_float_owner, state->c, pointless_reader_vector_float(state->p, v), n_items);
+		case _POINTLESS_VECTOR_I64:
+			POINTLESS_RECREATE_FUNC_3(_pointless_create_vector_i64_owner, state->c, _pointless_reader_vector_i64(state->p, v), n_items);
+			state->vector_r_c_mapping[v->data.data_u32] = handle;
+			return handle;
+		case _POINTLESS_VECTOR_U64:
+			POINTLESS_RECREATE_FUNC_3(_pointless_create_vector_u64_owner, state->c, _pointless_reader_vector_u64(state->p, v), n_items);
+			state->vector_r_c_mapping[v->data.data_u32] = handle;
+			return handle;
+		case _POINTLESS_VECTOR_FLOAT:
+			POINTLESS_RECREATE_FUNC_3(_pointless_create_vector_float_owner, state->c, _pointless_reader_vector_float(state->p, v), n_items);
 			state->vector_r_c_mapping[v->data.data_u32] = handle;
 			return handle;
 		case POINTLESS_VECTOR_EMPTY:

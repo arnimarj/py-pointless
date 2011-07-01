@@ -95,7 +95,7 @@ static PyObject* PyPointlessSetIter_iternext(PyPointlessSetIter* iter)
 	return 0;
 }
 
-static uint32_t PyPointlessSet_eq_cb(pointless_t* p, pointless_value_t* v, void* user, const char** error)
+static uint32_t PyPointlessSet_eq_cb(pointless_t* p, pointless_complete_value_t* v, void* user, const char** error)
 {
 	return pypointless_cmp_eq(p, v, (PyObject*)user, error);
 }
