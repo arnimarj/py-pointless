@@ -41,7 +41,7 @@ static int parse_pyobject_number(PyObject* v, int* is_signed, int64_t* i, uint64
 
 	ii = PyLong_AsLongLong(v);
 
-	if ((ii != -1 || PyErr_Occurred()) && ii < 0) {
+	if (!(ii != -1 || !PyErr_Occurred()) && ii < 0) {
 		*is_signed = 0;
 		*i = (int64_t)ii;
 		return 1;
@@ -1264,17 +1264,21 @@ static int prim_sort_proj_cmp(int a, int b, int* c, void* user)
 {
 	prim_sort_proj_state_t* state = (prim_sort_proj_state_t*)user;
 
-	uint32_t i_a = 0, i_b = 0, i;
+	int is_signed = 0;
+	int64_t i_a_i = 0, i_b_i = 0;
+	uint64_t i_a_u = 0, i_b_u = 0;
+
+	uint32_t i;
 
 	switch (state->p_t) {
-		case _POINTLESS_PRIM_VECTOR_TYPE_I8:  i_a = ((int8_t*)state->p_b)[a];   i_b = ((int8_t*)state->p_b)[b];   break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U8:  i_a = ((uint8_t*)state->p_b)[a];  i_b = ((uint8_t*)state->p_b)[b];  break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_I16: i_a = ((int16_t*)state->p_b)[a];  i_b = ((int16_t*)state->p_b)[b];  break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U16: i_a = ((uint16_t*)state->p_b)[a]; i_b = ((uint16_t*)state->p_b)[b]; break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_I32: i_a = ((int32_t*)state->p_b)[a];  i_b = ((int32_t*)state->p_b)[b];  break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U32: i_a = ((uint32_t*)state->p_b)[a]; i_b = ((uint32_t*)state->p_b)[b]; break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_I64: i_a = ((int64_t*)state->p_b)[a];  i_b = ((int64_t*)state->p_b)[b];  break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U64: i_a = ((uint64_t*)state->p_b)[a]; i_b = ((uint64_t*)state->p_b)[b]; break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I8:  i_a_i = ((int8_t*)state->p_b)[a];   i_b_i = ((int8_t*)state->p_b)[b];   is_signed = 1; break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U8:  i_a_u = ((uint8_t*)state->p_b)[a];  i_b_u = ((uint8_t*)state->p_b)[b];  is_signed = 0; break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I16: i_a_i = ((int16_t*)state->p_b)[a];  i_b_i = ((int16_t*)state->p_b)[b];  is_signed = 1; break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U16: i_a_u = ((uint16_t*)state->p_b)[a]; i_b_u = ((uint16_t*)state->p_b)[b]; is_signed = 0; break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I32: i_a_i = ((int32_t*)state->p_b)[a];  i_b_i = ((int32_t*)state->p_b)[b];  is_signed = 1; break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U32: i_a_u = ((uint32_t*)state->p_b)[a]; i_b_u = ((uint32_t*)state->p_b)[b]; is_signed = 0; break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I64: i_a_i = ((int64_t*)state->p_b)[a];  i_b_i = ((int64_t*)state->p_b)[b];  is_signed = 1; break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U64: i_a_u = ((uint64_t*)state->p_b)[a]; i_b_u = ((uint64_t*)state->p_b)[b]; is_signed = 0; break;
 		default: assert(0); break;
 	}
 
@@ -1283,31 +1287,58 @@ static int prim_sort_proj_cmp(int a, int b, int* c, void* user)
 	for (i = 0; i < state->n && *c == 0; i++) {
 		switch (state->v_t[i]) {
 			case _POINTLESS_PRIM_VECTOR_TYPE_I8:
-				*c = SORT_CMP(int8_t, state->v_b[i], i_a, i_b);
+				if (is_signed)
+					*c = SORT_CMP(int8_t, state->v_b[i], i_a_i, i_b_i);
+				else
+					*c = SORT_CMP(int8_t, state->v_b[i], i_a_u, i_a_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_U8:
-				*c = SORT_CMP(uint8_t, state->v_b[i], i_a, i_b);
+				if (is_signed)
+					*c = SORT_CMP(uint8_t, state->v_b[i], i_a_i, i_b_i);
+				else
+					*c = SORT_CMP(uint8_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_I16:
-				*c = SORT_CMP(int16_t, state->v_b[i], i_a, i_b);
+				if (is_signed)
+					*c = SORT_CMP(int16_t, state->v_b[i], i_a_i, i_b_i);
+				else
+					*c = SORT_CMP(int16_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_U16:
-				*c = SORT_CMP(uint16_t, state->v_b[i], i_a, i_b);
+				if (is_signed)
+					*c = SORT_CMP(uint16_t, state->v_b[i], i_a_i, i_b_i);
+				else
+					*c = SORT_CMP(uint16_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_I32:
-				*c = SORT_CMP(int32_t, state->v_b[i], i_a, i_b);
+				if (is_signed)
+					*c = SORT_CMP(int32_t, state->v_b[i], i_a_i, i_b_i);
+				else
+					*c = SORT_CMP(int32_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_U32:
-				*c = SORT_CMP(uint32_t, state->v_b[i], i_a, i_b);
+				if (is_signed)
+					*c = SORT_CMP(uint32_t, state->v_b[i], i_a_i, i_b_i);
+				else
+					*c = SORT_CMP(uint32_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_I64:
-				*c = SORT_CMP(int64_t, state->v_b[i], i_a, i_b);
+				if (is_signed)
+					*c = SORT_CMP(int64_t, state->v_b[i], i_a_i, i_b_i);
+				else
+					*c = SORT_CMP(int64_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_U64:
-				*c = SORT_CMP(uint64_t, state->v_b[i], i_a, i_b);
+				if (is_signed)
+					*c = SORT_CMP(uint64_t, state->v_b[i], i_a_i, i_b_i);
+				else
+					*c = SORT_CMP(uint64_t, state->v_b[i], i_a_u, i_b_u);
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
-				*c = SORT_CMP(float, state->v_b[i], i_a, i_b);
+				if (is_signed)
+					*c = SORT_CMP(float, state->v_b[i], i_a_i, i_b_i);
+				else
+					*c = SORT_CMP(float, state->v_b[i], i_a_u, i_b_u);
 				break;
 		}
 	}
@@ -1361,7 +1392,7 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 		case _POINTLESS_PRIM_VECTOR_TYPE_U32:
 		case _POINTLESS_PRIM_VECTOR_TYPE_I64:
 		case _POINTLESS_PRIM_VECTOR_TYPE_U64:
-			goto cleanup;
+			break;
 		case _POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
 			PyErr_SetString(PyExc_ValueError, "projection vector must contain only integer values");
 			goto cleanup;
@@ -1394,7 +1425,7 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 				case _POINTLESS_VECTOR_I64:   state.v_b[state.n] = (void*)(_pointless_reader_vector_i64(&pv->pp->p, pv->v)   + pv->slice_i); break;
 				case _POINTLESS_VECTOR_U64:   state.v_b[state.n] = (void*)(_pointless_reader_vector_u64(&pv->pp->p, pv->v)   + pv->slice_i); break;
 				case _POINTLESS_VECTOR_FLOAT: state.v_b[state.n] = (void*)(_pointless_reader_vector_float(&pv->pp->p, pv->v) + pv->slice_i); break;
-				case POINTLESS_VECTOR_EMPTY: state.v_b[state.n] = 0; break;
+				case POINTLESS_VECTOR_EMPTY:  state.v_b[state.n] = 0; break;
 				case POINTLESS_VECTOR_VALUE:
 				case POINTLESS_VECTOR_VALUE_HASHABLE:
 					PyErr_SetString(PyExc_ValueError, "illegal pointless vector type");
@@ -1428,31 +1459,33 @@ static PyObject* PyPointlessPrimVector_sort_proj(PyPointlessPrimVector* self, Py
 
 	{
 		// find min/max values in projection
-		int64_t p_min = 0, p_max = 0;
+		int64_t p_min = 0;
+		uint64_t p_max = 0;
 
 		for (i = 0; i < state.p_n; i++) {
-			int64_t v = 0;
+			int64_t v_a = 0;
+			uint64_t v_b = 0;
 
 			switch (state.p_t) {
-				case _POINTLESS_PRIM_VECTOR_TYPE_I8:  v = ((int8_t*)state.p_b)[i]; break;
-				case _POINTLESS_PRIM_VECTOR_TYPE_U8:  v = ((uint8_t*)state.p_b)[i]; break;
-				case _POINTLESS_PRIM_VECTOR_TYPE_I16: v = ((int16_t*)state.p_b)[i]; break;
-				case _POINTLESS_PRIM_VECTOR_TYPE_U16: v = ((uint16_t*)state.p_b)[i]; break;
-				case _POINTLESS_PRIM_VECTOR_TYPE_I32: v = ((int32_t*)state.p_b)[i]; break;
-				case _POINTLESS_PRIM_VECTOR_TYPE_U32: v = ((uint32_t*)state.p_b)[i]; break;
-				case _POINTLESS_PRIM_VECTOR_TYPE_I64: v = ((int64_t*)state.p_b)[i]; break;
-				case _POINTLESS_PRIM_VECTOR_TYPE_U64: v = ((uint64_t*)state.p_b)[i]; break;
+				case _POINTLESS_PRIM_VECTOR_TYPE_I8:  v_a = ((int8_t*)state.p_b)[i]; break;
+				case _POINTLESS_PRIM_VECTOR_TYPE_U8:  v_b = ((uint8_t*)state.p_b)[i]; break;
+				case _POINTLESS_PRIM_VECTOR_TYPE_I16: v_a = ((int16_t*)state.p_b)[i]; break;
+				case _POINTLESS_PRIM_VECTOR_TYPE_U16: v_b = ((uint16_t*)state.p_b)[i]; break;
+				case _POINTLESS_PRIM_VECTOR_TYPE_I32: v_a = ((int32_t*)state.p_b)[i]; break;
+				case _POINTLESS_PRIM_VECTOR_TYPE_U32: v_b = ((uint32_t*)state.p_b)[i]; break;
+				case _POINTLESS_PRIM_VECTOR_TYPE_I64: v_a = ((int64_t*)state.p_b)[i]; break;
+				case _POINTLESS_PRIM_VECTOR_TYPE_U64: v_b = ((uint64_t*)state.p_b)[i]; break;
 			}
 
-			if (i == 0 || v < p_min)
-				p_min = v;
+			if (i == 0 || v_a < p_min)
+				p_min = v_a;
 
-			if (i == 0 || v > p_max)
-				p_max = v;
+			if (i == 0 || v_b > p_max)
+				p_max = v_b;
 		}
 
 		// bounds check
-		in_bounds = (0 <= p_min && p_max < state.v_n[0]);
+		in_bounds = (0 <= p_min && p_max < (uint64_t)state.v_n[0]);
 
 		// if we are inside the bounds, we can sort
 		if (in_bounds) {

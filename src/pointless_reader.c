@@ -27,8 +27,6 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 			return 0;
 	}
 
-	printf("version: %i\n", (int)p->header->version);
-
 	// right, we need some number of bytes for the offset vectors
 	uint64_t mandatory_size = sizeof(pointless_header_t);
 	mandatory_size += p->header->n_unicode * sizeof(uint32_t);
