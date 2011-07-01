@@ -14,39 +14,75 @@ typedef union {
 	float f;
 } pypointless_number_t;
 
-static int pypointless_parse_number(PyObject* n, pypointless_number_t* v, uint32_t t)
+static int parse_pyobject_number(PyObject* v, int* is_signed, int64_t* i, uint64_t* u)
 {
-	// float is simple
-	if (t == _POINTLESS_PRIM_VECTOR_TYPE_FLOAT) {
-		if (PyFloat_Check(v) && PyArg_Parse(n, "f", &v->f))
-			return 1;
-
-		PyErr_SetString(PyExc_TypeError, "expected an float");
-		return 0;
-	}
-
-	// we try a ULONGLONG first, LONGLONG second
-	int is_ii = 0;
-	int is_uu = 0;
-	unsigned PY_LONG_LONG _uu;
-	PY_LONG_LONG _ii;
-
-	if (PyInt_Check(n) || PyLong_Check(n)) {
-		if (PyArg_Parse(n, "K", &_uu)) {
-			is_uu = 1;
-		} else if (PyArg_Parse(n, "L", &_ii)) {
-			is_ii = 1;
+	// simple case
+	if (PyInt_Check(v)) {
+		long _v = PyInt_AS_LONG(v);
+		if (_v < 0) {
+			*is_signed = 1;
+			*i = (int64_t)_v;
+		} else {
+			*is_signed = 0;
+			*u = (uint64_t)_v;
 		}
+
+		return 1;
 	}
 
-	// not an integer, or not inside [-2**63, 2**64[
-	if (!is_uu && !is_ii) {
+	// complicated case
+	if (!PyLong_Check(v)) {
 		PyErr_SetString(PyExc_TypeError, "expected an integer");
 		return 0;
 	}
 
+	PY_LONG_LONG ii = 0;
+	unsigned PY_LONG_LONG uu = 0;
+
+	ii = PyLong_AsLongLong(v);
+
+	if ((ii != -1 || PyErr_Occurred()) && ii < 0) {
+		*is_signed = 0;
+		*i = (int64_t)ii;
+		return 1;
+	}
+
+	PyErr_Clear();
+
+	uu = PyLong_AsUnsignedLongLong(v);
+
+	if ((uu == (unsigned long long)-1) && PyErr_Occurred()) {
+		PyErr_SetString(PyExc_ValueError, "integer too big");
+		return 0;
+	}
+
+	*is_signed = 0;
+	*u = (uint64_t)uu;
+
+	return 1;
+}
+
+static int pypointless_parse_number(PyObject* n, pypointless_number_t* v, uint32_t t)
+{
+	// float is simple
+	if (t == _POINTLESS_PRIM_VECTOR_TYPE_FLOAT) {
+		if (PyFloat_Check(n) && PyArg_Parse(n, "f", &v->f))
+			return 1;
+
+		PyErr_SetString(PyExc_TypeError, "expected a number");
+		return 0;
+	}
+
+	// we try a ULONGLONG first, LONGLONG second
+	int is_signed = 0;
+	int64_t _ii = 0;
+	uint64_t _uu = 0;
+
+	if (!parse_pyobject_number(n, &is_signed, &_ii, &_uu))
+		return 0;
+
 	// we assume that _ii is always negative
-	if (!is_uu && _ii >= 0) {
+	if (is_signed && _ii >= 0) {
 		PyErr_SetString(PyExc_TypeError, "internal error A");
 		return 0;
 	}
@@ -54,7 +90,7 @@ static int pypointless_parse_number(PyObject* n, pypointless_number_t* v, uint32
 	int in_range = 0;
 
 	// positive value, need only test upper limit
-	if (is_uu) {
+	if (!is_signed) {
 		switch (t) {
 			case _POINTLESS_PRIM_VECTOR_TYPE_I8:
 				in_range = (_uu <= INT8_MAX);
@@ -857,16 +893,32 @@ static size_t PyPointlessPrimVector_index_i_u(PyPointlessPrimVector* self, uint6
 
 	for (i = 0; i < n; i++) {
 		switch (self->type) {
+			case _POINTLESS_PRIM_VECTOR_TYPE_I8:
+				if (((int8_t*)a)[i] >= 0 && ((int8_t*)a)[i] == v)
+					return i;
+				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_U8:
 				if (((uint8_t*)a)[i] == v)
+					return i;
+				break;
+			case _POINTLESS_PRIM_VECTOR_TYPE_I16:
+				if (((int16_t*)a)[i] >= 0 && ((int16_t*)a)[i] == v)
 					return i;
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_U16:
 				if (((uint16_t*)a)[i] == v)
 					return i;
 				break;
+			case _POINTLESS_PRIM_VECTOR_TYPE_I32:
+				if (((int32_t*)a)[i] >= 0 && ((int32_t*)a)[i] == v)
+					return i;
+				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_U32:
 				if (((uint32_t*)a)[i] == v)
+					return i;
+				break;
+			case _POINTLESS_PRIM_VECTOR_TYPE_I64:
+				if (((int64_t*)a)[i] >= 0 && ((int64_t*)a)[i] == v)
 					return i;
 				break;
 			case _POINTLESS_PRIM_VECTOR_TYPE_U64:
@@ -881,20 +933,28 @@ static size_t PyPointlessPrimVector_index_i_u(PyPointlessPrimVector* self, uint6
 
 static size_t PyPointlessPrimVector_index_(PyPointlessPrimVector* self, PyObject* args, const char* func)
 {
-	PY_LONG_LONG ii;
-	float ff;
-	size_t i;
+	size_t i = SIZE_MAX;
 
 	if (self->type == _POINTLESS_PRIM_VECTOR_TYPE_FLOAT) {
+		float ff;
+	
 		if (!PyArg_ParseTuple(args, "f", &ff))
 			return (SIZE_MAX-1);
 
 		i = PyPointlessPrimVector_index_f(self, ff);
 	} else {
-		if (!PyArg_ParseTuple(args, "L", &ii))
-			return (SIZE_MAX-1);
+		int is_signed = 0;
+		int64_t _ii = 0;
+		uint64_t _uu = 0;
 
-		i = PyPointlessPrimVector_index_i(self, ii);
+		if (PyTuple_Check(args) && PyTuple_GET_SIZE(args) == 1) {
+			if (parse_pyobject_number(PyTuple_GET_ITEM(args, 0), &is_signed, &_ii, &_uu)) {
+				if (is_signed)
+					i = PyPointlessPrimVector_index_i_i(self, _ii);
+				else
+					i = PyPointlessPrimVector_index_i_u(self, _uu);
+			}
+		}
 	}
 
 	if (i == SIZE_MAX) {
@@ -1469,9 +1529,9 @@ static PyMethodDef PyPointlessPrimVector_methods[] = {
 	{"append_bulk", (PyCFunction)PyPointlessPrimVector_append_bulk, METH_VARARGS, ""},
 	{"pop",         (PyCFunction)PyPointlessPrimVector_pop,         METH_NOARGS,  ""},
 	{"pop_bulk",    (PyCFunction)PyPointlessPrimVector_pop_bulk,    METH_VARARGS, ""},
-	//{"index",       (PyCFunction)PyPointlessPrimVector_index,       METH_VARARGS,  ""},
-	//{"remove",      (PyCFunction)PyPointlessPrimVector_remove,      METH_VARARGS,  ""},
-	//{"fast_remove", (PyCFunction)PyPointlessPrimVector_fast_remove, METH_VARARGS,  ""},
+	{"index",       (PyCFunction)PyPointlessPrimVector_index,       METH_VARARGS,  ""},
+	{"remove",      (PyCFunction)PyPointlessPrimVector_remove,      METH_VARARGS,  ""},
+	{"fast_remove", (PyCFunction)PyPointlessPrimVector_fast_remove, METH_VARARGS,  ""},
 	{"serialize",   (PyCFunction)PyPointlessPrimVector_serialize,   METH_NOARGS,  ""},
 	{"sort",        (PyCFunction)PyPointlessPrimVector_sort,        METH_NOARGS,  ""},
 	{"sort_proj",   (PyCFunction)PyPointlessPrimVector_sort_proj,   METH_VARARGS, ""},
