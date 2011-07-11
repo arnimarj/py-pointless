@@ -1076,6 +1076,18 @@ static PyObject* PyPointlessPrimVector_serialize(PyPointlessPrimVector* self)
 	return bytearray;
 }
 
+static PyObject* PyPointlessPrimVector_clear(PyPointlessPrimVector* self)
+{
+	if (!PyPointlessPrimVector_can_resize(self))
+		return 0;
+
+	pointless_dynarray_clear(&self->array);
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+
 static Py_ssize_t PointlessPrimVector_buffer_getreadbuf(PyPointlessPrimVector* self, Py_ssize_t index, const void** ptr)
 {
 	if (index != 0 ) {
@@ -1543,6 +1555,7 @@ static PyMethodDef PyPointlessPrimVector_methods[] = {
 	{"sort_proj",   (PyCFunction)PyPointlessPrimVector_sort_proj,   METH_VARARGS, ""},
 	{"__sizeof__",  (PyCFunction)PyPointlessPrimVector_sizeof,      METH_NOARGS,  ""},
 	{"__sizeof2__", (PyCFunction)PyPointlessPrimVector_malloc_sizeof,      METH_NOARGS,  ""},
+	{"clear",       (PyCFunction)PyPointlessPrimVector_clear,      METH_NOARGS,  ""},
 	{NULL, NULL}
 };
 
