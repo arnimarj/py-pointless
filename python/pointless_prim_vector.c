@@ -1,6 +1,8 @@
 #include "../pointless_ext.h"
 
 static PyObject* PyPointlessPrimVector_append_item(PyPointlessPrimVector* self, PyObject* item);
+PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t* v, uint32_t t);
+
 
 typedef union {
 	int8_t i8;
@@ -1512,7 +1514,6 @@ static PyObject* PyPointlessPrimVector_malloc_sizeof(PyPointlessPrimVector* self
 	return PyLong_FromSize_t(sizeof(PyPointlessPrimVector) + pointless_malloc_sizeof(self->array._data));
 }
 
-
 static PyObject* PyPointlessPrimVector_get_typecode(PyPointlessPrimVector* self, void* closure)
 {
 	const char* s = 0;
@@ -1537,6 +1538,208 @@ static PyObject* PyPointlessPrimVector_get_typecode(PyPointlessPrimVector* self,
 	return Py_BuildValue("s", s);
 }
 
+static int PyPointlessPrimVector_from_remap_index_vector_prim(PyPointlessPrimVector* v_, size_t i, uint64_t* index)
+{
+	uint64_t n_u;
+	int64_t n_i = 0;
+	int is_i = 1;
+
+	switch (v_->type) {
+		case _POINTLESS_PRIM_VECTOR_TYPE_I8:
+			n_i = *((int8_t*)pointless_dynarray_item_at(&v_->array, i));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I16:
+			n_i = *((int16_t*)pointless_dynarray_item_at(&v_->array, i));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I32:
+			n_i = *((int32_t*)pointless_dynarray_item_at(&v_->array, i));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I64:
+			n_i = *((int64_t*)pointless_dynarray_item_at(&v_->array, i));
+			break;
+		default:
+			is_i = 0;
+			break;
+	}
+
+	if (is_i) {
+		if (n_i < 0)
+			return 0;
+
+		*index = (uint64_t)n_i;
+		return 1;
+	}
+
+	switch (v_->type) {
+		case _POINTLESS_PRIM_VECTOR_TYPE_U8:
+			n_u = *((uint8_t*)pointless_dynarray_item_at(&v_->array, i));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U16:
+			n_u = *((uint16_t*)pointless_dynarray_item_at(&v_->array, i));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U32:
+			n_u = *((uint32_t*)pointless_dynarray_item_at(&v_->array, i));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U64:
+			n_u = *((uint64_t*)pointless_dynarray_item_at(&v_->array, i));
+			break;
+		default:
+			return 0;
+	}
+
+	*index = n_u;
+	return 1;
+}
+
+static int PyPointlessPrimVector_from_remap_index_vector_pointless(PyPointlessVector* v_, size_t i, uint64_t* index)
+{
+	// take slice into account
+	i += v_->slice_i;
+
+	uint64_t n_u;
+	int64_t n_i = 0;
+	int is_i = 1;
+
+	switch (v_->v->type) {
+		case _POINTLESS_VECTOR_I8:
+			n_i = (int64_t)(*(_pointless_reader_vector_i8(&v_->pp->p, v_->v) + i));
+			break;
+		case _POINTLESS_VECTOR_I16:
+			n_i = (int64_t)(*(_pointless_reader_vector_i16(&v_->pp->p, v_->v) + i));
+			break;
+		case _POINTLESS_VECTOR_I32:
+			n_i = (int64_t)(*(_pointless_reader_vector_i32(&v_->pp->p, v_->v) + i));
+			break;
+		case _POINTLESS_VECTOR_I64:
+			n_i = (int64_t)(*(_pointless_reader_vector_i64(&v_->pp->p, v_->v) + i));
+			break;
+		default:
+			is_i = 0;
+			break;
+	}
+
+	if (is_i) {
+		if (n_i < 0)
+			return 0;
+		*index = (uint64_t)n_i;
+		return 1;
+	}
+
+	switch (v_->v->type) {
+		case _POINTLESS_VECTOR_U8:
+			n_u = (uint64_t)(*(_pointless_reader_vector_u8(&v_->pp->p, v_->v) + i));
+			break;
+		case _POINTLESS_VECTOR_U16:
+			n_u = (uint64_t)(*(_pointless_reader_vector_u16(&v_->pp->p, v_->v) + i));
+			break;
+		case _POINTLESS_VECTOR_U32:
+			n_u = (uint64_t)(*(_pointless_reader_vector_u32(&v_->pp->p, v_->v) + i));
+			break;
+		case _POINTLESS_VECTOR_U64:
+			n_u = (uint64_t)(*(_pointless_reader_vector_u64(&v_->pp->p, v_->v) + i));
+			break;
+		default:
+			return 0;
+	}
+
+	*index = n_u;
+	return 1;
+}
+
+static PyObject* PyPointlessPrimVector_from_remap(PyTypeObject* type, PyObject* args)
+{
+	PyPointlessPrimVector* r_ = 0;
+	PyObject* v_ = 0;
+	pointless_dynarray_t a_;
+
+	if (!PyArg_ParseTuple(args, "O!O", &PyPointlessPrimVectorType, &r_, &v_))
+		return 0;
+
+	if (!PyPointlessPrimVector_Check(r_) && !PyPointlessVector_Check(r_)) {
+		PyErr_SetString(PyExc_ValueError, "index vector must be PointlessPrimVector or PointlessVector");
+		return 0;
+	}
+
+	// initialize destination vector
+	switch (r_->type) {
+		case _POINTLESS_PRIM_VECTOR_TYPE_I8:
+			pointless_dynarray_init(&a_, sizeof(int8_t));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U8:
+			pointless_dynarray_init(&a_, sizeof(uint8_t));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I16:
+			pointless_dynarray_init(&a_, sizeof(int16_t));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U16:
+			pointless_dynarray_init(&a_, sizeof(uint16_t));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I32:
+			pointless_dynarray_init(&a_, sizeof(int32_t));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U32:
+			pointless_dynarray_init(&a_, sizeof(uint32_t));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
+			pointless_dynarray_init(&a_, sizeof(float));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_I64:
+			pointless_dynarray_init(&a_, sizeof(int64_t));
+			break;
+		case _POINTLESS_PRIM_VECTOR_TYPE_U64:
+			pointless_dynarray_init(&a_, sizeof(uint64_t));
+			break;
+		default:
+			PyErr_SetString(PyExc_ValueError, "unknown source vector type");
+			return 0;
+	}
+
+	// get source vector
+	size_t i, n_source = pointless_dynarray_n_items(&r_->array);
+	size_t n_index = 0;
+
+	if (PyPointlessPrimVector_Check(v_)) {
+		n_index = pointless_dynarray_n_items(&((PyPointlessPrimVector*)v_)->array);
+	} else {
+		n_index = ((PyPointlessVector*)v_)->slice_n;
+	}
+
+	// for each index
+	for (i = 0; i < n_index; i++) {
+		// get it
+		uint64_t index;
+
+		if (PyPointlessPrimVector_Check(v_) && !PyPointlessPrimVector_from_remap_index_vector_prim((PyPointlessPrimVector*)v_, i, &index)) {
+			PyErr_SetString(PyExc_ValueError, "index vector negative or of the wrong type");
+			return 0;
+		}
+
+		if (PyPointlessVector_Check(v_) && !PyPointlessPrimVector_from_remap_index_vector_pointless((PyPointlessVector*)v_, i, &index)) {
+			PyErr_SetString(PyExc_ValueError, "index vector negative or of the wrong type");
+			return 0;
+		}
+
+		// check for bounds
+		if (index >= n_source) {
+			PyErr_SetString(PyExc_ValueError, "index vector out of bounds");
+			return 0;
+		}
+
+		// TBD: support more vector types
+
+		// add to destination vector
+		void* source = pointless_dynarray_item_at(&r_->array, index);
+
+		if (!pointless_dynarray_push(&a_, source)) {
+			pointless_dynarray_destroy(&a_);
+			return PyErr_NoMemory();
+		}
+	}
+
+	return (PyObject*)PyPointlessPrimVector_from_T_vector(&a_, r_->type);
+}
+
+
 static PyGetSetDef PyPointlessPrimVector_getsets [] = {
 	{"typecode", (getter)PyPointlessPrimVector_get_typecode, 0, "the typecode string used to create the vector"},
 	{NULL}
@@ -1556,6 +1759,7 @@ static PyMethodDef PyPointlessPrimVector_methods[] = {
 	{"__sizeof__",  (PyCFunction)PyPointlessPrimVector_sizeof,      METH_NOARGS,  ""},
 	{"__sizeof2__", (PyCFunction)PyPointlessPrimVector_malloc_sizeof,      METH_NOARGS,  ""},
 	{"clear",       (PyCFunction)PyPointlessPrimVector_clear,      METH_NOARGS,  ""},
+	{"FromRemap",   (PyCFunction)PyPointlessPrimVector_from_remap, METH_VARARGS | METH_CLASS, ""},
 	{NULL, NULL}
 };
 

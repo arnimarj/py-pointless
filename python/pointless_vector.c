@@ -378,7 +378,7 @@ static size_t pointless_vector_n_bytes(pointless_t* pp, pointless_value_t* v)
 	size_t n_bytes = 0;
 
 	switch (v->type) {
-		// no support for value vecto
+		// no support for value vector
 		case POINTLESS_VECTOR_EMPTY: n_bytes = 0;                 break;
 		case _POINTLESS_VECTOR_I8:    n_bytes = sizeof(int8_t);    break;
 		case _POINTLESS_VECTOR_U8:    n_bytes = sizeof(uint8_t);   break;
