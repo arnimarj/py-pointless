@@ -407,6 +407,7 @@ uint32_t pointless_hash_bool_true();
 uint32_t pointless_hash_bool_false();
 uint32_t pointless_hash_null();
 uint32_t pointless_hash_reader(pointless_t* p, pointless_value_t* v);
+uint32_t pointless_hash_reader_vector(pointless_t* p, pointless_value_t* v, uint32_t i, uint32_t n);
 uint32_t pointless_hash_create(pointless_create_t* c, pointless_create_value_t* v);
 
 // comparison functions

@@ -246,13 +246,13 @@ uint32_t pointless_vector_hash_end(pointless_vector_hash_state_t* state)
 	return state->x;
 }
 
-static uint32_t pointless_hash_reader_vector(pointless_t* p, pointless_value_t* v)
+static uint32_t pointless_hash_reader_vector_priv(pointless_t* p, pointless_value_t* v, uint32_t offset, uint32_t n_items)
 {
-	uint32_t h, i, n_items = pointless_reader_vector_n_items(p, v);
+	uint32_t h, i;
 	pointless_vector_hash_state_t state;
 	pointless_vector_hash_init(&state, n_items);
 
-	for (i = 0; i < n_items; i++) {
+	for (i = offset; i < n_items + offset; i++) {
 		switch (v->type) {
 			case POINTLESS_VECTOR_VALUE_HASHABLE:
 				h = pointless_hash_reader(p, pointless_reader_vector_value(p, v) + i);
@@ -295,6 +295,13 @@ static uint32_t pointless_hash_reader_vector(pointless_t* p, pointless_value_t* 
 
 	return pointless_vector_hash_end(&state);
 }
+
+static uint32_t pointless_hash_reader_vector_(pointless_t* p, pointless_value_t* v)
+{
+	uint32_t n_items = pointless_reader_vector_n_items(p, v);
+	return pointless_hash_reader_vector_priv(p, v, 0, n_items);
+}
+
 
 static uint32_t pointless_hash_create_vector(pointless_create_t* c, pointless_create_value_t* v)
 {
@@ -423,7 +430,7 @@ static pointless_hash_reader_cb pointless_hash_reader_func(uint32_t t)
 		case _POINTLESS_VECTOR_U64:
 		case _POINTLESS_VECTOR_FLOAT:
 		case POINTLESS_VECTOR_EMPTY:
-			return pointless_hash_reader_vector;
+			return pointless_hash_reader_vector_;
 		case POINTLESS_SET_VALUE:
 		case POINTLESS_MAP_VALUE_VALUE:
 			return 0;
@@ -490,6 +497,11 @@ uint32_t pointless_hash_reader(pointless_t* p, pointless_value_t* v)
 	assert(pointless_is_hashable(v->type));
 	pointless_hash_reader_cb cb = pointless_hash_reader_func(v->type);
 	return (*cb)(p, v);
+}
+
+uint32_t pointless_hash_reader_vector(pointless_t* p, pointless_value_t* v, uint32_t i, uint32_t n)
+{
+	return pointless_hash_reader_vector_priv(p, v, i, n);
 }
 
 uint32_t pointless_hash_create(pointless_create_t* c, pointless_create_value_t* v)

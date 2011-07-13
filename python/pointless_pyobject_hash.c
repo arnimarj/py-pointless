@@ -36,6 +36,57 @@ static uint32_t pyobject_hash_tuple(PyObject* py_object, pyobject_hash_state_t* 
 	return pointless_vector_hash_end(&v_state);
 }
 
+static uint32_t pyobject_hash_primvector(PyPointlessPrimVector* v, pyobject_hash_state_t* state)
+{
+	uint64_t i;
+	size_t n_items = pointless_dynarray_n_items(&v->array);
+	uint32_t h;
+
+	pointless_vector_hash_state_t v_state;
+	pointless_vector_hash_init(&v_state, (uint32_t)n_items);
+
+	for (i = 0; i < n_items; i++) {
+		void* item = pointless_dynarray_item_at(&v->array, i);
+
+		switch (v->type) {
+			case _POINTLESS_PRIM_VECTOR_TYPE_I8:
+				h = pointless_hash_i32(*((int8_t*)item));
+				break;
+			case _POINTLESS_PRIM_VECTOR_TYPE_U8:
+				h = pointless_hash_u32(*((uint8_t*)item));
+				break;
+			case _POINTLESS_PRIM_VECTOR_TYPE_I16:
+				h = pointless_hash_i32(*((int16_t*)item));
+				break;
+			case _POINTLESS_PRIM_VECTOR_TYPE_U16:
+				h = pointless_hash_u32(*((uint16_t*)item));
+				break;
+			case _POINTLESS_PRIM_VECTOR_TYPE_I32:
+				h = pointless_hash_i32(*((int32_t*)item));
+				break;
+			case _POINTLESS_PRIM_VECTOR_TYPE_U32:
+				h = pointless_hash_u32(*((uint32_t*)item));
+				break;
+			case _POINTLESS_PRIM_VECTOR_TYPE_I64:
+				h = pointless_hash_i64(*((int64_t*)item));
+				break;
+			case _POINTLESS_PRIM_VECTOR_TYPE_U64:
+				h = pointless_hash_u64(*((uint64_t*)item));
+				break;
+			case _POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
+				h = pointless_hash_float(*((float*)item));
+				break;
+			default:
+				*state->error = "internal error";
+				return 0;
+		}
+
+		pointless_vector_hash_next(&v_state, h);
+	}
+
+	return pointless_vector_hash_end(&v_state);
+}
+
 static uint32_t pyobject_hash_unicode(PyObject* py_object, pyobject_hash_state_t* state)
 {
 	Py_UNICODE* s = PyUnicode_AS_UNICODE(py_object);
@@ -168,14 +219,22 @@ static uint32_t pyobject_hash_rec(PyObject* py_object, pyobject_hash_state_t* st
 	if (PyPointlessVector_Check(py_object)) {
 		p = &((PyPointlessVector*)py_object)->pp->p;
 		v = ((PyPointlessVector*)py_object)->v;
-	} else if (PyPointlessBitvector_Check(py_object)) {
-		return pointless_pybitvector_hash((PyPointlessBitvector*)py_object);
-	} else if (PyPointlessSet_Check(py_object)) {
-		p = &((PyPointlessSet*)py_object)->pp->p;
-		v = ((PyPointlessSet*)py_object)->v;
+
+		if (!pointless_is_hashable(v->type)) {
+			*state->error = "pointless type is not hashable";
+			return 0;
+		}
+
+		return pointless_hash_reader_vector(p, v, ((PyPointlessVector*)py_object)->slice_i, ((PyPointlessVector*)py_object)->slice_n);
 	}
 
-	if (p) {
+	if (PyPointlessBitvector_Check(py_object))
+		return pointless_pybitvector_hash((PyPointlessBitvector*)py_object);
+
+	if (PyPointlessSet_Check(py_object)) {
+		p = &((PyPointlessSet*)py_object)->pp->p;
+		v = ((PyPointlessSet*)py_object)->v;
+
 		if (!pointless_is_hashable(v->type)) {
 			*state->error = "pointless type is not hashable";
 			return 0;
@@ -183,6 +242,10 @@ static uint32_t pyobject_hash_rec(PyObject* py_object, pyobject_hash_state_t* st
 
 		return pointless_hash_reader(p, v);
 	}
+
+	// prim-vector
+	if (PyPointlessPrimVector_Check(py_object))
+		return pyobject_hash_primvector((PyPointlessPrimVector*)py_object, state);
 
 	// early checks for more common types
 	if (PyInt_Check(py_object))
