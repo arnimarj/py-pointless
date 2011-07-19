@@ -22,15 +22,15 @@ uint16_t* pointless_reader_unicode_value_ucs2_alloc(pointless_t* p, pointless_va
 uint32_t pointless_reader_vector_n_items(pointless_t* p, pointless_value_t* v);
 pointless_value_t* pointless_reader_vector_value(pointless_t* p, pointless_value_t* v);
 pointless_complete_value_t pointless_reader_complete_vector_value(pointless_t* p, pointless_value_t* v);
-int8_t* _pointless_reader_vector_i8(pointless_t* p, pointless_value_t* v);
-uint8_t* _pointless_reader_vector_u8(pointless_t* p, pointless_value_t* v);
-int16_t* _pointless_reader_vector_i16(pointless_t* p, pointless_value_t* v);
-uint16_t* _pointless_reader_vector_u16(pointless_t* p, pointless_value_t* v);
-int32_t* _pointless_reader_vector_i32(pointless_t* p, pointless_value_t* v);
-uint32_t* _pointless_reader_vector_u32(pointless_t* p, pointless_value_t* v);
-int64_t* _pointless_reader_vector_i64(pointless_t* p, pointless_value_t* v);
-uint64_t* _pointless_reader_vector_u64(pointless_t* p, pointless_value_t* v);
-float* _pointless_reader_vector_float(pointless_t* p, pointless_value_t* v);
+int8_t* pointless_reader_vector_i8(pointless_t* p, pointless_value_t* v);
+uint8_t* pointless_reader_vector_u8(pointless_t* p, pointless_value_t* v);
+int16_t* pointless_reader_vector_i16(pointless_t* p, pointless_value_t* v);
+uint16_t* pointless_reader_vector_u16(pointless_t* p, pointless_value_t* v);
+int32_t* pointless_reader_vector_i32(pointless_t* p, pointless_value_t* v);
+uint32_t* pointless_reader_vector_u32(pointless_t* p, pointless_value_t* v);
+int64_t* pointless_reader_vector_i64(pointless_t* p, pointless_value_t* v);
+uint64_t* pointless_reader_vector_u64(pointless_t* p, pointless_value_t* v);
+float* pointless_reader_vector_float(pointless_t* p, pointless_value_t* v);
 
 // general value fetcher
 pointless_complete_value_t pointless_reader_vector_value_case(pointless_t* p, pointless_value_t* v, uint32_t i);

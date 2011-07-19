@@ -85,15 +85,15 @@ PyObject* pypointless_value(PyPointless* p, pointless_value_t* v)
 	switch (v->type) {
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-		case _POINTLESS_VECTOR_I8:
-		case _POINTLESS_VECTOR_U8:
-		case _POINTLESS_VECTOR_I16:
-		case _POINTLESS_VECTOR_U16:
-		case _POINTLESS_VECTOR_I32:
-		case _POINTLESS_VECTOR_U32:
-		case _POINTLESS_VECTOR_I64:
-		case _POINTLESS_VECTOR_U64:
-		case _POINTLESS_VECTOR_FLOAT:
+		case POINTLESS_VECTOR_I8:
+		case POINTLESS_VECTOR_U8:
+		case POINTLESS_VECTOR_I16:
+		case POINTLESS_VECTOR_U16:
+		case POINTLESS_VECTOR_I32:
+		case POINTLESS_VECTOR_U32:
+		case POINTLESS_VECTOR_I64:
+		case POINTLESS_VECTOR_U64:
+		case POINTLESS_VECTOR_FLOAT:
 		case POINTLESS_VECTOR_EMPTY:
 			return (PyObject*)PyPointlessVector_New(p, v, 0, pointless_reader_vector_n_items(&p->p, v));
 

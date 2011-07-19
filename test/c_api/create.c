@@ -308,7 +308,7 @@ void create_special_c(pointless_create_t* c)
 
 static uint32_t create_special_d_0(pointless_create_t* c)
 {
-	uint32_t v = _pointless_create_vector_u32(c), i;
+	uint32_t v = pointless_create_vector_u32(c), i;
 
 	if (v == POINTLESS_CREATE_VALUE_FAIL) {
 		fprintf(stderr, "create_special_d_0(): pointless_create_vector_u32() failure\n");
@@ -316,7 +316,7 @@ static uint32_t create_special_d_0(pointless_create_t* c)
 	}
 
 	for (i = 0; i < SPECIAL_D_N; i++) {
-		if (_pointless_create_vector_u32_append(c, v, i) == POINTLESS_CREATE_VALUE_FAIL) {
+		if (pointless_create_vector_u32_append(c, v, i) == POINTLESS_CREATE_VALUE_FAIL) {
 			fprintf(stderr, "create_special_d_0(): pointless_create_vector_u32_append() failure\n");
 			exit(EXIT_FAILURE);
 		}
@@ -333,7 +333,7 @@ static uint32_t create_special_d_1(pointless_create_t* c, uint32_t* buffer)
 	for (i = 0; i < SPECIAL_D_N; i++)
 		buffer[i] = i;
 
-	v = _pointless_create_vector_u32_owner(c, buffer, SPECIAL_D_N);
+	v = pointless_create_vector_u32_owner(c, buffer, SPECIAL_D_N);
 
 	if (v == POINTLESS_CREATE_VALUE_FAIL) {
 		fprintf(stderr, "create_special_d_1(): pointless_create_vector_u32_owner() failure\n");
@@ -357,7 +357,7 @@ static uint32_t create_special_d_2(pointless_create_t* c)
 	for (i = 0; i < SPECIAL_D_N; i++)
 		u32_buffer[i] = i;
 
-	v = _pointless_create_vector_u32(c);
+	v = pointless_create_vector_u32(c);
 
 	if (v == POINTLESS_CREATE_VALUE_FAIL) {
 		fprintf(stderr, "create_special_d_2(): pointless_create_vector_u32() failure\n");

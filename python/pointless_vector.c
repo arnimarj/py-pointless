@@ -100,24 +100,24 @@ static PyObject* PyPointlessVector_subscript_priv(PyPointlessVector* self, uint3
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
 			return pypointless_value(self->pp, pointless_reader_vector_value(&self->pp->p, self->v) + i);
-		case _POINTLESS_VECTOR_I8:
-			return pypointless_i32(self->pp, (int32_t)_pointless_reader_vector_i8(&self->pp->p, self->v)[i]);
-		case _POINTLESS_VECTOR_U8:
-			return pypointless_u32(self->pp, (uint32_t)_pointless_reader_vector_u8(&self->pp->p, self->v)[i]);
-		case _POINTLESS_VECTOR_I16:
-			return pypointless_i32(self->pp, (int32_t)_pointless_reader_vector_i16(&self->pp->p, self->v)[i]);
-		case _POINTLESS_VECTOR_U16:
-			return pypointless_u32(self->pp, (uint32_t)_pointless_reader_vector_u16(&self->pp->p, self->v)[i]);
-		case _POINTLESS_VECTOR_I32:
-			return pypointless_i32(self->pp, _pointless_reader_vector_i32(&self->pp->p, self->v)[i]);
-		case _POINTLESS_VECTOR_U32:
-			return pypointless_u32(self->pp, _pointless_reader_vector_u32(&self->pp->p, self->v)[i]);
-		case _POINTLESS_VECTOR_I64:
-			return pypointless_i64(self->pp, _pointless_reader_vector_i64(&self->pp->p, self->v)[i]);
-		case _POINTLESS_VECTOR_U64:
-			return pypointless_u64(self->pp, _pointless_reader_vector_u64(&self->pp->p, self->v)[i]);
-		case _POINTLESS_VECTOR_FLOAT:
-			return pypointless_float(self->pp, _pointless_reader_vector_float(&self->pp->p, self->v)[i]);
+		case POINTLESS_VECTOR_I8:
+			return pypointless_i32(self->pp, (int32_t)pointless_reader_vector_i8(&self->pp->p, self->v)[i]);
+		case POINTLESS_VECTOR_U8:
+			return pypointless_u32(self->pp, (uint32_t)pointless_reader_vector_u8(&self->pp->p, self->v)[i]);
+		case POINTLESS_VECTOR_I16:
+			return pypointless_i32(self->pp, (int32_t)pointless_reader_vector_i16(&self->pp->p, self->v)[i]);
+		case POINTLESS_VECTOR_U16:
+			return pypointless_u32(self->pp, (uint32_t)pointless_reader_vector_u16(&self->pp->p, self->v)[i]);
+		case POINTLESS_VECTOR_I32:
+			return pypointless_i32(self->pp, pointless_reader_vector_i32(&self->pp->p, self->v)[i]);
+		case POINTLESS_VECTOR_U32:
+			return pypointless_u32(self->pp, pointless_reader_vector_u32(&self->pp->p, self->v)[i]);
+		case POINTLESS_VECTOR_I64:
+			return pypointless_i64(self->pp, pointless_reader_vector_i64(&self->pp->p, self->v)[i]);
+		case POINTLESS_VECTOR_U64:
+			return pypointless_u64(self->pp, pointless_reader_vector_u64(&self->pp->p, self->v)[i]);
+		case POINTLESS_VECTOR_FLOAT:
+			return pypointless_float(self->pp, pointless_reader_vector_float(&self->pp->p, self->v)[i]);
 	}
 
 	PyErr_Format(PyExc_TypeError, "strange array type");
@@ -328,15 +328,15 @@ static PyObject* PyPointlessVector_get_typecode(PyPointlessVector* a, void* clos
 		case POINTLESS_VECTOR_EMPTY:
 			e = "empty vectors are typeless";
 			break;
-		case _POINTLESS_VECTOR_I8:    s = "i8"; break;
-		case _POINTLESS_VECTOR_U8:    s = "u8"; break;
-		case _POINTLESS_VECTOR_I16:   s = "i16"; break;
-		case _POINTLESS_VECTOR_U16:   s = "u16"; break;
-		case _POINTLESS_VECTOR_I32:   s = "i32"; break;
-		case _POINTLESS_VECTOR_U32:   s = "u32"; break;
-		case _POINTLESS_VECTOR_I64:   s = "i64"; break;
-		case _POINTLESS_VECTOR_U64:   s = "u64"; break;
-		case _POINTLESS_VECTOR_FLOAT: s = "f"; break;
+		case POINTLESS_VECTOR_I8:    s = "i8"; break;
+		case POINTLESS_VECTOR_U8:    s = "u8"; break;
+		case POINTLESS_VECTOR_I16:   s = "i16"; break;
+		case POINTLESS_VECTOR_U16:   s = "u16"; break;
+		case POINTLESS_VECTOR_I32:   s = "i32"; break;
+		case POINTLESS_VECTOR_U32:   s = "u32"; break;
+		case POINTLESS_VECTOR_I64:   s = "i64"; break;
+		case POINTLESS_VECTOR_U64:   s = "u64"; break;
+		case POINTLESS_VECTOR_FLOAT: s = "f"; break;
 		default:
 			PyErr_BadInternalCall();
 			return 0;
@@ -357,15 +357,15 @@ static int pointless_is_prim_vector(pointless_value_t* v)
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
 			return 0;
 		case POINTLESS_VECTOR_EMPTY:
-		case _POINTLESS_VECTOR_I8:
-		case _POINTLESS_VECTOR_U8:
-		case _POINTLESS_VECTOR_I16:
-		case _POINTLESS_VECTOR_U16:
-		case _POINTLESS_VECTOR_I32:
-		case _POINTLESS_VECTOR_U32:
-		case _POINTLESS_VECTOR_I64:
-		case _POINTLESS_VECTOR_U64:
-		case _POINTLESS_VECTOR_FLOAT:
+		case POINTLESS_VECTOR_I8:
+		case POINTLESS_VECTOR_U8:
+		case POINTLESS_VECTOR_I16:
+		case POINTLESS_VECTOR_U16:
+		case POINTLESS_VECTOR_I32:
+		case POINTLESS_VECTOR_U32:
+		case POINTLESS_VECTOR_I64:
+		case POINTLESS_VECTOR_U64:
+		case POINTLESS_VECTOR_FLOAT:
 			return 1;
 	}
 
@@ -380,15 +380,15 @@ static size_t pointless_vector_n_bytes(PyPointlessVector* self)
 	switch (self->v->type) {
 		// no support for value vector
 		case POINTLESS_VECTOR_EMPTY: n_bytes = 0;                 break;
-		case _POINTLESS_VECTOR_I8:    n_bytes = sizeof(int8_t);    break;
-		case _POINTLESS_VECTOR_U8:    n_bytes = sizeof(uint8_t);   break;
-		case _POINTLESS_VECTOR_I16:   n_bytes = sizeof(int16_t);   break;
-		case _POINTLESS_VECTOR_U16:   n_bytes = sizeof(uint16_t);  break;
-		case _POINTLESS_VECTOR_I32:   n_bytes = sizeof(int32_t);   break;
-		case _POINTLESS_VECTOR_U32:   n_bytes = sizeof(uint32_t);  break;
-		case _POINTLESS_VECTOR_I64:   n_bytes = sizeof(int64_t);   break;
-		case _POINTLESS_VECTOR_U64:   n_bytes = sizeof(uint64_t);  break;
-		case _POINTLESS_VECTOR_FLOAT: n_bytes = sizeof(float);     break;
+		case POINTLESS_VECTOR_I8:    n_bytes = sizeof(int8_t);    break;
+		case POINTLESS_VECTOR_U8:    n_bytes = sizeof(uint8_t);   break;
+		case POINTLESS_VECTOR_I16:   n_bytes = sizeof(int16_t);   break;
+		case POINTLESS_VECTOR_U16:   n_bytes = sizeof(uint16_t);  break;
+		case POINTLESS_VECTOR_I32:   n_bytes = sizeof(int32_t);   break;
+		case POINTLESS_VECTOR_U32:   n_bytes = sizeof(uint32_t);  break;
+		case POINTLESS_VECTOR_I64:   n_bytes = sizeof(int64_t);   break;
+		case POINTLESS_VECTOR_U64:   n_bytes = sizeof(uint64_t);  break;
+		case POINTLESS_VECTOR_FLOAT: n_bytes = sizeof(float);     break;
 		default:                     assert(0); break;
 	}
 
@@ -403,15 +403,15 @@ static void* pointless_prim_vector_base_ptr(PyPointlessVector* self)
 			assert(0);
 			return 0;
 		case POINTLESS_VECTOR_EMPTY: return 0;
-		case _POINTLESS_VECTOR_I8:    return (void*)(_pointless_reader_vector_i8(&self->pp->p, self->v) + self->slice_i);
-		case _POINTLESS_VECTOR_U8:    return (void*)(_pointless_reader_vector_u8(&self->pp->p, self->v) + self->slice_i);
-		case _POINTLESS_VECTOR_I16:   return (void*)(_pointless_reader_vector_i16(&self->pp->p, self->v) + self->slice_i);
-		case _POINTLESS_VECTOR_U16:   return (void*)(_pointless_reader_vector_u16(&self->pp->p, self->v) + self->slice_i);
-		case _POINTLESS_VECTOR_I32:   return (void*)(_pointless_reader_vector_i32(&self->pp->p, self->v) + self->slice_i);
-		case _POINTLESS_VECTOR_U32:   return (void*)(_pointless_reader_vector_u32(&self->pp->p, self->v) + self->slice_i);
-		case _POINTLESS_VECTOR_I64:   return (void*)(_pointless_reader_vector_i64(&self->pp->p, self->v) + self->slice_i);
-		case _POINTLESS_VECTOR_U64:   return (void*)(_pointless_reader_vector_u64(&self->pp->p, self->v) + self->slice_i);
-		case _POINTLESS_VECTOR_FLOAT: return (void*)(_pointless_reader_vector_float(&self->pp->p, self->v) + self->slice_i);
+		case POINTLESS_VECTOR_I8:    return (void*)(pointless_reader_vector_i8(&self->pp->p, self->v) + self->slice_i);
+		case POINTLESS_VECTOR_U8:    return (void*)(pointless_reader_vector_u8(&self->pp->p, self->v) + self->slice_i);
+		case POINTLESS_VECTOR_I16:   return (void*)(pointless_reader_vector_i16(&self->pp->p, self->v) + self->slice_i);
+		case POINTLESS_VECTOR_U16:   return (void*)(pointless_reader_vector_u16(&self->pp->p, self->v) + self->slice_i);
+		case POINTLESS_VECTOR_I32:   return (void*)(pointless_reader_vector_i32(&self->pp->p, self->v) + self->slice_i);
+		case POINTLESS_VECTOR_U32:   return (void*)(pointless_reader_vector_u32(&self->pp->p, self->v) + self->slice_i);
+		case POINTLESS_VECTOR_I64:   return (void*)(pointless_reader_vector_i64(&self->pp->p, self->v) + self->slice_i);
+		case POINTLESS_VECTOR_U64:   return (void*)(pointless_reader_vector_u64(&self->pp->p, self->v) + self->slice_i);
+		case POINTLESS_VECTOR_FLOAT: return (void*)(pointless_reader_vector_float(&self->pp->p, self->v) + self->slice_i);
 	}
 
 	assert(0);
@@ -508,31 +508,31 @@ static PyObject* PyPointlessVector_max(PyPointlessVector* self)
 	}
 
 	switch (self->v->type) {
-		case _POINTLESS_VECTOR_I8:
+		case POINTLESS_VECTOR_I8:
 			POINTLESS_VECTOR_MAX_LOOP(int8_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_U8:
+		case POINTLESS_VECTOR_U8:
 			POINTLESS_VECTOR_MAX_LOOP(uint8_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_I16:
+		case POINTLESS_VECTOR_I16:
 			POINTLESS_VECTOR_MAX_LOOP(int16_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_U16:
+		case POINTLESS_VECTOR_U16:
 			POINTLESS_VECTOR_MAX_LOOP(uint16_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_I32:
+		case POINTLESS_VECTOR_I32:
 			POINTLESS_VECTOR_MAX_LOOP(int32_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_U32:
+		case POINTLESS_VECTOR_U32:
 			POINTLESS_VECTOR_MAX_LOOP(uint32_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_I64:
+		case POINTLESS_VECTOR_I64:
 			POINTLESS_VECTOR_MAX_LOOP(int64_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_U64:
+		case POINTLESS_VECTOR_U64:
 			POINTLESS_VECTOR_MAX_LOOP(uint64_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_FLOAT:
+		case POINTLESS_VECTOR_FLOAT:
 			POINTLESS_VECTOR_MAX_LOOP(float, base_ptr, n_items);
 			break;
 		default:
@@ -559,31 +559,31 @@ static PyObject* PyPointlessVector_min(PyPointlessVector* self)
 	}
 
 	switch (self->v->type) {
-		case _POINTLESS_VECTOR_I8:
+		case POINTLESS_VECTOR_I8:
 			POINTLESS_VECTOR_MIN_LOOP(int8_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_U8:
+		case POINTLESS_VECTOR_U8:
 			POINTLESS_VECTOR_MIN_LOOP(uint8_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_I16:
+		case POINTLESS_VECTOR_I16:
 			POINTLESS_VECTOR_MIN_LOOP(int16_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_U16:
+		case POINTLESS_VECTOR_U16:
 			POINTLESS_VECTOR_MIN_LOOP(uint16_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_I32:
+		case POINTLESS_VECTOR_I32:
 			POINTLESS_VECTOR_MIN_LOOP(int32_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_U32:
+		case POINTLESS_VECTOR_U32:
 			POINTLESS_VECTOR_MIN_LOOP(uint32_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_I64:
+		case POINTLESS_VECTOR_I64:
 			POINTLESS_VECTOR_MIN_LOOP(int64_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_U64:
+		case POINTLESS_VECTOR_U64:
 			POINTLESS_VECTOR_MIN_LOOP(uint64_t, base_ptr, n_items);
 			break;
-		case _POINTLESS_VECTOR_FLOAT:
+		case POINTLESS_VECTOR_FLOAT:
 			POINTLESS_VECTOR_MIN_LOOP(float, base_ptr, n_items);
 			break;
 		default:

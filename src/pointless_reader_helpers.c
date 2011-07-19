@@ -163,32 +163,32 @@ static int pointless_get_mapping_string_to_vector_(pointless_t* p, pointless_val
 		return 0;
 
 	switch (v.type) {
-		case _POINTLESS_VECTOR_I8:
-			*value = (void*)_pointless_reader_vector_i8(p, &v);
+		case POINTLESS_VECTOR_I8:
+			*value = (void*)pointless_reader_vector_i8(p, &v);
 			break;
-		case _POINTLESS_VECTOR_U8:
-			*value = (void*)_pointless_reader_vector_u8(p, &v);
+		case POINTLESS_VECTOR_U8:
+			*value = (void*)pointless_reader_vector_u8(p, &v);
 			break;
-		case _POINTLESS_VECTOR_I16:
-			*value = (void*)_pointless_reader_vector_i16(p, &v);
+		case POINTLESS_VECTOR_I16:
+			*value = (void*)pointless_reader_vector_i16(p, &v);
 			break;
-		case _POINTLESS_VECTOR_U16:
-			*value = (void*)_pointless_reader_vector_u16(p, &v);
+		case POINTLESS_VECTOR_U16:
+			*value = (void*)pointless_reader_vector_u16(p, &v);
 			break;
-		case _POINTLESS_VECTOR_I32:
-			*value = (void*)_pointless_reader_vector_i32(p, &v);
+		case POINTLESS_VECTOR_I32:
+			*value = (void*)pointless_reader_vector_i32(p, &v);
 			break;
-		case _POINTLESS_VECTOR_U32:
-			*value = (void*)_pointless_reader_vector_u32(p, &v);
+		case POINTLESS_VECTOR_U32:
+			*value = (void*)pointless_reader_vector_u32(p, &v);
 			break;
-		case _POINTLESS_VECTOR_I64:
-			*value = (void*)_pointless_reader_vector_i64(p, &v);
+		case POINTLESS_VECTOR_I64:
+			*value = (void*)pointless_reader_vector_i64(p, &v);
 			break;
-		case _POINTLESS_VECTOR_U64:
-			*value = (void*)_pointless_reader_vector_u64(p, &v);
+		case POINTLESS_VECTOR_U64:
+			*value = (void*)pointless_reader_vector_u64(p, &v);
 			break;
-		case _POINTLESS_VECTOR_FLOAT:
-			*value = (void*)_pointless_reader_vector_float(p, &v);
+		case POINTLESS_VECTOR_FLOAT:
+			*value = (void*)pointless_reader_vector_float(p, &v);
 			break;
 		default:
 			return 0;
@@ -206,15 +206,15 @@ int pointless_get_mapping_string_to_vector(pointless_t* p, pointless_value_t* ma
 
 	switch (v->type) {
 		case POINTLESS_VECTOR_EMPTY:
-		case _POINTLESS_VECTOR_I8:
-		case _POINTLESS_VECTOR_U8:
-		case _POINTLESS_VECTOR_I16:
-		case _POINTLESS_VECTOR_U16:
-		case _POINTLESS_VECTOR_I32:
-		case _POINTLESS_VECTOR_U32:
-		case _POINTLESS_VECTOR_I64:
-		case _POINTLESS_VECTOR_U64:
-		case _POINTLESS_VECTOR_FLOAT:
+		case POINTLESS_VECTOR_I8:
+		case POINTLESS_VECTOR_U8:
+		case POINTLESS_VECTOR_I16:
+		case POINTLESS_VECTOR_U16:
+		case POINTLESS_VECTOR_I32:
+		case POINTLESS_VECTOR_U32:
+		case POINTLESS_VECTOR_I64:
+		case POINTLESS_VECTOR_U64:
+		case POINTLESS_VECTOR_FLOAT:
 			*n_items = pointless_reader_vector_n_items(p, v);
 			return 1;
 	}
@@ -223,23 +223,23 @@ int pointless_get_mapping_string_to_vector(pointless_t* p, pointless_value_t* ma
 }
 
 int pointless_get_mapping_string_to_vector_i8(pointless_t* p, pointless_value_t* map, char* key, int8_t** value, uint32_t* n_items)
-	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, _POINTLESS_VECTOR_I8); }
+	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, POINTLESS_VECTOR_I8); }
 int pointless_get_mapping_string_to_vector_u8(pointless_t* p, pointless_value_t* map, char* key, uint8_t** value, uint32_t* n_items)
-	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, _POINTLESS_VECTOR_U8); }
+	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, POINTLESS_VECTOR_U8); }
 int pointless_get_mapping_string_to_vector_i16(pointless_t* p, pointless_value_t* map, char* key, int16_t** value, uint32_t* n_items)
-	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, _POINTLESS_VECTOR_I16); }
+	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, POINTLESS_VECTOR_I16); }
 int pointless_get_mapping_string_to_vector_u16(pointless_t* p, pointless_value_t* map, char* key, uint16_t** value, uint32_t* n_items)
-	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, _POINTLESS_VECTOR_U16); }
+	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, POINTLESS_VECTOR_U16); }
 int pointless_get_mapping_string_to_vector_i32(pointless_t* p, pointless_value_t* map, char* key, int32_t** value, uint32_t* n_items)
-	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, _POINTLESS_VECTOR_I32); }
+	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, POINTLESS_VECTOR_I32); }
 int pointless_get_mapping_string_to_vector_u32(pointless_t* p, pointless_value_t* map, char* key, uint32_t** value, uint32_t* n_items)
-	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, _POINTLESS_VECTOR_U32); }
+	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, POINTLESS_VECTOR_U32); }
 int pointless_get_mapping_string_to_vector_i64(pointless_t* p, pointless_value_t* map, char* key, int64_t** value, uint32_t* n_items)
-	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, _POINTLESS_VECTOR_I64); }
+	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, POINTLESS_VECTOR_I64); }
 int pointless_get_mapping_string_to_vector_u64(pointless_t* p, pointless_value_t* map, char* key, uint64_t** value, uint32_t* n_items)
-	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, _POINTLESS_VECTOR_U64); }
+	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, POINTLESS_VECTOR_U64); }
 int pointless_get_mapping_string_to_vector_float(pointless_t* p, pointless_value_t* map, char* key, float** value, uint32_t* n_items)
-	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, _POINTLESS_VECTOR_FLOAT); }
+	{ return pointless_get_mapping_string_to_vector_(p, map, key, (void**)value, n_items, POINTLESS_VECTOR_FLOAT); }
 
 int pointless_get_mapping_string_to_vector_value(pointless_t* p, pointless_value_t* map, char* key, pointless_value_t** value, uint32_t* n_items)
 {

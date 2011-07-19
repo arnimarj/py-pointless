@@ -83,32 +83,32 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 				PyErr_Format(PyExc_ValueError, "only primitive pointless vectors are supported");
 				state->is_error = 1;
 				return POINTLESS_CREATE_VALUE_FAIL;
-			case _POINTLESS_VECTOR_I8:
-				handle = _pointless_create_vector_i8_owner(&state->c, _pointless_reader_vector_i8(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+			case POINTLESS_VECTOR_I8:
+				handle = pointless_create_vector_i8_owner(&state->c, pointless_reader_vector_i8(&v->pp->p, v->v) + v->slice_i, v->slice_n);
 				break;
-			case _POINTLESS_VECTOR_U8:
-				handle = _pointless_create_vector_u8_owner(&state->c, _pointless_reader_vector_u8(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+			case POINTLESS_VECTOR_U8:
+				handle = pointless_create_vector_u8_owner(&state->c, pointless_reader_vector_u8(&v->pp->p, v->v) + v->slice_i, v->slice_n);
 				break;
-			case _POINTLESS_VECTOR_I16:
-				handle = _pointless_create_vector_i16_owner(&state->c, _pointless_reader_vector_i16(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+			case POINTLESS_VECTOR_I16:
+				handle = pointless_create_vector_i16_owner(&state->c, pointless_reader_vector_i16(&v->pp->p, v->v) + v->slice_i, v->slice_n);
 				break;
-			case _POINTLESS_VECTOR_U16:
-				handle = _pointless_create_vector_u16_owner(&state->c, _pointless_reader_vector_u16(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+			case POINTLESS_VECTOR_U16:
+				handle = pointless_create_vector_u16_owner(&state->c, pointless_reader_vector_u16(&v->pp->p, v->v) + v->slice_i, v->slice_n);
 				break;
-			case _POINTLESS_VECTOR_I32:
-				handle = _pointless_create_vector_i32_owner(&state->c, _pointless_reader_vector_i32(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+			case POINTLESS_VECTOR_I32:
+				handle = pointless_create_vector_i32_owner(&state->c, pointless_reader_vector_i32(&v->pp->p, v->v) + v->slice_i, v->slice_n);
 				break;
-			case _POINTLESS_VECTOR_U32:
-				handle = _pointless_create_vector_u32_owner(&state->c, _pointless_reader_vector_u32(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+			case POINTLESS_VECTOR_U32:
+				handle = pointless_create_vector_u32_owner(&state->c, pointless_reader_vector_u32(&v->pp->p, v->v) + v->slice_i, v->slice_n);
 				break;
-			case _POINTLESS_VECTOR_I64:
-				handle = _pointless_create_vector_i64_owner(&state->c, _pointless_reader_vector_i64(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+			case POINTLESS_VECTOR_I64:
+				handle = pointless_create_vector_i64_owner(&state->c, pointless_reader_vector_i64(&v->pp->p, v->v) + v->slice_i, v->slice_n);
 				break;
-			case _POINTLESS_VECTOR_U64:
-				handle = _pointless_create_vector_u64_owner(&state->c, _pointless_reader_vector_u64(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+			case POINTLESS_VECTOR_U64:
+				handle = pointless_create_vector_u64_owner(&state->c, pointless_reader_vector_u64(&v->pp->p, v->v) + v->slice_i, v->slice_n);
 				break;
-			case _POINTLESS_VECTOR_FLOAT:
-				handle = _pointless_create_vector_float_owner(&state->c, _pointless_reader_vector_float(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+			case POINTLESS_VECTOR_FLOAT:
+				handle = pointless_create_vector_float_owner(&state->c, pointless_reader_vector_float(&v->pp->p, v->v) + v->slice_i, v->slice_n);
 				break;
 			case POINTLESS_VECTOR_EMPTY:
 				handle = pointless_create_vector_value(&state->c);
@@ -135,7 +135,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			return POINTLESS_CREATE_VALUE_FAIL;
 		}
 
-		handle = _pointless_create_vector_u8_owner(&state->c, (uint8_t*)PyByteArray_AS_STRING(py_object), (uint32_t)n_items);
+		handle = pointless_create_vector_u8_owner(&state->c, (uint8_t*)PyByteArray_AS_STRING(py_object), (uint32_t)n_items);
 		RETURN_OOM_IF_FAIL(handle, state);
 
 		// cache object
@@ -149,32 +149,32 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		void* data = prim_vector->array._data;
 
 		switch (prim_vector->type) {
-			case _POINTLESS_PRIM_VECTOR_TYPE_I8:
-				handle = _pointless_create_vector_i8_owner(&state->c, (int8_t*)data, n_items);
+			case POINTLESS_PRIM_VECTOR_TYPE_I8:
+				handle = pointless_create_vector_i8_owner(&state->c, (int8_t*)data, n_items);
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_U8:
-				handle = _pointless_create_vector_u8_owner(&state->c, (uint8_t*)data, n_items);
+			case POINTLESS_PRIM_VECTOR_TYPE_U8:
+				handle = pointless_create_vector_u8_owner(&state->c, (uint8_t*)data, n_items);
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_I16:
-				handle = _pointless_create_vector_i16_owner(&state->c, (int16_t*)data, n_items);
+			case POINTLESS_PRIM_VECTOR_TYPE_I16:
+				handle = pointless_create_vector_i16_owner(&state->c, (int16_t*)data, n_items);
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_U16:
-				handle = _pointless_create_vector_u16_owner(&state->c, (uint16_t*)data, n_items);
+			case POINTLESS_PRIM_VECTOR_TYPE_U16:
+				handle = pointless_create_vector_u16_owner(&state->c, (uint16_t*)data, n_items);
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_I32:
-				handle = _pointless_create_vector_i32_owner(&state->c, (int32_t*)data, n_items);
+			case POINTLESS_PRIM_VECTOR_TYPE_I32:
+				handle = pointless_create_vector_i32_owner(&state->c, (int32_t*)data, n_items);
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_U32:
-				handle = _pointless_create_vector_u32_owner(&state->c, (uint32_t*)data, n_items);
+			case POINTLESS_PRIM_VECTOR_TYPE_U32:
+				handle = pointless_create_vector_u32_owner(&state->c, (uint32_t*)data, n_items);
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_I64:
-				handle = _pointless_create_vector_i64_owner(&state->c, (int64_t*)data, n_items);
+			case POINTLESS_PRIM_VECTOR_TYPE_I64:
+				handle = pointless_create_vector_i64_owner(&state->c, (int64_t*)data, n_items);
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_U64:
-				handle = _pointless_create_vector_u64_owner(&state->c, (uint64_t*)data, n_items);
+			case POINTLESS_PRIM_VECTOR_TYPE_U64:
+				handle = pointless_create_vector_u64_owner(&state->c, (uint64_t*)data, n_items);
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
-				handle = _pointless_create_vector_float_owner(&state->c, (float*)data, n_items);
+			case POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
+				handle = pointless_create_vector_float_owner(&state->c, (float*)data, n_items);
 				break;
 			default:
 				PyErr_SetString(PyExc_ValueError, "internal error: illegal type for primitive vector");

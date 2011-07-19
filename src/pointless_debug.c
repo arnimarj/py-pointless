@@ -94,40 +94,40 @@ static void pointless_print_vector_other(pointless_debug_state_t* state, pointle
 
 	for (i = 0; i < n; i++) {
 		switch (v->type) {
-			case _POINTLESS_VECTOR_I8:
-				ii= (long long int)(_pointless_reader_vector_i8(state->p, v)[i]);
+			case POINTLESS_VECTOR_I8:
+				ii= (long long int)(pointless_reader_vector_i8(state->p, v)[i]);
 				is_signed = 1;
 				break;
-			case _POINTLESS_VECTOR_U8:
-				uu = (unsigned long long int)(_pointless_reader_vector_u8(state->p, v)[i]);
+			case POINTLESS_VECTOR_U8:
+				uu = (unsigned long long int)(pointless_reader_vector_u8(state->p, v)[i]);
 				is_unsigned = 1;
 				break;
-			case _POINTLESS_VECTOR_I16:
-				ii = (long long int)(_pointless_reader_vector_i16(state->p, v)[i]);
+			case POINTLESS_VECTOR_I16:
+				ii = (long long int)(pointless_reader_vector_i16(state->p, v)[i]);
 				is_signed = 1;
 				break;
-			case _POINTLESS_VECTOR_U16:
-				uu = (unsigned long long int)(_pointless_reader_vector_u16(state->p, v)[i]);
+			case POINTLESS_VECTOR_U16:
+				uu = (unsigned long long int)(pointless_reader_vector_u16(state->p, v)[i]);
 				is_unsigned = 1;
 				break;
-			case _POINTLESS_VECTOR_I32:
-				ii = (long long int)(_pointless_reader_vector_i32(state->p, v)[i]);
+			case POINTLESS_VECTOR_I32:
+				ii = (long long int)(pointless_reader_vector_i32(state->p, v)[i]);
 				is_signed = 1;
 				break;
-			case _POINTLESS_VECTOR_U32:
-				uu = (unsigned long long int)(_pointless_reader_vector_u32(state->p, v)[i]);
+			case POINTLESS_VECTOR_U32:
+				uu = (unsigned long long int)(pointless_reader_vector_u32(state->p, v)[i]);
 				is_unsigned = 1;
 				break;
-			case _POINTLESS_VECTOR_I64:
-				ii = (long long int)(_pointless_reader_vector_i64(state->p, v)[i]);
+			case POINTLESS_VECTOR_I64:
+				ii = (long long int)(pointless_reader_vector_i64(state->p, v)[i]);
 				is_signed = 1;
 				break;
-			case _POINTLESS_VECTOR_U64:
-				uu = (unsigned long long int)(_pointless_reader_vector_u64(state->p, v)[i]);
+			case POINTLESS_VECTOR_U64:
+				uu = (unsigned long long int)(pointless_reader_vector_u64(state->p, v)[i]);
 				is_unsigned = 1;
 				break;
-			case _POINTLESS_VECTOR_FLOAT:
-				ff = _pointless_reader_vector_float(state->p, v)[i];
+			case POINTLESS_VECTOR_FLOAT:
+				ff = pointless_reader_vector_float(state->p, v)[i];
 				is_float = 1;
 				break;
 			default:
@@ -416,15 +416,15 @@ static void pointless_print_value(pointless_debug_state_t* state, pointless_valu
 		case POINTLESS_VECTOR_EMPTY:
 			fprintf(state->out, "[]");
 			break;
-		case _POINTLESS_VECTOR_I8:
-		case _POINTLESS_VECTOR_U8:
-		case _POINTLESS_VECTOR_I16:
-		case _POINTLESS_VECTOR_U16:
-		case _POINTLESS_VECTOR_I32:
-		case _POINTLESS_VECTOR_U32:
-		case _POINTLESS_VECTOR_I64:
-		case _POINTLESS_VECTOR_U64:
-		case _POINTLESS_VECTOR_FLOAT:
+		case POINTLESS_VECTOR_I8:
+		case POINTLESS_VECTOR_U8:
+		case POINTLESS_VECTOR_I16:
+		case POINTLESS_VECTOR_U16:
+		case POINTLESS_VECTOR_I32:
+		case POINTLESS_VECTOR_U32:
+		case POINTLESS_VECTOR_I64:
+		case POINTLESS_VECTOR_U64:
+		case POINTLESS_VECTOR_FLOAT:
 			pointless_print_vector_other(state, v);
 			break;
 		case POINTLESS_BITVECTOR:

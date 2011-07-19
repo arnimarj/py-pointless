@@ -52,15 +52,15 @@
 // general/specialized vectors
 #define POINTLESS_VECTOR_VALUE          0
 #define POINTLESS_VECTOR_VALUE_HASHABLE 1
-#define _POINTLESS_VECTOR_I8             2
-#define _POINTLESS_VECTOR_U8             3
-#define _POINTLESS_VECTOR_I16            4
-#define _POINTLESS_VECTOR_U16            5
-#define _POINTLESS_VECTOR_I32            6
-#define _POINTLESS_VECTOR_U32            7
-#define _POINTLESS_VECTOR_I64            25
-#define _POINTLESS_VECTOR_U64            26
-#define _POINTLESS_VECTOR_FLOAT          8
+#define POINTLESS_VECTOR_I8             2
+#define POINTLESS_VECTOR_U8             3
+#define POINTLESS_VECTOR_I16            4
+#define POINTLESS_VECTOR_U16            5
+#define POINTLESS_VECTOR_I32            6
+#define POINTLESS_VECTOR_U32            7
+#define POINTLESS_VECTOR_I64            25
+#define POINTLESS_VECTOR_U64            26
+#define POINTLESS_VECTOR_FLOAT          8
 #define POINTLESS_VECTOR_EMPTY          9
 
 // unicode strings

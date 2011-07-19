@@ -49,31 +49,31 @@ static uint32_t pyobject_hash_primvector(PyPointlessPrimVector* v, pyobject_hash
 		void* item = pointless_dynarray_item_at(&v->array, i);
 
 		switch (v->type) {
-			case _POINTLESS_PRIM_VECTOR_TYPE_I8:
+			case POINTLESS_PRIM_VECTOR_TYPE_I8:
 				h = pointless_hash_i32(*((int8_t*)item));
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_U8:
+			case POINTLESS_PRIM_VECTOR_TYPE_U8:
 				h = pointless_hash_u32(*((uint8_t*)item));
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_I16:
+			case POINTLESS_PRIM_VECTOR_TYPE_I16:
 				h = pointless_hash_i32(*((int16_t*)item));
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_U16:
+			case POINTLESS_PRIM_VECTOR_TYPE_U16:
 				h = pointless_hash_u32(*((uint16_t*)item));
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_I32:
+			case POINTLESS_PRIM_VECTOR_TYPE_I32:
 				h = pointless_hash_i32(*((int32_t*)item));
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_U32:
+			case POINTLESS_PRIM_VECTOR_TYPE_U32:
 				h = pointless_hash_u32(*((uint32_t*)item));
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_I64:
+			case POINTLESS_PRIM_VECTOR_TYPE_I64:
 				h = pointless_hash_i64(*((int64_t*)item));
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_U64:
+			case POINTLESS_PRIM_VECTOR_TYPE_U64:
 				h = pointless_hash_u64(*((uint64_t*)item));
 				break;
-			case _POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
+			case POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
 				h = pointless_hash_float(*((float*)item));
 				break;
 			default:

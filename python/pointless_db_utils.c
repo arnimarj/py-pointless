@@ -7,19 +7,19 @@ static int pointless_prim_vector_uint_item_at(PyPointlessPrimVector* v, uint32_t
 	int64_t v_signed = 0;
 
 	switch (v->type) {
-		case _POINTLESS_PRIM_VECTOR_TYPE_I8:
+		case POINTLESS_PRIM_VECTOR_TYPE_I8:
 			is_signed = 1;
 			v_signed = (int64_t)(*((int8_t*)data));
 			break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_I16:
+		case POINTLESS_PRIM_VECTOR_TYPE_I16:
 			is_signed = 1;
 			v_signed = (int64_t)(*((int16_t*)data));
 			break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_I32:
+		case POINTLESS_PRIM_VECTOR_TYPE_I32:
 			is_signed = 1;
 			v_signed = (int64_t)(*((int32_t*)data));
 			break;
-		case _POINTLESS_PRIM_VECTOR_TYPE_I64:
+		case POINTLESS_PRIM_VECTOR_TYPE_I64:
 			is_signed = 1;
 			v_signed = (int64_t)(*((int64_t*)data));
 			break;
@@ -34,16 +34,16 @@ static int pointless_prim_vector_uint_item_at(PyPointlessPrimVector* v, uint32_t
 	}
 
 	switch (v->type) {
-		case _POINTLESS_PRIM_VECTOR_TYPE_U8:
+		case POINTLESS_PRIM_VECTOR_TYPE_U8:
 			*output = (uint64_t)(*((int8_t*)data));
 			return 1;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U16:
+		case POINTLESS_PRIM_VECTOR_TYPE_U16:
 			*output = (uint64_t)(*((int16_t*)data));
 			return 1;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U32:
+		case POINTLESS_PRIM_VECTOR_TYPE_U32:
 			*output = (uint64_t)(*((int32_t*)data));
 			return 1;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U64:
+		case POINTLESS_PRIM_VECTOR_TYPE_U64:
 			*output = (uint64_t)(*((int64_t*)data));
 			return 1;
 	}
@@ -104,23 +104,23 @@ static void my_swap(int a, int b, void* user)
 static qsort_cmp_ pointless_db_utils_get_cmp(uint32_t type)
 {
 	switch (type) {
-		case _POINTLESS_PRIM_VECTOR_TYPE_I8:
+		case POINTLESS_PRIM_VECTOR_TYPE_I8:
 			return my_cmp_i8;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U8:
+		case POINTLESS_PRIM_VECTOR_TYPE_U8:
 			return my_cmp_u8;
-		case _POINTLESS_PRIM_VECTOR_TYPE_I16:
+		case POINTLESS_PRIM_VECTOR_TYPE_I16:
 			return my_cmp_i16;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U16:
+		case POINTLESS_PRIM_VECTOR_TYPE_U16:
 			return my_cmp_u16;
-		case _POINTLESS_PRIM_VECTOR_TYPE_I32:
+		case POINTLESS_PRIM_VECTOR_TYPE_I32:
 			return my_cmp_i32;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U32:
+		case POINTLESS_PRIM_VECTOR_TYPE_U32:
 			return my_cmp_u32;
-		case _POINTLESS_PRIM_VECTOR_TYPE_I64:
+		case POINTLESS_PRIM_VECTOR_TYPE_I64:
 			return my_cmp_i64;
-		case _POINTLESS_PRIM_VECTOR_TYPE_U64:
+		case POINTLESS_PRIM_VECTOR_TYPE_U64:
 			return my_cmp_u64;
-		case _POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
+		case POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
 			return my_cmp_f;
 	}
 
@@ -148,7 +148,7 @@ PyObject* pointless_db_array_sort(PyObject* o, PyObject* args)
 		return 0;
 	}
 
-	if (array->type != _POINTLESS_PRIM_VECTOR_TYPE_U32) {
+	if (array->type != POINTLESS_PRIM_VECTOR_TYPE_U32) {
 		PyErr_Format(PyExc_TypeError, "%s: array must be u32", __func__);
 		return 0;
 	}

@@ -204,24 +204,24 @@ static pointless_complete_value_t pointless_cmp_vector_value_reader(pointless_t*
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
 			return pointless_value_to_complete(&(pointless_reader_vector_value(p, &_v)[i]));
-		case _POINTLESS_VECTOR_I8:
-			return pointless_complete_value_create_as_read_i32((int32_t)_pointless_reader_vector_i8(p, &_v)[i]);
-		case _POINTLESS_VECTOR_U8:
-			return pointless_complete_value_create_as_read_u32((uint32_t)_pointless_reader_vector_u8(p, &_v)[i]);
-		case _POINTLESS_VECTOR_I16:
-			return pointless_complete_value_create_as_read_i32((int32_t)_pointless_reader_vector_i16(p, &_v)[i]);
-		case _POINTLESS_VECTOR_U16:
-			return pointless_complete_value_create_as_read_u32((uint32_t)_pointless_reader_vector_u16(p, &_v)[i]);
-		case _POINTLESS_VECTOR_I32:
-			return pointless_complete_value_create_as_read_i32((int32_t)_pointless_reader_vector_i32(p, &_v)[i]);
-		case _POINTLESS_VECTOR_U32:
-			return pointless_complete_value_create_as_read_u32(_pointless_reader_vector_u32(p, &_v)[i]);
-		case _POINTLESS_VECTOR_I64:
-			return pointless_complete_value_create_as_read_i64((int64_t)_pointless_reader_vector_i64(p, &_v)[i]);
-		case _POINTLESS_VECTOR_U64:
-			return pointless_complete_value_create_as_read_u64(_pointless_reader_vector_u64(p, &_v)[i]);
-		case _POINTLESS_VECTOR_FLOAT:
-			return pointless_complete_value_create_as_read_float(_pointless_reader_vector_float(p, &_v)[i]);
+		case POINTLESS_VECTOR_I8:
+			return pointless_complete_value_create_as_read_i32((int32_t)pointless_reader_vector_i8(p, &_v)[i]);
+		case POINTLESS_VECTOR_U8:
+			return pointless_complete_value_create_as_read_u32((uint32_t)pointless_reader_vector_u8(p, &_v)[i]);
+		case POINTLESS_VECTOR_I16:
+			return pointless_complete_value_create_as_read_i32((int32_t)pointless_reader_vector_i16(p, &_v)[i]);
+		case POINTLESS_VECTOR_U16:
+			return pointless_complete_value_create_as_read_u32((uint32_t)pointless_reader_vector_u16(p, &_v)[i]);
+		case POINTLESS_VECTOR_I32:
+			return pointless_complete_value_create_as_read_i32((int32_t)pointless_reader_vector_i32(p, &_v)[i]);
+		case POINTLESS_VECTOR_U32:
+			return pointless_complete_value_create_as_read_u32(pointless_reader_vector_u32(p, &_v)[i]);
+		case POINTLESS_VECTOR_I64:
+			return pointless_complete_value_create_as_read_i64((int64_t)pointless_reader_vector_i64(p, &_v)[i]);
+		case POINTLESS_VECTOR_U64:
+			return pointless_complete_value_create_as_read_u64(pointless_reader_vector_u64(p, &_v)[i]);
+		case POINTLESS_VECTOR_FLOAT:
+			return pointless_complete_value_create_as_read_float(pointless_reader_vector_float(p, &_v)[i]);
 	}
 
 	assert(0);
@@ -245,31 +245,31 @@ static pointless_complete_create_value_t pointless_cmp_vector_value_create(point
 		vi.complete_data.data_u32 = 0;
 
 		switch (v->header.type_29) {
-			case _POINTLESS_VECTOR_I8:
+			case POINTLESS_VECTOR_I8:
 				vi = pointless_complete_value_create_i32(((int8_t*)cv_get_outside_vector(&_v)->items)[i]);
 				break;
-			case _POINTLESS_VECTOR_U8:
+			case POINTLESS_VECTOR_U8:
 				vi = pointless_complete_value_create_u32(((uint8_t*)cv_get_outside_vector(&_v)->items)[i]);
 				break;
-			case _POINTLESS_VECTOR_I16:
+			case POINTLESS_VECTOR_I16:
 				vi = pointless_complete_value_create_i32(((int16_t*)cv_get_outside_vector(&_v)->items)[i]);
 				break;
-			case _POINTLESS_VECTOR_U16:
+			case POINTLESS_VECTOR_U16:
 				vi = pointless_complete_value_create_u32(((uint16_t*)cv_get_outside_vector(&_v)->items)[i]);
 				break;
-			case _POINTLESS_VECTOR_I32:
+			case POINTLESS_VECTOR_I32:
 				vi = pointless_complete_value_create_i32(((int32_t*)cv_get_outside_vector(&_v)->items)[i]);
 				break;
-			case _POINTLESS_VECTOR_U32:
+			case POINTLESS_VECTOR_U32:
 				vi = pointless_complete_value_create_u32(((uint32_t*)cv_get_outside_vector(&_v)->items)[i]);
 				break;
-			case _POINTLESS_VECTOR_I64:
+			case POINTLESS_VECTOR_I64:
 				vi = pointless_complete_value_create_i64(((int64_t*)cv_get_outside_vector(&_v)->items)[i]);
 				break;
-			case _POINTLESS_VECTOR_U64:
+			case POINTLESS_VECTOR_U64:
 				vi = pointless_complete_value_create_u64(((uint64_t*)cv_get_outside_vector(&_v)->items)[i]);
 				break;
-			case _POINTLESS_VECTOR_FLOAT:
+			case POINTLESS_VECTOR_FLOAT:
 				vi = pointless_complete_value_create_float(((float*)cv_get_outside_vector(&_v)->items)[i]);
 				break;
 			default:
@@ -365,15 +365,15 @@ static pointless_cmp_reader_cb pointless_cmp_reader_func(uint32_t t)
 			return pointless_cmp_reader_null;
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-		case _POINTLESS_VECTOR_I8:
-		case _POINTLESS_VECTOR_U8:
-		case _POINTLESS_VECTOR_I16:
-		case _POINTLESS_VECTOR_U16:
-		case _POINTLESS_VECTOR_I32:
-		case _POINTLESS_VECTOR_U32:
-		case _POINTLESS_VECTOR_I64:
-		case _POINTLESS_VECTOR_U64:
-		case _POINTLESS_VECTOR_FLOAT:
+		case POINTLESS_VECTOR_I8:
+		case POINTLESS_VECTOR_U8:
+		case POINTLESS_VECTOR_I16:
+		case POINTLESS_VECTOR_U16:
+		case POINTLESS_VECTOR_I32:
+		case POINTLESS_VECTOR_U32:
+		case POINTLESS_VECTOR_I64:
+		case POINTLESS_VECTOR_U64:
+		case POINTLESS_VECTOR_FLOAT:
 		case POINTLESS_VECTOR_EMPTY:
 			return pointless_cmp_reader_vector;
 		case POINTLESS_SET_VALUE:
@@ -409,15 +409,15 @@ static pointless_cmp_create_cb pointless_cmp_create_func(uint32_t t)
 			return pointless_cmp_create_null;
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-		case _POINTLESS_VECTOR_I8:
-		case _POINTLESS_VECTOR_U8:
-		case _POINTLESS_VECTOR_I16:
-		case _POINTLESS_VECTOR_U16:
-		case _POINTLESS_VECTOR_I32:
-		case _POINTLESS_VECTOR_U32:
-		case _POINTLESS_VECTOR_I64:
-		case _POINTLESS_VECTOR_U64:
-		case _POINTLESS_VECTOR_FLOAT:
+		case POINTLESS_VECTOR_I8:
+		case POINTLESS_VECTOR_U8:
+		case POINTLESS_VECTOR_I16:
+		case POINTLESS_VECTOR_U16:
+		case POINTLESS_VECTOR_I32:
+		case POINTLESS_VECTOR_U32:
+		case POINTLESS_VECTOR_I64:
+		case POINTLESS_VECTOR_U64:
+		case POINTLESS_VECTOR_FLOAT:
 		case POINTLESS_VECTOR_EMPTY:
 			return pointless_cmp_create_vector;
 		case POINTLESS_SET_VALUE:
