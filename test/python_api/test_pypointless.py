@@ -98,7 +98,7 @@ def test_serialize_leak(pointless):
 		p = pointless.Pointless(fname)
 		root = p.GetRoot()
 
-'''
+	'''
 	def testCompression(self):
 		# None, or compressed vector type -> values in vector
 		vm = [
@@ -124,9 +124,9 @@ def test_serialize_leak(pointless):
 			else:
 				self.assert_(v_b.typecode == tc)
 
-			del v_b
-'''
+		del v_b
 
+	'''
 	def testMixedVectors(self):
 		v = [
 			[1.0, 2.0, 3  ],  # 001
@@ -138,16 +138,16 @@ def test_serialize_leak(pointless):
 		]
 
 		def eq_v(i, j):
-			a = (type(i) in (types.IntType, types.LongType))
-			b = (type(j) in (types.IntType, types.LongType))
+			a = isinstance(i, (types.IntType, types.LongType))
+			b = isinstance(i, (types.IntType, types.LongType))
 
 			if a and b:
 				return i == j
 
-			if type(i) != types.FloatType:
+			if isinstance(i, types.FloatType):
 				return False
 
-			if type(j) != types.FloatType:
+			if isinstance(j, types.FloatType):
 				return False
 
 			return abs(i - j) < 0.001

@@ -219,7 +219,9 @@ class TestPrimVector(unittest.TestCase):
 			('i16', -600, 600),
 			('u16',    0, 1200),
 			('i32',   -1, 33000),
-			('u32',    0, 66000)
+			('u32',    0, 66000),
+			('i64',   -2**63, 2**63-1),
+			('u64',    0, 2**64-1),
 		]
 
 		def close_enough(v_a, v_b):
@@ -242,7 +244,7 @@ class TestPrimVector(unittest.TestCase):
 					pr_v.sort()
 
 					self.assert_(len(py_v) == len(pr_v))
-					self.assert_(all(a == b for a, b in itertool.izip(py_v, pr_v)))
+					self.assert_(all(a == b for a, b in itertools.izip(py_v, pr_v)))
 
 					py_v = [random.uniform(-10000.0, +10000.0) for i in xrange(n)]
 					random.shuffle(py_v)
@@ -331,13 +333,13 @@ class TestPrimVector(unittest.TestCase):
 	def testSerialize(self):
 		random.seed(0)
 
-		tcs = ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']
+		tcs = ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', 'f']
 
 		for tc in tcs:
 			n_random = range(100)
 
 			for i in xrange(100):
-				n_random.append(random.randint(101, 100000))
+				n_random.append(random.randint(101, 10000))
 
 			sys.stdout.write('.')
 			sys.stdout.flush()
@@ -360,6 +362,8 @@ class TestPrimVector(unittest.TestCase):
 			['u16',      0,  2**16 - 1],
 			['i32', -2**31,  2**31 - 1],
 			['u32',      0,  2**32 - 1],
+			['i64', -2**63,  2**63 - 1],
+			['u64',      0,  2**64 - 1],
 			['f',     None,       None]
 		]
 

@@ -1,9 +1,17 @@
 #!/bin/sh
 
-for i in `(cd test_files; find | grep map)`; do
+P=/home/arni/pointless_test_files
+V="valgrind -q"
+#V=
+
+for i in `(cd $P; find | grep map)`; do
 	echo $i;
-	./a.out --re-create ./test_files/$i test.map;
-	./a.out --dump-file ./test_files/$i > output_a.txt;
-	./a.out --dump-file test.map > output_b.txt;
-	diff --brief output_a.txt output_b.txt;
+	$V ./new.out --re-create-32 $P/$i test_32.map;
+	$V ./new.out --re-create-64 $P/$i test_64.map;
+	$V ./new.out --dump-file $P/$i > output_a.txt;
+	$V ./new.out --dump-file test_32.map > output_b_32.txt;
+	$V ./new.out --dump-file test_64.map > output_b_64.txt;
+	diff --brief output_a.txt output_b_32.txt;
+	diff --brief output_a.txt output_b_64.txt;
+	#./new.out --measure-32-64-bit-difference $P/$i;
 done
