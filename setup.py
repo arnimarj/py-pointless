@@ -38,7 +38,7 @@ setup(
 	url = 'http://code.google.com/p/py-pointless/',
 
 	classifiers = [
-		'Development Status :: 4 - Beta',
+		'Development Status :: 5 - Production/Stable',
 		'Environment :: Other Environment',
 		'Intended Audience :: Developers',
 		'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
