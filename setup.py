@@ -1,13 +1,30 @@
 import sys
 from distutils.core import setup, Extension
 
-extra_compile_args = ['-I./include', '-I/usr/local/include', '-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O2', '-DNDEBUG']
-# extra_compile_args = ['-I./include', '-pedantic', '-std=c99', '-Wall', '-Wno-strict-prototypes', '-g', '-D_GNU_SOURCE', '-O0']
+extra_compile_args = [
+	'-I./include',
+	'-I/usr/local/include',
+	'-pedantic',
+	'-std=c99',
+	'-Wall',
+	'-Wno-strict-prototypes',
+	'-g',
+	'-D_GNU_SOURCE',
+	'-O2',
+	'-DNDEBUG',
+#	'-fno-omit-frame-pointer',
+#	'-pg',
+#	'-fno-inline-functions',
+#	'-fno-inline-functions-called-once',
+#	'-fno-optimize-sibling-calls',
+#	'-fno-inline'
+]
+
 extra_link_args = ['-Bstatic', '-lJudy', '-Bdynamic', '-lm']
 
 setup(
 	name = 'pointless',
-	version = '0.1',
+	version = '0.2',
 	maintainer = 'Arni Mar Jonsson',
 	maintainer_email = 'arnimarj@gmail.com',
 	url = 'http://code.google.com/p/py-pointless/',
@@ -21,11 +38,12 @@ setup(
 		'Programming Language :: C',
 		'Programming Language :: Python',
 		'Programming Language :: Python :: 2.6',
+		'Programming Language :: Python :: 2.7',
 		'Topic :: Database',
 		'Topic :: Software Development :: Libraries'
 	],
 
-	download_url = 'http://py-pointless.googlecode.com/files/pointless-0.1.tar.gz',
+	download_url = 'http://py-pointless.googlecode.com/files/pointless-0.2.tar.gz',
 	description = 'A read-only relocatable data structure for JSON like data, with C and Python APIs',
 	# long_description = 
 
