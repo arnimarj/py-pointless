@@ -1,7 +1,15 @@
-import sys
+import sys, commands
 from distutils.core import setup, Extension
 
+print 'INFO: building judy static library...'
+
+a, b = commands.getstatusoutput('(cd judy/src; COPT=\'-O3 -fPIC\' ./sh_build)')
+
+if a != 0:
+	sys.exit(b)
+
 extra_compile_args = [
+	'-I./judy/src',
 	'-I./include',
 	'-I/usr/local/include',
 	'-pedantic',
@@ -20,7 +28,7 @@ extra_compile_args = [
 #	'-fno-inline'
 ]
 
-extra_link_args = ['-Bstatic', '-lJudy', '-Bdynamic', '-lm']
+extra_link_args = ['-L./judy/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm']
 
 setup(
 	name = 'pointless',
