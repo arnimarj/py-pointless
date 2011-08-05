@@ -16,10 +16,9 @@
 #define POINTLESS_FUNC_DEF(pyfunc, func) { pyfunc, func, METH_VARARGS, func##_doc}
 
 POINTLESS_FUNC_N_DOC(pointless_write_object);
-POINTLESS_FUNC_N_DOC(pointless_pyobject_hash);
+POINTLESS_FUNC_N_DOC(pointless_pyobject_hash_32);
 POINTLESS_FUNC_N_DOC(pointless_cmp);
 POINTLESS_FUNC_N_DOC(pointless_is_eq);
-POINTLESS_FUNC_N_DOC(pointless_db_array_sort);
 
 typedef struct {
 	PyObject_HEAD
@@ -59,6 +58,7 @@ typedef struct {
 	uint32_t primitive_n_bits;
 	void* primitive_bits;
 	uint32_t primitive_n_bytes_alloc;
+	size_t primitive_n_one;
 } PyPointlessBitvector;
 
 typedef struct {
@@ -148,8 +148,8 @@ PyObject* PyPointless_str(PyObject* py_object);
 PyObject* PyPointless_repr(PyObject* py_object);
 
 uint32_t pypointless_cmp_eq(pointless_t* p, pointless_complete_value_t* v, PyObject* py_object, const char** error);
-uint32_t pyobject_hash(PyObject* py_object, uint32_t version, const char** error);
-uint32_t pointless_pybitvector_hash(PyPointlessBitvector* bitvector);
+uint32_t pyobject_hash_32(PyObject* py_object, uint32_t version, const char** error);
+uint32_t pointless_pybitvector_hash_32(PyPointlessBitvector* bitvector);
 
 // custom types
 extern PyTypeObject PyPointlessType;

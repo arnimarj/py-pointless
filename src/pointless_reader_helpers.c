@@ -112,11 +112,11 @@ int pointless_get_mapping_string_to_u32(pointless_t* p, pointless_value_t* map, 
 
 	switch (p->header->version) {
 		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0((uint8_t*)key);
+			hash = pointless_hash_string_v0_32((uint8_t*)key);
 			break;
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1((uint8_t*)key);
+			hash = pointless_hash_string_v1_32((uint8_t*)key);
 			break;
 		default:
 			assert(0);
@@ -132,11 +132,11 @@ int pointless_get_mapping_string_to_i64(pointless_t* p, pointless_value_t* map, 
 
 	switch (p->header->version) {
 		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0((uint8_t*)key);
+			hash = pointless_hash_string_v0_32((uint8_t*)key);
 			break;
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1((uint8_t*)key);
+			hash = pointless_hash_string_v1_32((uint8_t*)key);
 			break;
 		default:
 			assert(0);
@@ -269,11 +269,11 @@ int pointless_get_mapping_string_to_value(pointless_t* p, pointless_value_t* map
 
 	switch (p->header->version) {
 		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0((uint8_t*)key);
+			hash = pointless_hash_string_v0_32((uint8_t*)key);
 			break;
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1((uint8_t*)key);
+			hash = pointless_hash_string_v1_32((uint8_t*)key);
 			break;
 		default:
 			assert(0);
@@ -289,11 +289,11 @@ int pointless_get_mapping_unicode_to_value(pointless_t* p, pointless_value_t* ma
 
 	switch (p->header->version) {
 		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0((uint8_t*)key);
+			hash = pointless_hash_string_v0_32((uint8_t*)key);
 			break;
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1((uint8_t*)key);
+			hash = pointless_hash_string_v1_32((uint8_t*)key);
 			break;
 		default:
 			assert(0);
@@ -309,11 +309,11 @@ int pointless_get_mapping_unicode_to_u32(pointless_t* p, pointless_value_t* map,
 
 	switch (p->header->version) {
 		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0((uint8_t*)key);
+			hash = pointless_hash_string_v0_32((uint8_t*)key);
 			break;
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1((uint8_t*)key);
+			hash = pointless_hash_string_v1_32((uint8_t*)key);
 			break;
 		default:
 			assert(0);
@@ -330,11 +330,11 @@ static int pointless_get_mapping_string_to_value_type(pointless_t* p, pointless_
 
 	switch (p->header->version) {
 		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0((uint8_t*)key);
+			hash = pointless_hash_string_v0_32((uint8_t*)key);
 			break;
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1((uint8_t*)key);
+			hash = pointless_hash_string_v1_32((uint8_t*)key);
 			break;
 		default:
 			assert(0);
@@ -366,19 +366,19 @@ int pointless_get_mapping_string_to_map(pointless_t* p, pointless_value_t* map, 
 
 int pointless_get_mapping_int_to_value(pointless_t* p, pointless_value_t* map, int64_t i, pointless_value_t* v)
 {
-	uint32_t hash = pointless_hash_i64(i);
+	uint32_t hash = pointless_hash_i64_32(i);
 	return pointless_get_map_(p, map, hash, check_i64, (void*)&i, get_value, 0, (void*)v);
 }
 
 int pointless_is_int_in_set(pointless_t* p, pointless_value_t* set, int64_t i)
 {
-	uint32_t hash = pointless_hash_i64(i);
+	uint32_t hash = pointless_hash_i64_32(i);
 	return pointless_get_set_(p, set, hash, check_i64, (void*)&i);
 }
 
 int pointless_is_int_in_map(pointless_t* p, pointless_value_t* map, int64_t i)
 {
-	uint32_t hash = pointless_hash_i64(i);
+	uint32_t hash = pointless_hash_i64_32(i);
 	pointless_value_t v;
 	return pointless_get_map_(p, map, hash, check_i64, (void*)&i, get_value, 0, (void*)&v);
 }
@@ -448,7 +448,7 @@ int pointless_has_same_keys_map_map(pointless_t* p, pointless_value_t* m_a, poin
 int pointless_is_in_set_acyclic(pointless_t* p, pointless_value_t* s, pointless_value_t* k)
 {
 	// get hash (guaranteed possible since value is acyclic)
-	uint32_t hash = pointless_hash_reader(p, k);
+	uint32_t hash = pointless_hash_reader_32(p, k);
 
 	// start the iteration
 	pointless_value_t* kk = 0;
@@ -472,7 +472,7 @@ int pointless_is_in_set_acyclic(pointless_t* p, pointless_value_t* s, pointless_
 int pointless_is_in_map_acyclic(pointless_t* p, pointless_value_t* m, pointless_value_t* k)
 {
 	// get hash (guaranteed possible since value is acyclic)
-	uint32_t hash = pointless_hash_reader(p, k);
+	uint32_t hash = pointless_hash_reader_32(p, k);
 
 	// start the iteration
 	pointless_value_t* kk = 0;

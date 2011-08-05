@@ -28,16 +28,15 @@ static PyPointless_CAPI CAPI = {
 
 static PyMethodDef pointless_methods[] =
 {
-	POINTLESS_FUNC_DEF("serialize",       pointless_write_object),
-	POINTLESS_FUNC_DEF("pyobject_hash",   pointless_pyobject_hash),
-	POINTLESS_FUNC_DEF("pointless_cmp",   pointless_cmp),
-	POINTLESS_FUNC_DEF("pointless_is_eq", pointless_is_eq),
-	POINTLESS_FUNC_DEF("db_array_sort",   pointless_db_array_sort),
+	POINTLESS_FUNC_DEF("serialize",         pointless_write_object),
+	POINTLESS_FUNC_DEF("pyobject_hash",     pointless_pyobject_hash_32),
+	POINTLESS_FUNC_DEF("pyobject_hash_32",  pointless_pyobject_hash_32),
+	POINTLESS_FUNC_DEF("pointless_cmp",     pointless_cmp),
+	POINTLESS_FUNC_DEF("pointless_is_eq",   pointless_is_eq),
 	{NULL, NULL},
 };
 
 #define POINTLESS_FUNC_DEF(pyfunc, func) { pyfunc, func, METH_VARARGS, func##_doc}
-
 
 // helpers
 #define TRY_MODULE_INIT(module, description) PyObject* module##_module = 0; if ((module##_module = Py_InitModule4(#module, module##_methods, description, 0, PYTHON_API_VERSION)) == 0) { return; }
@@ -48,6 +47,11 @@ static PyMethodDef pointless_methods[] =
 PyMODINIT_FUNC
 initpointless(void)
 {
+	if (sizeof(Word_t) != sizeof(void*)) {
+		PyErr_SetString(PyExc_ValueError, "word size mismatch");
+		return;
+	}
+
 	TRY_MODULE_INIT(pointless, "Pointless Python API");
 
 	if (PyType_Ready(&PyPointlessType) < 0)

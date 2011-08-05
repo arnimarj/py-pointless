@@ -200,7 +200,7 @@ static uint32_t PyPointlessMap_eq_cb(pointless_t* p, pointless_complete_value_t*
 static int PyPointlessMap_contains_(PyPointlessMap* m, PyObject* key)
 {
 	const char* error = 0;
-	uint32_t hash = pyobject_hash(key, m->pp->p.header->version, &error);
+	uint32_t hash = pyobject_hash_32(key, m->pp->p.header->version, &error);
 
 	if (error) {
 		PyErr_Format(PyExc_ValueError, "pointless hash error: %s", error);
@@ -280,7 +280,7 @@ static PyMemberDef PyPointlessMap_memberlist[] = {
 static PyObject* PyPointlessMap_subscript(PyPointlessMap* m, PyObject* key)
 {
 	const char* error = 0;
-	uint32_t hash = pyobject_hash(key, m->pp->p.header->version, &error);
+	uint32_t hash = pyobject_hash_32(key, m->pp->p.header->version, &error);
 
 	if (error) {
 		PyErr_Format(PyExc_ValueError, "pointless hash error: %s", error);
@@ -320,7 +320,7 @@ static PyObject* PyPointlessMap_get(PyPointlessMap* m, PyObject* args)
 		return NULL;
 
 	const char* error = 0;
-	uint32_t hash = pyobject_hash(key, m->pp->p.header->version, &error);
+	uint32_t hash = pyobject_hash_32(key, m->pp->p.header->version, &error);
 
 	if (error) {
 		PyErr_Format(PyExc_ValueError, "pointless hash error: %s", error);

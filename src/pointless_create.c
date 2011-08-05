@@ -124,7 +124,7 @@ static int pointless_hash_table_create(pointless_create_t* c, uint32_t hash_tabl
 			goto cleanup;
 		}
 
-		hash_vector[i] = pointless_hash_create(c, cv_value_at(keys_vector_ptr[i]));
+		hash_vector[i] = pointless_hash_create_32(c, cv_value_at(keys_vector_ptr[i]));
 	}
 
 	// populate the arrays

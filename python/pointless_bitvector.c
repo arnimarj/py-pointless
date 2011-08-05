@@ -13,6 +13,7 @@ static void PyPointlessBitvector_dealloc(PyPointlessBitvector* self)
 	pointless_free(self->primitive_bits);
 	self->primitive_bits = 0;
 	self->primitive_n_bytes_alloc = 0;
+	self->primitive_n_one = 0;
 	Py_TYPE(self)->tp_free(self);
 }
 
@@ -32,9 +33,10 @@ PyObject* PyPointlessBitvector_new(PyTypeObject* type, PyObject* args, PyObject*
 		self->is_pointless = 0;
 		self->pointless_pp = 0;
 		self->pointless_v = 0;
+		self->primitive_n_bytes_alloc = 0;
 		self->primitive_n_bits = 0;
 		self->primitive_bits = 0;
-		self->primitive_n_bytes_alloc = 0;
+		self->primitive_n_one = 0;
 	}
 
 	return (PyObject*)self;
@@ -66,6 +68,7 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 	self->primitive_n_bits = 0;
 	self->primitive_bits = 0;
 	self->primitive_n_bytes_alloc = 0;
+	self->primitive_n_one = 0;
 
 	// parse input
 	static char* kwargs[] = {"size", "sequence", "allow_print", 0};
@@ -143,12 +146,16 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 				is_error = 1;
 			// 1) boolean
 			} else if (PyBool_Check(obj)) {
-				if (obj == Py_True)
+				if (obj == Py_True) {
 					bm_set_(self->primitive_bits, i);
+					self->primitive_n_one += 1;
+				}
 			// 2) integer (must be 0 or 1)
 			} else if ((PyInt_Check(obj) || PyInt_CheckExact(obj)) && (PyInt_AS_LONG(obj) == 0 || PyInt_AS_LONG(obj) == 1)) {
-				if (PyInt_AS_LONG(obj) == 1)
+				if (PyInt_AS_LONG(obj) == 1) {
 					bm_set_(self->primitive_bits, i);
+					self->primitive_n_one += 1;
+				}
 			// 3) long (must be 0 or 1)
 			} else if (PyLong_Check(obj) || PyLong_CheckExact(obj)) {
 				PY_LONG_LONG v = PyLong_AsLongLong(obj);
@@ -158,6 +165,7 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 					is_error = 1;
 				} else if (v == 1) {
 					bm_set_(self->primitive_bits, i);
+					self->primitive_n_one += 1;
 				}
 			// 4) nothong else allowed
 			} else {
@@ -169,6 +177,7 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 				self->primitive_n_bits = 0;
 				self->primitive_bits = 0;
 				self->primitive_n_bytes_alloc = 0;
+				self->primitive_n_one = 0;
 
 				if (!PyErr_Occurred())
 					PyErr_SetString(PyExc_ValueError, "init sequence must only contain True, False, 0 or 1");
@@ -222,6 +231,14 @@ static int PyPointlessBitvector_check_index(PyPointlessBitvector* self, PyObject
 	return 1;
 }
 
+static uint32_t PyPointlessBitvector_subscript_priv_int(PyPointlessBitvector* self, uint32_t i)
+{
+	if (self->is_pointless)
+		return pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, i);
+
+	return (bm_is_set_(self->primitive_bits, i) != 0);
+}
+
 static int PyPointlessBitvector_ass_subscript(PyPointlessBitvector* self, PyObject* item, PyObject* value)
 {
 	if (self->is_pointless) {
@@ -235,12 +252,22 @@ static int PyPointlessBitvector_ass_subscript(PyPointlessBitvector* self, PyObje
 	if (!PyPointlessBitvector_check_index(self, item, &i))
 		return -1;
 
+	// true iff: the value was set
+	uint32_t was_set = PyPointlessBitvector_subscript_priv_int(self, i);
+
 	// we only want 0|1|True|False
 	if (PyBool_Check(value)) {
-		if (value == Py_True)
+		if (value == Py_True) {
 			bm_set_(self->primitive_bits, i);
-		else
+
+			if (!was_set)
+				self->primitive_n_one += 1;
+		} else {
 			bm_reset_(self->primitive_bits, i);
+
+			if (was_set)
+				self->primitive_n_one -= 1;
+		}
 
 		return 0;	
 	}
@@ -249,10 +276,17 @@ static int PyPointlessBitvector_ass_subscript(PyPointlessBitvector* self, PyObje
 		long v = PyInt_AS_LONG(value);
 
 		if (v == 0 || v == 1) {
-			if (v == 1)
+			if (v == 1) {
 				bm_set_(self->primitive_bits, i);
-			else
+
+				if (!was_set)
+					self->primitive_n_one += 1;
+			} else {
 				bm_reset_(self->primitive_bits, i);
+
+				if (was_set)
+					self->primitive_n_one -= 1;
+			}
 
 			return 0;
 		}
@@ -260,14 +294,6 @@ static int PyPointlessBitvector_ass_subscript(PyPointlessBitvector* self, PyObje
 
 	PyErr_SetString(PyExc_ValueError, "we only want 0, 1, True or False");
 	return -1;
-}
-
-static uint32_t PyPointlessBitvector_subscript_priv_int(PyPointlessBitvector* self, uint32_t i)
-{
-	if (self->is_pointless)
-		return pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, i);
-
-	return (bm_is_set_(self->primitive_bits, i) != 0);
 }
 
 static PyObject* PyPointlessBitvector_subscript_priv(PyPointlessBitvector* self, uint32_t i)
@@ -380,6 +406,28 @@ static uint32_t next_size(uint32_t n_alloc)
 	return (a + b + c);
 }
 
+static PyObject* PyPointlessBitvector_is_any_set(PyPointlessBitvector* self)
+{
+	if (!self->is_pointless) {
+		if (self->primitive_n_one > 0) {
+			Py_RETURN_TRUE;
+		} else {
+			Py_RETURN_FALSE;
+		}
+	}
+
+	void* bits = 0;
+
+	if (self->pointless_v->type == POINTLESS_BITVECTOR)
+		bits = pointless_reader_bitvector_buffer(&self->pointless_pp->p, self->pointless_v);
+
+	if (pointless_bitvector_is_any_set(self->pointless_v->type, &self->pointless_v->data, bits)) {
+		Py_RETURN_TRUE;
+	} else {
+		Py_RETURN_FALSE;
+	}
+}
+
 static PyObject* PyPointlessBitvector_append(PyPointlessBitvector* self, PyObject* args)
 {
 	PyObject* v = 0;
@@ -430,8 +478,9 @@ static PyObject* PyPointlessBitvector_sizeof(PyPointlessBitvector* self)
 }
 
 static PyMethodDef PyPointlessBitvector_methods[] = {
-	{"append",      (PyCFunction)PyPointlessBitvector_append, METH_VARARGS, ""},
-	{"__sizeof__",  (PyCFunction)PyPointlessBitvector_sizeof, METH_NOARGS,  ""},
+	{"IsAnySet",   (PyCFunction)PyPointlessBitvector_is_any_set, METH_NOARGS, ""},
+	{"append",     (PyCFunction)PyPointlessBitvector_append,     METH_VARARGS, ""},
+	{"__sizeof__", (PyCFunction)PyPointlessBitvector_sizeof,     METH_NOARGS,  ""},
 	{NULL, NULL}
 };
 
@@ -440,6 +489,24 @@ static PyMappingMethods PyPointlessBitvector_as_mapping = {
 	(binaryfunc)PyPointlessBitvector_subscript,
 	(objobjargproc)PyPointlessBitvector_ass_subscript
 };
+
+static long PyPointlessBitVector_hash(PyPointlessBitvector* self)
+{
+	// this is a Python hash, so we go for the 64-bit version
+	if (self->is_pointless) {
+		void* buffer = 0;
+
+		if (self->pointless_v->type == POINTLESS_BITVECTOR)
+			buffer = pointless_reader_bitvector_buffer(&self->pointless_pp->p, self->pointless_v);
+
+		return (long)pointless_bitvector_hash_64(self->pointless_v->type, &self->pointless_v->data, buffer);
+	}
+
+	uint32_t n_bits = self->primitive_n_bits;
+	void* bits = self->primitive_bits;
+
+	return (long)pointless_bitvector_hash_n_bits_bits_64(n_bits, bits);
+}
 
 PyObject* PyBitvector_repr(PyPointlessBitvector* self)
 {
@@ -457,7 +524,6 @@ PyObject* PyBitvector_str(PyPointlessBitvector* self)
 	return PyPointless_str((PyObject*)self);
 }
 
-
 PyTypeObject PyPointlessBitvectorType = {
 	PyObject_HEAD_INIT(NULL)
 	0,                                        /*ob_size*/
@@ -473,7 +539,7 @@ PyTypeObject PyPointlessBitvectorType = {
 	0,                                        /*tp_as_number*/
 	0,                                        /*tp_as_sequence*/
 	&PyPointlessBitvector_as_mapping,         /*tp_as_mapping*/
-	0,                                        /*tp_hash */
+	(hashfunc)PyPointlessBitVector_hash,      /*tp_hash */
 	0,                                        /*tp_call*/
 	(reprfunc)PyBitvector_str,                /*tp_str*/
 	0,                                        /*tp_getattro*/
@@ -582,7 +648,7 @@ PyPointlessBitvector* PyPointlessBitvector_New(PyPointless* pp, pointless_value_
 	return pv;
 }
 
-uint32_t pointless_pybitvector_hash(PyPointlessBitvector* bitvector)
+uint32_t pointless_pybitvector_hash_32(PyPointlessBitvector* bitvector)
 {
 	if (bitvector->is_pointless) {
 		void* buffer = 0;
@@ -590,11 +656,11 @@ uint32_t pointless_pybitvector_hash(PyPointlessBitvector* bitvector)
 		if (bitvector->pointless_v->type == POINTLESS_BITVECTOR)
 			buffer = pointless_reader_bitvector_buffer(&bitvector->pointless_pp->p, bitvector->pointless_v);
 
-		return pointless_bitvector_hash(bitvector->pointless_v->type, &bitvector->pointless_v->data, buffer);
+		return pointless_bitvector_hash_32(bitvector->pointless_v->type, &bitvector->pointless_v->data, buffer);
 	}
 
 	uint32_t n_bits = bitvector->primitive_n_bits;
 	void* bits = bitvector->primitive_bits;
 
-	return pointless_bitvector_hash_n_bits_bits(n_bits, bits);
+	return pointless_bitvector_hash_n_bits_bits_32(n_bits, bits);
 }

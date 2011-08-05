@@ -39,7 +39,7 @@ extra_link_args = ['-L./judy/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm']
 
 setup(
 	name = 'pointless',
-	version = '0.2',
+	version = '0.2.1',
 	maintainer = 'Arni Mar Jonsson',
 	maintainer_email = 'arnimarj@gmail.com',
 	url = 'http://code.google.com/p/py-pointless/',
@@ -58,7 +58,7 @@ setup(
 		'Topic :: Software Development :: Libraries'
 	],
 
-	download_url = 'http://py-pointless.googlecode.com/files/pointless-0.2.tar.gz',
+	download_url = 'http://py-pointless.googlecode.com/files/pointless-0.2.1.tar.gz',
 	description = 'A read-only relocatable data structure for JSON like data, with C and Python APIs',
 	# long_description = 
 
@@ -83,7 +83,6 @@ setup(
 				'python/pointless_pyobject_cmp.c',
 				'python/pointless_print.c',
 				'python/pointless_prim_vector.c',
-				'python/pointless_db_utils.c',
 
 				# libpointless
 				'src/custom_sort.c',

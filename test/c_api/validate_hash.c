@@ -22,13 +22,13 @@ void validate_hash_semantics()
 		f.data.data_f = (float)v;
 
 		hash.i32 = v;
-		h_i32 = pointless_hash_i32(hash.i32);
+		h_i32 = pointless_hash_i32_32(hash.i32);
 
 		hash.i32 = v;
-		h_u32 = pointless_hash_u32(hash.u32);
+		h_u32 = pointless_hash_u32_32(hash.u32);
 
 		hash.f = (float)v;
-		h_f = pointless_hash_float(hash.f);
+		h_f = pointless_hash_float_32(hash.f);
 
 		if (h_i32 != h_u32) {
 			fprintf(stderr, "v: %i i32/u32 hash mismatch: %u/%u\n", v, h_i32, h_u32);

@@ -6,9 +6,9 @@ typedef struct {
 	const char** error;
 } pyobject_hash_state_t;
 
-static uint32_t pyobject_hash_rec(PyObject* py_object, pyobject_hash_state_t* state);
+static uint32_t pyobject_hash_rec_32(PyObject* py_object, pyobject_hash_state_t* state);
 
-static uint32_t pyobject_hash_tuple(PyObject* py_object, pyobject_hash_state_t* state)
+static uint32_t pyobject_hash_tuple_32(PyObject* py_object, pyobject_hash_state_t* state)
 {
 	Py_ssize_t i, s = PyTuple_GET_SIZE(py_object);
 
@@ -20,74 +20,74 @@ static uint32_t pyobject_hash_tuple(PyObject* py_object, pyobject_hash_state_t* 
 	uint32_t h, n_items = (uint32_t)s;
 	PyObject* o = 0;
 
-	pointless_vector_hash_state_t v_state;
-	pointless_vector_hash_init(&v_state, n_items);
+	pointless_vector_hash_state_32_t v_state;
+	pointless_vector_hash_init_32(&v_state, n_items);
 
 	state->depth += 1;
 
 	for (i = 0; i < s; i++) {
 		o = PyTuple_GET_ITEM(py_object, i);
-		h = pyobject_hash_rec(o, state);
-		pointless_vector_hash_next(&v_state, h);
+		h = pyobject_hash_rec_32(o, state);
+		pointless_vector_hash_next_32(&v_state, h);
 	}
 
 	state->depth -= 1;
 
-	return pointless_vector_hash_end(&v_state);
+	return pointless_vector_hash_end_32(&v_state);
 }
 
-static uint32_t pyobject_hash_primvector(PyPointlessPrimVector* v, pyobject_hash_state_t* state)
+static uint32_t pyobject_hash_primvector_32(PyPointlessPrimVector* v, pyobject_hash_state_t* state)
 {
 	uint64_t i;
 	size_t n_items = pointless_dynarray_n_items(&v->array);
 	uint32_t h;
 
-	pointless_vector_hash_state_t v_state;
-	pointless_vector_hash_init(&v_state, (uint32_t)n_items);
+	pointless_vector_hash_state_32_t v_state;
+	pointless_vector_hash_init_32(&v_state, (uint32_t)n_items);
 
 	for (i = 0; i < n_items; i++) {
 		void* item = pointless_dynarray_item_at(&v->array, i);
 
 		switch (v->type) {
 			case POINTLESS_PRIM_VECTOR_TYPE_I8:
-				h = pointless_hash_i32(*((int8_t*)item));
+				h = pointless_hash_i32_32(*((int8_t*)item));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_U8:
-				h = pointless_hash_u32(*((uint8_t*)item));
+				h = pointless_hash_u32_32(*((uint8_t*)item));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_I16:
-				h = pointless_hash_i32(*((int16_t*)item));
+				h = pointless_hash_i32_32(*((int16_t*)item));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_U16:
-				h = pointless_hash_u32(*((uint16_t*)item));
+				h = pointless_hash_u32_32(*((uint16_t*)item));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_I32:
-				h = pointless_hash_i32(*((int32_t*)item));
+				h = pointless_hash_i32_32(*((int32_t*)item));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_U32:
-				h = pointless_hash_u32(*((uint32_t*)item));
+				h = pointless_hash_u32_32(*((uint32_t*)item));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_I64:
-				h = pointless_hash_i64(*((int64_t*)item));
+				h = pointless_hash_i64_32(*((int64_t*)item));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_U64:
-				h = pointless_hash_u64(*((uint64_t*)item));
+				h = pointless_hash_u64_32(*((uint64_t*)item));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
-				h = pointless_hash_float(*((float*)item));
+				h = pointless_hash_float_32(*((float*)item));
 				break;
 			default:
 				*state->error = "internal error";
 				return 0;
 		}
 
-		pointless_vector_hash_next(&v_state, h);
+		pointless_vector_hash_next_32(&v_state, h);
 	}
 
-	return pointless_vector_hash_end(&v_state);
+	return pointless_vector_hash_end_32(&v_state);
 }
 
-static uint32_t pyobject_hash_unicode(PyObject* py_object, pyobject_hash_state_t* state)
+static uint32_t pyobject_hash_unicode_32(PyObject* py_object, pyobject_hash_state_t* state)
 {
 	Py_UNICODE* s = PyUnicode_AS_UNICODE(py_object);
 	uint32_t hash = 0;
@@ -95,19 +95,19 @@ static uint32_t pyobject_hash_unicode(PyObject* py_object, pyobject_hash_state_t
 	switch (state->version) {
 		#ifdef Py_UNICODE_WIDE
 		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_unicode_ucs4_v0((uint32_t*)s);
+			hash = pointless_hash_unicode_ucs4_v0_32((uint32_t*)s);
 			break;
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_unicode_ucs4_v1((uint32_t*)s);
+			hash = pointless_hash_unicode_ucs4_v1_32((uint32_t*)s);
 			break;
 		#else
 		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_unicode_ucs2_v0((uint16_t*)s);
+			hash = pointless_hash_unicode_ucs2_v0_32((uint16_t*)s);
 			break;
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_unicode_ucs2_v1((uint16_t*)s);
+			hash = pointless_hash_unicode_ucs2_v1_32((uint16_t*)s);
 			break;
 		#endif
 	}
@@ -115,30 +115,30 @@ static uint32_t pyobject_hash_unicode(PyObject* py_object, pyobject_hash_state_t
 	return hash;
 }
 
-static uint32_t pyobject_hash_string(PyObject* py_object, pyobject_hash_state_t* state)
+static uint32_t pyobject_hash_string_32(PyObject* py_object, pyobject_hash_state_t* state)
 {
 	char* s = PyString_AS_STRING(py_object);
 	uint32_t hash = 0;
 
 	switch (state->version) {
 		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0((uint8_t*)s);
+			hash = pointless_hash_string_v0_32((uint8_t*)s);
 			break;
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1((uint8_t*)s);
+			hash = pointless_hash_string_v1_32((uint8_t*)s);
 			break;
 	}
 
 	return hash;
 }
 
-static uint32_t pyobject_hash_pypointlessbitvector(PyObject* py_object, pyobject_hash_state_t* state)
+static uint32_t pyobject_hash_pypointlessbitvector_32(PyObject* py_object, pyobject_hash_state_t* state)
 {
-	return pointless_pybitvector_hash((PyPointlessBitvector*)py_object);
+	return pointless_pybitvector_hash_32((PyPointlessBitvector*)py_object);
 }
 
-static uint32_t pyobject_hash_int(PyObject* py_object, pyobject_hash_state_t* state)
+static uint32_t pyobject_hash_int_32(PyObject* py_object, pyobject_hash_state_t* state)
 {
 	long i = PyInt_AS_LONG(py_object);
 
@@ -148,7 +148,7 @@ static uint32_t pyobject_hash_int(PyObject* py_object, pyobject_hash_state_t* st
 			return 0;
 		}
 
-		return pointless_hash_i32((int32_t)i);
+		return pointless_hash_i32_32((int32_t)i);
 	}
 
 	if (!(i <= UINT32_MAX)) {
@@ -156,10 +156,10 @@ static uint32_t pyobject_hash_int(PyObject* py_object, pyobject_hash_state_t* st
 		return 0;
 	}
 
-	return pointless_hash_u32((uint32_t)i);
+	return pointless_hash_u32_32((uint32_t)i);
 }
 
-static uint32_t pyobject_hash_long(PyObject* py_object, pyobject_hash_state_t* state)
+static uint32_t pyobject_hash_long_32(PyObject* py_object, pyobject_hash_state_t* state)
 {
 	PY_LONG_LONG i = PyLong_AsLongLong(py_object);
 
@@ -175,7 +175,7 @@ static uint32_t pyobject_hash_long(PyObject* py_object, pyobject_hash_state_t* s
 			return 0;
 		}
 
-		return pointless_hash_i32((int32_t)i);
+		return pointless_hash_i32_32((int32_t)i);
 	}
 
 	if (!(i <= UINT32_MAX)) {
@@ -183,29 +183,29 @@ static uint32_t pyobject_hash_long(PyObject* py_object, pyobject_hash_state_t* s
 		return 0;
 	}
 
-	return pointless_hash_u32((uint32_t)i);
+	return pointless_hash_u32_32((uint32_t)i);
 }
 
-static uint32_t pyobject_hash_float(PyObject* py_object, pyobject_hash_state_t* state)
+static uint32_t pyobject_hash_float_32(PyObject* py_object, pyobject_hash_state_t* state)
 {
 	float v = (float)PyFloat_AS_DOUBLE(py_object);
-	return pointless_hash_float(v);
+	return pointless_hash_float_32(v);
 }
 
-static uint32_t pyobject_hash_boolean(PyObject* py_object, pyobject_hash_state_t* state)
+static uint32_t pyobject_hash_boolean_32(PyObject* py_object, pyobject_hash_state_t* state)
 {
 	if (py_object == Py_True)
-		return pointless_hash_bool_true();
+		return pointless_hash_bool_true_32();
 	else
-		return pointless_hash_bool_false();
+		return pointless_hash_bool_false_32();
 }
 
-static uint32_t pyobject_hash_null(PyObject* py_object, pyobject_hash_state_t* state)
+static uint32_t pyobject_hash_null_32(PyObject* py_object, pyobject_hash_state_t* state)
 {
-	return pointless_hash_null();
+	return pointless_hash_null_32();
 }
 
-static uint32_t pyobject_hash_rec(PyObject* py_object, pyobject_hash_state_t* state)
+static uint32_t pyobject_hash_rec_32(PyObject* py_object, pyobject_hash_state_t* state)
 {
 	if (state->depth >= POINTLESS_MAX_DEPTH) {
 		*state->error = "maximum depth reached";
@@ -225,11 +225,11 @@ static uint32_t pyobject_hash_rec(PyObject* py_object, pyobject_hash_state_t* st
 			return 0;
 		}
 
-		return pointless_hash_reader_vector(p, v, ((PyPointlessVector*)py_object)->slice_i, ((PyPointlessVector*)py_object)->slice_n);
+		return pointless_hash_reader_vector_32(p, v, ((PyPointlessVector*)py_object)->slice_i, ((PyPointlessVector*)py_object)->slice_n);
 	}
 
 	if (PyPointlessBitvector_Check(py_object))
-		return pointless_pybitvector_hash((PyPointlessBitvector*)py_object);
+		return pointless_pybitvector_hash_32((PyPointlessBitvector*)py_object);
 
 	if (PyPointlessSet_Check(py_object)) {
 		p = &((PyPointlessSet*)py_object)->pp->p;
@@ -240,55 +240,55 @@ static uint32_t pyobject_hash_rec(PyObject* py_object, pyobject_hash_state_t* st
 			return 0;
 		}
 
-		return pointless_hash_reader(p, v);
+		return pointless_hash_reader_32(p, v);
 	}
 
 	// prim-vector
 	if (PyPointlessPrimVector_Check(py_object))
-		return pyobject_hash_primvector((PyPointlessPrimVector*)py_object, state);
+		return pyobject_hash_primvector_32((PyPointlessPrimVector*)py_object, state);
 
 	// early checks for more common types
 	if (PyInt_Check(py_object))
-		return pyobject_hash_int(py_object, state);
+		return pyobject_hash_int_32(py_object, state);
 
 	if (PyLong_Check(py_object))
-		return pyobject_hash_long(py_object, state);
+		return pyobject_hash_long_32(py_object, state);
 
 	if (PyTuple_Check(py_object))
-		return pyobject_hash_tuple(py_object, state);
+		return pyobject_hash_tuple_32(py_object, state);
 
 	if (PyUnicode_Check(py_object))
-		return pyobject_hash_unicode(py_object, state);
+		return pyobject_hash_unicode_32(py_object, state);
 
 	if (PyString_Check(py_object))
-		return pyobject_hash_string(py_object, state);
+		return pyobject_hash_string_32(py_object, state);
 
 	if (PyPointlessBitvector_Check(py_object))
-		return pyobject_hash_pypointlessbitvector(py_object, state);
+		return pyobject_hash_pypointlessbitvector_32(py_object, state);
 
 	if (PyFloat_Check(py_object))
-		return pyobject_hash_float(py_object, state);
+		return pyobject_hash_float_32(py_object, state);
 
 	if (PyBool_Check(py_object))
-		return pyobject_hash_boolean(py_object, state);
+		return pyobject_hash_boolean_32(py_object, state);
 
 	if (py_object == Py_None)
-		return pyobject_hash_null(py_object, state);
+		return pyobject_hash_null_32(py_object, state);
 
 	*state->error = "object is not hashable";
 	return 0;
 }
 
-uint32_t pyobject_hash(PyObject* py_object, uint32_t version, const char** error)
+uint32_t pyobject_hash_32(PyObject* py_object, uint32_t version, const char** error)
 {
 	pyobject_hash_state_t state;
 	state.version = version;
 	state.depth = 0;
 	state.error = error;
-	return pyobject_hash_rec(py_object, &state);
+	return pyobject_hash_rec_32(py_object, &state);
 }
 
-const char pointless_pyobject_hash_doc[] =
+const char pointless_pyobject_hash_32_doc[] =
 "1\n"
 "pointless.pyobject_hash(object)\n"
 "\n"
@@ -296,7 +296,7 @@ const char pointless_pyobject_hash_doc[] =
 "\n"
 "  object: the object\n"
 ;
-PyObject* pointless_pyobject_hash(PyObject* self, PyObject* args)
+PyObject* pointless_pyobject_hash_32(PyObject* self, PyObject* args)
 {
 	PyObject* object = 0;
 	const char* error = 0;
@@ -310,7 +310,7 @@ PyObject* pointless_pyobject_hash(PyObject* self, PyObject* args)
 		return 0;
 	}
 
-	uint32_t hash = pyobject_hash(object, version, &error);
+	uint32_t hash = pyobject_hash_32(object, version, &error);
 
 	if (error) {
 		PyErr_Format(PyExc_ValueError, "PyObject hashing error: %s", error);

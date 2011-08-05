@@ -42,7 +42,7 @@ int32_t pointless_hash_table_validate(pointless_t* p, uint32_t n_items, uint32_t
 		}
 
 		// just compute the hash, even for empty slots
-		uint32_t h = pointless_hash_reader(p, &key_vector[i]);
+		uint32_t h = pointless_hash_reader_32(p, &key_vector[i]);
 
 		if (h != hash_vector[i]) {
 			*error = "hash for object in hash-table does not match hash in slot";

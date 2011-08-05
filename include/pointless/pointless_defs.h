@@ -382,33 +382,33 @@ typedef struct {
 	uint32_t mult;
 	uint32_t x;
 	uint32_t len;
-} pointless_vector_hash_state_t;
+} pointless_vector_hash_state_32_t;
 
-void pointless_vector_hash_init(pointless_vector_hash_state_t* state, uint32_t len);
-void pointless_vector_hash_next(pointless_vector_hash_state_t* state, uint32_t hash);
-uint32_t pointless_vector_hash_end(pointless_vector_hash_state_t* state);
+void pointless_vector_hash_init_32(pointless_vector_hash_state_32_t* state, uint32_t len);
+void pointless_vector_hash_next_32(pointless_vector_hash_state_32_t* state, uint32_t hash);
+uint32_t pointless_vector_hash_end_32(pointless_vector_hash_state_32_t* state);
 
 uint32_t pointless_is_hashable(uint32_t type);
 
-uint32_t pointless_hash_unicode_ucs4_v0(uint32_t* s);
-uint32_t pointless_hash_unicode_ucs2_v0(uint16_t* s);
-uint32_t pointless_hash_string_v0(uint8_t* s);
+uint32_t pointless_hash_unicode_ucs4_v0_32(uint32_t* s);
+uint32_t pointless_hash_unicode_ucs2_v0_32(uint16_t* s);
+uint32_t pointless_hash_string_v0_32(uint8_t* s);
 
-uint32_t pointless_hash_unicode_ucs4_v1(uint32_t* s);
-uint32_t pointless_hash_unicode_ucs2_v1(uint16_t* s);
-uint32_t pointless_hash_string_v1(uint8_t* s);
+uint32_t pointless_hash_unicode_ucs4_v1_32(uint32_t* s);
+uint32_t pointless_hash_unicode_ucs2_v1_32(uint16_t* s);
+uint32_t pointless_hash_string_v1_32(uint8_t* s);
 
-uint32_t pointless_hash_float(float f);
-uint32_t pointless_hash_i32(int32_t i);
-uint32_t pointless_hash_u32(uint32_t i);
-uint32_t pointless_hash_i64(int64_t i);
-uint32_t pointless_hash_u64(uint64_t i);
-uint32_t pointless_hash_bool_true();
-uint32_t pointless_hash_bool_false();
-uint32_t pointless_hash_null();
-uint32_t pointless_hash_reader(pointless_t* p, pointless_value_t* v);
-uint32_t pointless_hash_reader_vector(pointless_t* p, pointless_value_t* v, uint32_t i, uint32_t n);
-uint32_t pointless_hash_create(pointless_create_t* c, pointless_create_value_t* v);
+uint32_t pointless_hash_float_32(float f);
+uint32_t pointless_hash_i32_32(int32_t i);
+uint32_t pointless_hash_u32_32(uint32_t i);
+uint32_t pointless_hash_i64_32(int64_t i);
+uint32_t pointless_hash_u64_32(uint64_t i);
+uint32_t pointless_hash_bool_true_32();
+uint32_t pointless_hash_bool_false_32();
+uint32_t pointless_hash_null_32();
+uint32_t pointless_hash_reader_32(pointless_t* p, pointless_value_t* v);
+uint32_t pointless_hash_reader_vector_32(pointless_t* p, pointless_value_t* v, uint32_t i, uint32_t n);
+uint32_t pointless_hash_create_32(pointless_create_t* c, pointless_create_value_t* v);
 
 // comparison functions
 #ifdef POINTLESS_WCHAR_T_IS_4_BYTES

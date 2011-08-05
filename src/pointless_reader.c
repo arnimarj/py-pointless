@@ -387,7 +387,7 @@ void pointless_reader_set_lookup(pointless_t* p, pointless_value_t* s, pointless
 	assert((size_t)header % 4 == 0);
 
 	// value hash
-	uint32_t hash = pointless_hash_reader(p, k);
+	uint32_t hash = pointless_hash_reader_32(p, k);
 
 	// other info
 	uint32_t* hash_vector = pointless_reader_vector_u32(p, &header->hash_vector);
@@ -575,7 +575,7 @@ void pointless_reader_map_lookup(pointless_t* p, pointless_value_t* m, pointless
 	assert((size_t)header % 4 == 0);
 
 	// value hash
-	uint32_t hash = pointless_hash_reader(p, k);
+	uint32_t hash = pointless_hash_reader_32(p, k);
 
 	// other info
 	uint32_t* hash_vector = pointless_reader_vector_u32(p, &header->hash_vector);
