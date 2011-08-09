@@ -4,7 +4,16 @@
 
 static int32_t pointless_cmp_create_rec_priv(pointless_create_t* c, pointless_complete_create_value_t* v_a, pointless_complete_create_value_t* v_b, uint32_t depth, const char** error);
 
-#define POINTLESS_CMP_STRING(a, b) while ((uint32_t)(*(a)) == (uint32_t)(*(b))) { if (*(a) == 0) return 0; (a)++; (b)++;} return SIMPLE_CMP(*(a), *(b));
+#define POINTLESS_CMP_STRING(a, b)         while ((uint32_t)(*(a)) == (uint32_t)(*(b))) { if (*(a) == 0) return 0; (a)++; (b)++;} return SIMPLE_CMP(*(a), *(b));
+#define POINTLESS_CMP_STRING__N(a, b, n_b)     \
+	size_t n_ = 0;                             \
+	while (*(a) && n_ < n_b && *(a) == *(b)) { \
+		(a)++; (b)++; n_++;                    \
+	}                                          \
+	if (*(a) == 0 && n_ == (n_b)) return 0;    \
+	if (*(a) == 0)             return -1;      \
+	if (n_ == (n_b))           return 1;       \
+	return SIMPLE_CMP(*(a), *(b));
 
 #ifdef POINTLESS_WCHAR_T_IS_4_BYTES
 int32_t pointless_cmp_unicode_wchar_wchar(wchar_t* a, wchar_t* b)
@@ -23,6 +32,9 @@ int32_t pointless_cmp_unicode_ucs4_ascii(uint32_t* a, uint8_t* b)
 	{ POINTLESS_CMP_STRING(a, b); }
 int32_t pointless_cmp_unicode_ascii_ascii(uint8_t* a, uint8_t* b)
 	{ POINTLESS_CMP_STRING(a, b); }
+
+int32_t pointless_cmp_unicode_ucs4_ascii_n(uint32_t* a, uint8_t* b, size_t n_b)
+	{ POINTLESS_CMP_STRING__N(a, b, n_b); }
 
 typedef int32_t (*pointless_cmp_reader_cb)(pointless_t* p_a, pointless_complete_value_t* a, pointless_t* p_b, pointless_complete_value_t* b, uint32_t depth, const char** error);
 typedef int32_t (*pointless_cmp_create_cb)(pointless_create_t* c, pointless_complete_create_value_t* a, pointless_complete_create_value_t* b, uint32_t depth, const char** error);

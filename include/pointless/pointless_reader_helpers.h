@@ -12,6 +12,7 @@ int pointless_get_mapping_string_to_map(pointless_t* p, pointless_value_t* map, 
 int pointless_get_mapping_string_to_value(pointless_t* p, pointless_value_t* map, char* key, pointless_value_t* m);
 int pointless_get_mapping_int_to_value(pointless_t* p, pointless_value_t* map, int64_t i, pointless_value_t* v);
 int pointless_get_mapping_string_to_value(pointless_t* p, pointless_value_t* map, char* key, pointless_value_t* value);
+int pointless_get_mapping_string_n_to_value(pointless_t* p, pointless_value_t* map, char* key, size_t n, pointless_value_t* value);
 
 int pointless_get_mapping_unicode_to_value(pointless_t* p, pointless_value_t* map, uint32_t* key, pointless_value_t* value);
 int pointless_get_mapping_unicode_to_u32(pointless_t* p, pointless_value_t* map, uint32_t* key, uint32_t* value);

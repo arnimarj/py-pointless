@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <math.h>
 
 #include <Judy.h>
@@ -393,10 +394,12 @@ uint32_t pointless_is_hashable(uint32_t type);
 uint32_t pointless_hash_unicode_ucs4_v0_32(uint32_t* s);
 uint32_t pointless_hash_unicode_ucs2_v0_32(uint16_t* s);
 uint32_t pointless_hash_string_v0_32(uint8_t* s);
+uint32_t pointless_hash_string_v0_32_(uint8_t* s, size_t n);
 
 uint32_t pointless_hash_unicode_ucs4_v1_32(uint32_t* s);
 uint32_t pointless_hash_unicode_ucs2_v1_32(uint16_t* s);
 uint32_t pointless_hash_string_v1_32(uint8_t* s);
+uint32_t pointless_hash_string_v1_32_(uint8_t* s, size_t n);
 
 uint32_t pointless_hash_float_32(float f);
 uint32_t pointless_hash_i32_32(int32_t i);
@@ -420,6 +423,7 @@ int32_t pointless_cmp_unicode_ucs2_ucs4(uint16_t* a, uint32_t* b);
 int32_t pointless_cmp_unicode_ucs4_ucs2(uint32_t* a, uint16_t* b);
 int32_t pointless_cmp_unicode_ascii_ucs4(uint8_t* a, uint32_t* b);
 int32_t pointless_cmp_unicode_ucs4_ascii(uint32_t* a, uint8_t* b);
+int32_t pointless_cmp_unicode_ucs4_ascii_n(uint32_t* a, uint8_t* b, size_t n_b);
 int32_t pointless_cmp_unicode_ascii_ascii(uint8_t* a, uint8_t* b);
 int32_t pointless_cmp_reader(pointless_t* p_a, pointless_complete_value_t* a, pointless_t* p_b, pointless_complete_value_t* b, const char** error);
 int32_t pointless_cmp_reader_acyclic(pointless_t* p_a, pointless_complete_value_t* a, pointless_t* p_b, pointless_complete_value_t* b);

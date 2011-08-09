@@ -3,11 +3,17 @@
 #include <pointless/pointless_reader.h>
 #include <pointless/pointless_bitvector.h>
 
-#define PYTHON_STRING_HASH_32(s, T) { T* p = (s); size_t len = 0; uint32_t x = (uint32_t)(*p) << 7; while (*p) {x = (1000003 * x) ^ (uint32_t)(*p++); len++;} return x ^ len;}
+#define PYTHON_STRING_HASH_32(s, T)     { T* p = (s); size_t len = 0; uint32_t x = (uint32_t)(*p) << 7; while (*p)        {x = (1000003 * x) ^ (uint32_t)(*p++); len++;} return x ^ len;}
+#define PYTHON_STRING_HASH_32_(s, n, T) { T* p = (s); size_t len = 0; uint32_t x = (uint32_t)(*p) << 7; while (len < (n)) {x = (1000003 * x) ^ (uint32_t)(*p++); len++;} return x ^ len;}
 
 uint32_t pointless_hash_string_v1_32(uint8_t* s)
 {
 	PYTHON_STRING_HASH_32(s, uint8_t)
+}
+
+uint32_t pointless_hash_string_v1_32_(uint8_t* s, size_t n)
+{
+	PYTHON_STRING_HASH_32_(s, n, uint8_t)
 }
 
 uint32_t pointless_hash_unicode_ucs2_v1_32(uint16_t* s)
@@ -22,7 +28,8 @@ uint32_t pointless_hash_unicode_ucs4_v1_32(uint32_t* s)
 
 #define HASH_UNICODE_SEED 1000000001L
 
-#define POINTLESS_HASH_STRING_32(s) uint32_t v = 1; while (*(s)) { v = v + HASH_UNICODE_SEED + *(s); (s) += 1; } return v
+#define POINTLESS_HASH_STRING_32(s)     uint32_t v = 1;                   while (*(s))      { v = v + HASH_UNICODE_SEED + *(s); (s) += 1;          } return v
+#define POINTLESS_HASH_STRING_32_(s, n) uint32_t v = 1; uint32_t len = 0; while (len < (n)) { v = v + HASH_UNICODE_SEED + *(s); (s) += 1; len += 1;} return v
 
 uint32_t pointless_hash_unicode_ucs4_v0_32(uint32_t* s)
 {
@@ -37,6 +44,11 @@ uint32_t pointless_hash_unicode_ucs2_v0_32(uint16_t* s)
 uint32_t pointless_hash_string_v0_32(uint8_t* s)
 {
 	POINTLESS_HASH_STRING_32(s);
+}
+
+uint32_t pointless_hash_string_v0_32_(uint8_t* s, size_t n)
+{
+	POINTLESS_HASH_STRING_32_(s, n);
 }
 
 typedef uint32_t (*pointless_hash_reader_32_cb)(pointless_t* p, pointless_value_t* v);

@@ -3,11 +3,23 @@
 typedef int (*check_k)(pointless_t* p, pointless_value_t* v, void* user);
 typedef int (*check_v)(pointless_t* p, pointless_value_t* v, void* user, void* out);
 
+typedef struct {
+	uint8_t* s;
+	size_t n;
+} check_string_n_t;
+
 static int check_string(pointless_t* p, pointless_value_t* v, void* user)
 {
 	uint8_t* key_s = (uint8_t*)user;
 	uint32_t* s = pointless_reader_unicode_value_ucs4(p, v);
 	return (v->type == POINTLESS_UNICODE && pointless_cmp_unicode_ucs4_ascii(s, key_s) == 0);
+}
+
+static int check_string_n(pointless_t* p, pointless_value_t* v, void* user)
+{
+	check_string_n_t* key = (check_string_n_t*)user;
+	uint32_t* s = pointless_reader_unicode_value_ucs4(p, v);
+	return (v->type == POINTLESS_UNICODE && pointless_cmp_unicode_ucs4_ascii_n(s, key->s, key->n) == 0);
 }
 
 static int check_unicode(pointless_t* p, pointless_value_t* v, void* user)
@@ -281,6 +293,31 @@ int pointless_get_mapping_string_to_value(pointless_t* p, pointless_value_t* map
 	}
 
 	return pointless_get_map_(p, map, hash, check_string, (void*)key, get_value, 0, (void*)value);
+}
+
+int pointless_get_mapping_string_n_to_value(pointless_t* p, pointless_value_t* map, char* key, size_t n, pointless_value_t* value)
+{
+	uint32_t hash = 0;
+
+	switch (p->header->version) {
+		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
+			hash = pointless_hash_string_v0_32_((uint8_t*)key, n);
+			break;
+		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
+		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
+			hash = pointless_hash_string_v1_32_((uint8_t*)key, n);
+			break;
+		default:
+			assert(0);
+			break;
+	}
+
+
+	check_string_n_t user;
+	user.s = (uint8_t*)key;
+	user.n = n;
+
+	return pointless_get_map_(p, map, hash, check_string_n, (void*)&user, get_value, 0, (void*)value);
 }
 
 int pointless_get_mapping_unicode_to_value(pointless_t* p, pointless_value_t* map, uint32_t* key, pointless_value_t* value)
