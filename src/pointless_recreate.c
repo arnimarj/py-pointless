@@ -273,20 +273,13 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 	return POINTLESS_CREATE_VALUE_FAIL;
 }
 
-static int pointless_recreate_(const char* fname_in, const char* fname_out, const char** error, int bits)
+uint32_t pointless_recreate_value(pointless_t* p_in, pointless_value_t* v_in, pointless_create_t* c_out, const char** error)
 {
-	if (bits != 32 && bits != 64) {
-		*error = "internal error";
-		return 0;
-	}
-
-	pointless_t p;
-	pointless_create_t c;
 	pointless_recreate_state_t state;
-	int is_p = 0, is_c = 0, retval = 0;
+	uint32_t handle = POINTLESS_CREATE_VALUE_FAIL;
 
-	state.p = &p;
-	state.c = &c;
+	state.p = p_in;
+	state.c = c_out;
 
 	state.error = error;
 
@@ -296,23 +289,11 @@ static int pointless_recreate_(const char* fname_in, const char* fname_out, cons
 	state.set_r_c_mapping = 0;
 	state.map_r_c_mapping = 0;
 
-	if (!pointless_open_f(&p, fname_in, 0, error))
-		return 0;
-
-	is_p = 1;
-
-	if (bits == 32)
-		pointless_create_begin_32(&c);
-	else
-		pointless_create_begin_64(&c);
-
-	is_c = 1;
-
-	state.unicode_r_c_mapping = pointless_malloc_uint32_init(p.header->n_unicode, UINT32_MAX);
-	state.vector_r_c_mapping = pointless_malloc_uint32_init(p.header->n_vector, UINT32_MAX);
-	state.bitvector_r_c_mapping = pointless_malloc_uint32_init(p.header->n_bitvector, UINT32_MAX);
-	state.set_r_c_mapping = pointless_malloc_uint32_init(p.header->n_set, UINT32_MAX);
-	state.map_r_c_mapping = pointless_malloc_uint32_init(p.header->n_map, UINT32_MAX);
+	state.unicode_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_unicode, UINT32_MAX);
+	state.vector_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_vector, UINT32_MAX);
+	state.bitvector_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_bitvector, UINT32_MAX);
+	state.set_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_set, UINT32_MAX);
+	state.map_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_map, UINT32_MAX);
 
 	if (state.unicode_r_c_mapping == 0 || state.vector_r_c_mapping == 0 || state.bitvector_r_c_mapping == 0) {
 		*error = "out of memory";
@@ -324,29 +305,9 @@ static int pointless_recreate_(const char* fname_in, const char* fname_out, cons
 		goto error;
 	}
 
-	pointless_value_t* root_value = pointless_root(&p);
-	uint32_t root_handle = pointless_recreate_convert_rec(&state, root_value, 0);
-
-	if (root_handle == POINTLESS_CREATE_VALUE_FAIL)
-		goto error;
-
-	pointless_create_set_root(&c, root_handle);
-
-	if (!pointless_create_output_and_end_f(&c, fname_out, error)) {
-		is_c = 0;
-		goto error;
-	}
-
-	is_c = 0;
-
-	retval = 1;
+	handle = pointless_recreate_convert_rec(&state, v_in, 0);
 
 error:
-	if (is_p)
-		pointless_close(&p);
-
-	if (is_c)
-		pointless_create_end(&c);
 
 	pointless_free(state.unicode_r_c_mapping);
 	pointless_free(state.vector_r_c_mapping);
@@ -354,7 +315,43 @@ error:
 	pointless_free(state.set_r_c_mapping);
 	pointless_free(state.map_r_c_mapping);
 
-	return retval;
+	return handle;
+}
+
+static int pointless_recreate_(const char* fname_in, const char* fname_out, const char** error, int n_bits)
+{
+	// open source
+	pointless_t p;
+
+	if (!pointless_open_f(&p, fname_in, 0, error))
+		return 0;
+
+	// create destination
+	pointless_create_t c;
+
+	if (n_bits == 32)
+		pointless_create_begin_32(&c);
+	else
+		pointless_create_begin_64(&c);
+
+	uint32_t root = pointless_recreate_value(&p, pointless_root(&p), &c, error);
+
+	if (root == POINTLESS_CREATE_VALUE_FAIL) {
+		pointless_close(&p);
+		pointless_create_end(&c);
+		return 0;
+	}
+
+	pointless_create_set_root(&c, root);
+
+	if (!pointless_create_output_and_end_f(&c, fname_out, error)) {
+		pointless_close(&p);
+		pointless_create_end(&c);
+		return 0;
+	}
+
+	pointless_close(&p);
+	return 1;
 }
 
 int pointless_recreate_32(const char* fname_in, const char* fname_out, const char** error)

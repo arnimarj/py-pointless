@@ -76,13 +76,20 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 	} else if (PyPointlessVector_Check(py_object)) {
 		// currently, we only support value vectors, they are simple
 		PyPointlessVector* v = (PyPointlessVector*)py_object;
+		const char* error = 0;
 
 		switch(v->v->type) {
 			case POINTLESS_VECTOR_VALUE:
 			case POINTLESS_VECTOR_VALUE_HASHABLE:
-				PyErr_Format(PyExc_ValueError, "only primitive pointless vectors are supported");
-				state->is_error = 1;
-				return POINTLESS_CREATE_VALUE_FAIL;
+				handle = pointless_recreate_value(&v->pp->p, v->v, &state->c, &error);
+
+				if (handle == POINTLESS_CREATE_VALUE_FAIL) {
+					state->is_error = 1;
+					PyErr_Format(PyExc_ValueError, "pointless_recreate_value(): %s", error);
+					return POINTLESS_CREATE_VALUE_FAIL;
+				}
+
+				break;
 			case POINTLESS_VECTOR_I8:
 				handle = pointless_create_vector_i8_owner(&state->c, pointless_reader_vector_i8(&v->pp->p, v->v) + v->slice_i, v->slice_n);
 				break;
@@ -393,6 +400,28 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		}
 
 		RETURN_OOM_IF_FAIL(handle, state);
+	} else if (PyPointlessSet_Check(py_object)) {
+		PyPointlessSet* set = (PyPointlessSet*)py_object;
+		const char* error = 0;
+		handle = pointless_recreate_value(&set->pp->p, set->v, &state->c, &error);
+
+		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
+			state->is_error = 1;
+			PyErr_Format(PyExc_ValueError, "pointless_recreate_value(): %s", error);
+			return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
+	} else if (PyPointlessMap_Check(py_object)) {
+		PyPointlessMap* map = (PyPointlessMap*)py_object;
+		const char* error = 0;
+		handle = pointless_recreate_value(&map->pp->p, map->v, &state->c, &error);
+
+		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
+			state->is_error = 1;
+			PyErr_Format(PyExc_ValueError, "pointless_recreate_value(): %s", error);
+			return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
 	// type not supported
 	} else {
 		PyErr_Format(PyExc_ValueError, "type <%s> not supported", py_object->ob_type->tp_name);

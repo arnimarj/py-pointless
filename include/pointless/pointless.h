@@ -7,6 +7,9 @@
 #include <pointless/pointless_value.h>
 #include <pointless/pointless_debug.h>
 #include <pointless/pointless_reader_helpers.h>
+#include <pointless/pointless_eval.h>
+#include <pointless/pointless_recreate.h>
 
 #endif
+
 
