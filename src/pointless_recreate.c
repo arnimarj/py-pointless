@@ -178,7 +178,7 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 			n_bits = pointless_reader_bitvector_n_bits(state->p, v);
 			bits = pointless_calloc(ICEIL(n_bits, 8), 1);
 
-			if (n_bits == 0) {
+			if (bits == 0) {
 				*state->error = "out of memory";
 				return POINTLESS_CREATE_VALUE_FAIL;
 			}
