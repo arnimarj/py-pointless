@@ -1532,6 +1532,14 @@ uint32_t pointless_create_boolean_true(pointless_create_t* c)
 	return handle;
 }
 
+uint32_t pointless_create_boolean(pointless_create_t* c, int32_t v)
+{
+	if (v)
+		return pointless_create_boolean_true(c);
+	else
+		return pointless_create_boolean_false(c);
+}
+
 static uint32_t pointless_create_empty_slot_priv(pointless_create_t* c)
 {
 	pointless_create_and_return_inline_value_2(c, pointless_value_create_empty_slot);

@@ -38,6 +38,7 @@ uint32_t pointless_create_null(pointless_create_t* c);
 uint32_t pointless_create_boolean_true(pointless_create_t* c);
 uint32_t pointless_create_boolean_false(pointless_create_t* c);
 uint32_t pointless_create_empty_slot(pointless_create_t* c);
+uint32_t pointless_create_boolean(pointless_create_t* c, int32_t v);
 
 // unicode constructors, using different sources
 uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* s);
