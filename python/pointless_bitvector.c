@@ -5,6 +5,9 @@ PyTypeObject PyPointlessBitvectorIterType;
 
 static void PyPointlessBitvector_dealloc(PyPointlessBitvector* self)
 {
+	if (self->is_pointless && self->pointless_pp)
+		self->pointless_pp->n_bitvector_refs -= 1;
+
 	Py_XDECREF(self->pointless_pp);
 	self->is_pointless = 0;
 	self->pointless_pp = 0;
@@ -60,7 +63,11 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 	self->is_pointless = 0;
 	self->allow_print = 1;
 
-	Py_XDECREF(self->pointless_pp);
+	if (self->pointless_pp) {
+		self->pointless_pp->n_bitvector_refs -= 1;
+		Py_DECREF(self->pointless_pp);
+	}
+
 	self->pointless_pp = 0;
 	self->pointless_v = 0;
 
@@ -467,6 +474,29 @@ static PyObject* PyPointlessBitvector_append(PyPointlessBitvector* self, PyObjec
 	return Py_None;
 }
 
+static PyObject* PyPointlessBitvector_pop(PyPointlessBitvector* self)
+{
+	if (self->is_pointless) {
+		PyErr_SetString(PyExc_ValueError, "BitVector is pointless based, and thus read-only");
+		return 0;
+	}
+
+	if (self->primitive_n_bits == 0) {
+		PyErr_SetString(PyExc_IndexError, "pop from empty vector");
+		return 0;
+	}
+
+	int is_set = (bm_is_set_(self->primitive_bits, self->primitive_n_bits - 1) != 0);
+
+	self->primitive_n_bits -= 1;
+
+	if (is_set) {
+		Py_RETURN_TRUE;
+	} else {
+		Py_RETURN_FALSE;
+	}
+}
+
 static PyObject* PyPointlessBitvector_sizeof(PyPointlessBitvector* self)
 {
 	size_t s = sizeof(PyPointlessBitvector);
@@ -480,6 +510,7 @@ static PyObject* PyPointlessBitvector_sizeof(PyPointlessBitvector* self)
 static PyMethodDef PyPointlessBitvector_methods[] = {
 	{"IsAnySet",   (PyCFunction)PyPointlessBitvector_is_any_set, METH_NOARGS, ""},
 	{"append",     (PyCFunction)PyPointlessBitvector_append,     METH_VARARGS, ""},
+	{"pop",        (PyCFunction)PyPointlessBitvector_pop,        METH_NOARGS, ""},
 	{"__sizeof__", (PyCFunction)PyPointlessBitvector_sizeof,     METH_NOARGS,  ""},
 	{NULL, NULL}
 };
@@ -638,6 +669,8 @@ PyPointlessBitvector* PyPointlessBitvector_New(PyPointless* pp, pointless_value_
 		return 0;
 
 	Py_INCREF(pp);
+
+	pp->n_bitvector_refs += 1;
 
 	pv->is_pointless = 1;
 	pv->pointless_pp = pp;

@@ -1,7 +1,7 @@
 import sys, commands
 from distutils.core import setup, Extension
 
-print 'INFO: building judy static library...'
+print('INFO: building judy static library...')
 
 if sys.maxint == 2**63-1:
 	CFLAGS = '-O3 -fPIC -DJU_64BIT'

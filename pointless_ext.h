@@ -24,6 +24,11 @@ typedef struct {
 	PyObject_HEAD
 	int is_open;
 	int allow_print;
+	Py_ssize_t n_root_refs;
+	Py_ssize_t n_vector_refs;
+	Py_ssize_t n_bitvector_refs;
+	Py_ssize_t n_map_refs;
+	Py_ssize_t n_set_refs;
 	pointless_t p;
 } PyPointless;
 

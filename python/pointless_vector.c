@@ -2,7 +2,11 @@
 
 static void PyPointlessVector_dealloc(PyPointlessVector* self)
 {
-	Py_XDECREF(self->pp);
+	if (self->pp) {
+		self->pp->n_vector_refs -= 1;
+		Py_DECREF(self->pp);
+	}
+
 	self->pp = 0;
 	self->v = 0;
 	self->container_id = 0;
@@ -681,7 +685,7 @@ PyTypeObject PyPointlessVectorType = {
 	0,                                              /*tp_descr_get */
 	0,                                              /*tp_descr_set */
 	0,                                              /*tp_dictoffset */
-	(initproc)PyPointlessVector_init,               /*tp_init */
+	(initproc)0,               /*tp_init */
 	0,                                              /*tp_alloc */
 	PyPointlessVector_new,                          /*tp_new */
 };
@@ -741,6 +745,7 @@ PyPointlessVector* PyPointlessVector_New(PyPointless* pp, pointless_value_t* v, 
 		return 0;
 
 	Py_INCREF(pp);
+	pp->n_vector_refs += 1;
 
 	pv->pp = pp;
 	pv->v = v;

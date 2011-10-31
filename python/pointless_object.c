@@ -10,6 +10,26 @@ static void PyPointless_dealloc(PyPointless* self)
 	}
 
 	self->allow_print = 0;
+
+	if (self->n_root_refs != 0 ||
+		self->n_vector_refs != 0 ||
+		self->n_bitvector_refs != 0 ||
+		self->n_map_refs != 0 ||
+		self->n_set_refs != 0) {
+
+		printf("WTF A: %zu\n", self->n_root_refs);
+		printf("WTF B: %zu\n", self->n_vector_refs);
+		printf("WTF C: %zu\n", self->n_bitvector_refs);
+		printf("WTF D: %zu\n", self->n_map_refs);
+		printf("WTF E: %zu\n", self->n_set_refs);
+	}
+
+	self->n_root_refs = 0;
+	self->n_vector_refs = 0;
+	self->n_bitvector_refs = 0;
+	self->n_map_refs = 0;
+	self->n_set_refs = 0;
+
 	Py_TYPE(self)->tp_free(self);
 }
 
@@ -20,6 +40,11 @@ static PyObject* PyPointless_new(PyTypeObject* type, PyObject* args, PyObject* k
 	if (self) {
 		self->allow_print = 0;
 		self->is_open = 0;
+		self->n_root_refs = 0;
+		self->n_vector_refs = 0;
+		self->n_bitvector_refs = 0;
+		self->n_map_refs = 0;
+		self->n_set_refs = 0;
 	}
 
 	return (PyObject*)self;
@@ -30,6 +55,17 @@ static PyObject* PyPointless_GetRoot(PyPointless* self)
 	return pypointless_value(self, &self->p.header->root);
 }
 
+static PyObject* PyPointless_GetRefs(PyPointless* self)
+{
+	return Py_BuildValue("{s:n,s:n,s:n,s:n,s:n}",
+		"n_root_refs", self->n_root_refs,
+		"n_vector_refs", self->n_vector_refs,
+		"n_bitvector_refs", self->n_bitvector_refs,
+		"n_map_refs", self->n_map_refs,
+		"n_set_refs", self->n_set_refs
+	);
+}
+
 static PyObject* PyPointless_sizeof(PyPointless* self)
 {
 	return PyLong_FromUnsignedLongLong(self->p.fd_len);
@@ -38,6 +74,7 @@ static PyObject* PyPointless_sizeof(PyPointless* self)
 static PyMethodDef PyPointless_methods[] = {
 	{"__sizeof__", (PyCFunction)PyPointless_sizeof,  METH_NOARGS, "get size in bytes of backing file or buffer"},
 	{"GetRoot",    (PyCFunction)PyPointless_GetRoot, METH_NOARGS, "get pointless root object" },
+	{"GetRefs",    (PyCFunction)PyPointless_GetRefs, METH_NOARGS, "get inside-reference count to base object" },
 	{NULL}
 };
 
@@ -48,11 +85,32 @@ static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 	int i = 0;
 
 	if (self->is_open) {
+		Py_BEGIN_ALLOW_THREADS
 		pointless_close(&self->p);
+		Py_END_ALLOW_THREADS
 		self->is_open = 0;
 	}
 
 	self->allow_print = 1;
+
+	if (self->n_root_refs != 0 ||
+		self->n_vector_refs != 0 ||
+		self->n_bitvector_refs != 0 ||
+		self->n_map_refs != 0 ||
+		self->n_set_refs != 0) {
+		printf("_WTF A: %zu\n", self->n_root_refs);
+		printf("_WTF B: %zu\n", self->n_vector_refs);
+		printf("_WTF C: %zu\n", self->n_bitvector_refs);
+		printf("_WTF D: %zu\n", self->n_map_refs);
+		printf("_WTF E: %zu\n", self->n_set_refs);
+	}
+
+	self->n_root_refs = 0;
+	self->n_vector_refs = 0;
+	self->n_bitvector_refs = 0;
+	self->n_map_refs = 0;
+	self->n_set_refs = 0;
+
 	PyObject* allow_print = Py_True;
 	static char* kwargs[] = {"filename", "allow_print", 0};
 
