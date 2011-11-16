@@ -120,7 +120,7 @@ void pointless_dynarray_swap(pointless_dynarray_t* a, size_t i, size_t j)
 
 	uint8_t* D = (uint8_t*)a->_data;
 
-	for (k = 0; k < a->item_size; k++) {
+	for (k = 0; k < a->item_size; k++, i++, j++) {
 		uint8_t t = D[i];
 		D[i] = D[j];
 		D[j] = t;
