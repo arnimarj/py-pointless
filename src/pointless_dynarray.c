@@ -24,9 +24,6 @@ void pointless_dynarray_pop(pointless_dynarray_t* a)
 	a->n_items -= 1;
 }
 
-// debug stuff
-// #include <stdio.h>
-
 static intop_sizet_t next_size(size_t n_alloc)
 {
 	size_t small_add[] = {1, 1, 2, 2, 4, 4, 4, 8, 8, 10, 11, 12, 13, 14, 15, 16};
@@ -51,10 +48,8 @@ int pointless_dynarray_push(pointless_dynarray_t* a, void* i)
 		// we're good
 		void* next_data = pointless_realloc(a->_data, next_n_bytes.value);
 
-		if (next_data == 0) {
-			// fprintf(stderr, "ERROR: failure to grow vector of %zu items to %zu items, each item being %zu bytes\n", a->n_alloc, next_n_alloc, a->item_size);
+		if (next_data == 0)
 			return 0;
-		}
 
 		a->_data = next_data;
 		a->n_alloc = next_n_alloc.value;
