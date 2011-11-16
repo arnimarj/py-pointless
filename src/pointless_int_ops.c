@@ -2,13 +2,13 @@
 
 // the multiply overflow check is from "Secure Coding in C and C++", chapter 5
 
-intop_sizet sizet_mult(intop_sizet a, intop_sizet b)
+intop_sizet_t intop_sizet_mult(intop_sizet_t a, intop_sizet_t b)
 {
-	intop_sizet c;
+	intop_sizet_t c;
 
 	if (a.is_overflow || b.is_overflow || (a.value != 0 && b.value > SIZE_MAX / a.value) || (b.value != 0 && a.value > SIZE_MAX / b.value)) {
 		c.is_overflow = 1;
-		c.value = 0;
+		c.value = 1;
 	} else {
 		c.is_overflow = 0;
 		c.value = a.value * b.value;
@@ -17,13 +17,13 @@ intop_sizet sizet_mult(intop_sizet a, intop_sizet b)
 	return c;
 }
 
-intop_u64 u64_mult(intop_u64 a, intop_u64 b)
+intop_u64_t intop_u64_mult(intop_u64_t a, intop_u64_t b)
 {
-	intop_u64 c;
+	intop_u64_t c;
 
 	if (a.is_overflow || b.is_overflow || (a.value != 0 && b.value > UINT64_MAX / a.value) || (b.value != 0 && a.value > UINT64_MAX / b.value)) {
 		c.is_overflow = 1;
-		c.value = 0;
+		c.value = 1;
 	} else {
 		c.is_overflow = 0;
 		c.value = a.value * b.value;
@@ -32,13 +32,13 @@ intop_u64 u64_mult(intop_u64 a, intop_u64 b)
 	return c;
 }
 
-intop_u32 u32_mult(intop_u32 a, intop_u32 b)
+intop_u32_t uintop_32_mult(intop_u32_t a, intop_u32_t b)
 {
-	intop_u32 c;
+	intop_u32_t c;
 
 	if (a.is_overflow || b.is_overflow || (a.value != 0 && b.value > UINT32_MAX / a.value) || (b.value != 0 && a.value > UINT32_MAX / b.value)) {
 		c.is_overflow = 1;
-		c.value = 0;
+		c.value = 1;
 	} else {
 		c.is_overflow = 0;
 		c.value = a.value * b.value;
@@ -47,13 +47,13 @@ intop_u32 u32_mult(intop_u32 a, intop_u32 b)
 	return c;
 }
 
-intop_sizet sizet_add(intop_sizet a, intop_sizet b)
+intop_sizet_t intop_sizet_add(intop_sizet_t a, intop_sizet_t b)
 {
-	intop_sizet c;
+	intop_sizet_t c;
 
 	if (a.is_overflow || b.is_overflow) {
 		c.is_overflow = 1;
-		c.value = 0;
+		c.value = 1;
 	} else {
 		// sum = lhs + rhs
 		// overflow iff: sum < lhs or sum < rhs
@@ -62,16 +62,15 @@ intop_sizet sizet_add(intop_sizet a, intop_sizet b)
 	}
 
 	return c;
-
 }
 
-intop_u32 u32_add(intop_u32 a, intop_u32 b)
+intop_u32_t intop_u32_add(intop_u32_t a, intop_u32_t b)
 {
-	intop_u32 c;
+	intop_u32_t c;
 
 	if (a.is_overflow || b.is_overflow) {
 		c.is_overflow = 1;
-		c.value = 0;
+		c.value = 1;
 	} else {
 		// sum = lhs + rhs
 		// overflow iff: sum < lhs or sum < rhs
@@ -80,16 +79,15 @@ intop_u32 u32_add(intop_u32 a, intop_u32 b)
 	}
 
 	return c;
-
 }
 
-intop_u64 u64_add(intop_u64 a, intop_u64 b)
+intop_u64_t intop_u64_add(intop_u64_t a, intop_u64_t b)
 {
-	intop_u64 c;
+	intop_u64_t c;
 
 	if (a.is_overflow || b.is_overflow) {
 		c.is_overflow = 1;
-		c.value = 0;
+		c.value = 1;
 	} else {
 		// sum = lhs + rhs
 		// overflow iff: sum < lhs or sum < rhs
@@ -98,7 +96,6 @@ intop_u64 u64_add(intop_u64 a, intop_u64 b)
 	}
 
 	return c;
-
 }
 
 // I took the effort to write a Python program to validate these. All critique welcome.
@@ -160,21 +157,21 @@ for c, (i, j) in enumerate(itertools.product(xrange(0, 2**16, stride), xrange(0,
 
 */
 
-intop_sizet intop_sizet_(size_t v)
+intop_sizet_t intop_sizet_init(size_t v)
 {
-	intop_sizet r = {0, v};
+	intop_sizet_t r = {0, v};
 	return r;
 }
 
-intop_u32 intop_u32_(uint32_t v)
+intop_u32_t intop_u32_init(uint32_t v)
 {
-	intop_u32 r = {0, v};
+	intop_u32_t r = {0, v};
 	return r;
 }
 
-intop_u64 intop_u64_(uint64_t v)
+intop_u64_t intop_u64_init(uint64_t v)
 {
-	intop_u64 r = {0, v};
+	intop_u64_t r = {0, v};
 	return r;
 }
 
@@ -190,126 +187,126 @@ intop_u64 intop_u64_(uint64_t v)
 // T' := *FT'|e
 // F  := (E)|x|number
 
-static void intop_eval_E(intop_eval_context_t* context);
-static void intop_eval_Em(intop_eval_context_t* context);
-static void intop_eval_T(intop_eval_context_t* context);
-static void intop_eval_Tm(intop_eval_context_t* context);
-static void intop_eval_F(intop_eval_context_t* context);
+static void intop_eval_E(intop_eval_context_t* c);
+static void intop_eval_Em(intop_eval_context_t* c);
+static void intop_eval_T(intop_eval_context_t* c);
+static void intop_eval_Tm(intop_eval_context_t* c);
+static void intop_eval_F(intop_eval_context_t* c);
 
-static int intop_check_error(intop_eval_context_t* context)
+static int intop_check_error(intop_eval_context_t* c)
 {
-	return (context->s_error != 0);
+	return (c->s_error != 0);
 }
 
-static int intop_eval_check_bounds(intop_eval_context_t* context)
+static int intop_eval_check_bounds(intop_eval_context_t* c)
 {
-	return (context->i < intop_eval_MAX_N);
+	return (c->i < INTOP_EVAL_MAX_N);
 }
 
-static void intop_eval_push(intop_eval_context_t* context, intop_eval_token_t* token)
+static void intop_eval_push(intop_eval_context_t* c, intop_eval_token_t* token)
 {
-	if (context->s_n == intop_eval_MAX_N) {
-		context->s_error = "result stack overflow";
-		context->i_error = context->i;
+	if (c->s_n == INTOP_EVAL_MAX_N) {
+		c->s_error = "result stack overflow";
+		c->i_error = c->i;
 		return;
 	}
 
-	context->stack[context->s_n++] = *token;
+	c->stack[c->s_n++] = *token;
 }
 
 // E  := TE'
-static void intop_eval_E(intop_eval_context_t* context)
+static void intop_eval_E(intop_eval_context_t* c)
 {
-	if (intop_check_error(context))
+	if (intop_check_error(c))
 		return;
 
-	intop_eval_T(context);
-	intop_eval_Em(context);
+	intop_eval_T(c);
+	intop_eval_Em(c);
 }
 
-// E' := +TE'|e
-static void intop_eval_Em(intop_eval_context_t* context)
+// E' := +TE'|-TE'|e
+static void intop_eval_Em(intop_eval_context_t* c)
 {
-	if (intop_check_error(context))
+	if (intop_check_error(c))
 		return;
 
-	if (intop_eval_check_bounds(context) && context->tokens[context->i].type == intop_eval_PLUS) {
-		int i = context->i;
-		context->i += 1;
-		intop_eval_T(context);
-		intop_eval_Em(context);
+	if (intop_eval_check_bounds(c) && (c->tokens[c->i].type == INTOP_EVAL_ADD || c->tokens[c->i].type == INTOP_EVAL_SUB)) {
+		int i = c->i;
+		c->i += 1;
+		intop_eval_T(c);
+		intop_eval_Em(c);
 
-		intop_eval_push(context, &context->tokens[i]);
+		intop_eval_push(c, &c->tokens[i]);
 	}
 }
 
 // T  := FT'
-static void intop_eval_T(intop_eval_context_t* context)
+static void intop_eval_T(intop_eval_context_t* c)
 {
-	if (intop_check_error(context))
+	if (intop_check_error(c))
 		return;
 
-	intop_eval_F(context);
-	intop_eval_Tm(context);
+	intop_eval_F(c);
+	intop_eval_Tm(c);
 }
 
-// T' := *FT'|e
-static void intop_eval_Tm(intop_eval_context_t* context)
+// T' := *FT'|/FT'e
+static void intop_eval_Tm(intop_eval_context_t* c)
 {
-	if (intop_check_error(context))
+	if (intop_check_error(c))
 		return;
 
-	if (intop_eval_check_bounds(context) && context->tokens[context->i].type == intop_eval_MULT) {
-		int i = context->i;
-		context->i += 1;
-		intop_eval_F(context);
-		intop_eval_Tm(context);
+	if (intop_eval_check_bounds(c) && (c->tokens[c->i].type == INTOP_EVAL_MUL || c->tokens[c->i].type == INTOP_EVAL_DIV)) {
+		int i = c->i;
+		c->i += 1;
+		intop_eval_F(c);
+		intop_eval_Tm(c);
 
-		intop_eval_push(context, &context->tokens[i]);
+		intop_eval_push(c, &c->tokens[i]);
 	}
 }
 
-static void intop_eval_F(intop_eval_context_t* context)
+static void intop_eval_F(intop_eval_context_t* c)
 {
-	if (intop_check_error(context))
+	if (intop_check_error(c))
 		return;
 
-	if (!intop_eval_check_bounds(context))
+	if (!intop_eval_check_bounds(c))
 		goto failure;
 
-	if (context->tokens[context->i].type == intop_eval_NUMBER) {
-		intop_eval_push(context, &context->tokens[context->i]);
+	if (c->tokens[c->i].type == INTOP_EVAL_NUMBER) {
+		intop_eval_push(c, &c->tokens[c->i]);
 		goto success;
 	}
 
-	if (context->tokens[context->i].type == intop_eval_VARIABLE) {
-		intop_eval_push(context, &context->tokens[context->i]);
+	if (c->tokens[c->i].type == INTOP_EVAL_VARIABLE) {
+		intop_eval_push(c, &c->tokens[c->i]);
 		goto success;
 	}
 
-	if (context->tokens[context->i].type != intop_eval_LPAREN)
+	if (c->tokens[c->i].type != INTOP_EVAL_LPAREN)
 		goto failure;
 
-	context->i += 1;
-	intop_eval_E(context);
+	c->i += 1;
+	intop_eval_E(c);
 
-	if (intop_check_error(context))
+	if (intop_check_error(c))
 		return;
 
-	if (!intop_eval_check_bounds(context) || context->tokens[context->i].type != intop_eval_RPAREN) {
-		context->s_error = "expected ')'";
-		context->i_error = context->i;
+	if (!intop_eval_check_bounds(c) || c->tokens[c->i].type != INTOP_EVAL_RPAREN) {
+		c->s_error = "expected ')'";
+		c->i_error = c->i;
 		return;
 	}
 
 success:
-	context->i += 1;
+	c->i += 1;
 	return;
 
 failure:
 
-	context->s_error = "expected '(', number or variable";
-	context->i_error = context->i;
+	c->s_error = "expected '(', number or variable";
+	c->i_error = c->i;
 
 }
 
@@ -326,15 +323,15 @@ static int parse_number(const char* s, uint64_t* n)
 	return 1;
 }
 
-int intop_eval_compile(const char* s, intop_eval_context_t* context, const char** error)
+int intop_eval_compile(const char* s, intop_eval_context_t* c, const char** error)
 {
 	// initialize context
-	context->i = 0;
-	context->n = 0;
-	context->s_n = 0;
-	context->e_n = 0;
-	context->s_error = 0;
-	context->i_error = 0;
+	c->i = 0;
+	c->n = 0;
+	c->s_n = 0;
+	c->e_n = 0;
+	c->s_error = 0;
+	c->i_error = 0;
 
 	int n_variables = 0;
 
@@ -343,40 +340,50 @@ int intop_eval_compile(const char* s, intop_eval_context_t* context, const char*
 	int i_token = 0;
 
 	while (*s) {
-		if (context->n >= intop_eval_MAX_N) {
+		if (c->n >= INTOP_EVAL_MAX_N) {
 			*error = "too many tokens";
 			return 0;
 		}
 
 		switch (*s) {
 			case '(':
-				context->tokens[context->n].type = intop_eval_LPAREN;
-				context->n += 1;
+				c->tokens[c->n].type = INTOP_EVAL_LPAREN;
+				c->n += 1;
 				s += 1;
 				break;
 			case ')':
-				context->tokens[context->n].type = intop_eval_RPAREN;
-				context->n += 1;
+				c->tokens[c->n].type = INTOP_EVAL_RPAREN;
+				c->n += 1;
 				s += 1;
 				break;
 			case ' ':
 			case '\t':
 				s += 1;
 				break;
+			case '-':
+				c->tokens[c->n].type = INTOP_EVAL_SUB;
+				c->n += 1;
+				s += 1;
+				break;
 			case '+':
-				context->tokens[context->n].type = intop_eval_PLUS;
-				context->n += 1;
+				c->tokens[c->n].type = INTOP_EVAL_ADD;
+				c->n += 1;
+				s += 1;
+				break;
+			case '/':
+				c->tokens[c->n].type = INTOP_EVAL_DIV;
+				c->n += 1;
 				s += 1;
 				break;
 			case '*':
-				context->tokens[context->n].type = intop_eval_MULT;
-				context->n += 1;
+				c->tokens[c->n].type = INTOP_EVAL_MUL;
+				c->n += 1;
 				s += 1;
 				break;
 			case 'x':
-				context->tokens[context->n].type = intop_eval_VARIABLE;
-				context->tokens[context->n].var_index = n_variables;
-				context->n += 1;
+				c->tokens[c->n].type = INTOP_EVAL_VARIABLE;
+				c->tokens[c->n].var_index = n_variables;
+				c->n += 1;
 				s += 1;
 				n_variables += 1;
 				break;
@@ -403,17 +410,17 @@ int intop_eval_compile(const char* s, intop_eval_context_t* context, const char*
 
 				token[i_token] = 0;
 
-				context->tokens[context->n].type = intop_eval_NUMBER;
-				context->tokens[context->n].number.is_overflow = 0;
-				context->tokens[context->n].number.value = atoi(token);
+				c->tokens[c->n].type = INTOP_EVAL_NUMBER;
+				c->tokens[c->n].number.is_overflow = 0;
+				c->tokens[c->n].number.value = atoi(token);
 
-				if (!parse_number(token, &context->tokens[context->n].number.value)) {
+				if (!parse_number(token, &c->tokens[c->n].number.value)) {
 					*error = "invalid number";
 					return 0;
 				}
 
 				i_token = 0;
-				context->n += 1;
+				c->n += 1;
 
 				break;
 
@@ -423,19 +430,19 @@ int intop_eval_compile(const char* s, intop_eval_context_t* context, const char*
 		}
 	}
 
-	if (context->n == 0) {
+	if (c->n == 0) {
 		*error = "no tokens";
 		return 0;
 	}
 
-	intop_eval_E(context);
+	intop_eval_E(c);
 
-	if (intop_check_error(context)) {
-		*error = context->s_error;
+	if (intop_check_error(c)) {
+		*error = c->s_error;
 		return 0;
 	}
 
-	if (context->i != context->n) {
+	if (c->i != c->n) {
 		*error = "some parsing error";
 		return 0;
 	}
@@ -443,52 +450,77 @@ int intop_eval_compile(const char* s, intop_eval_context_t* context, const char*
 	return 1;
 }
 
-int intop_eval_eval(intop_eval_context_t* context, uint64_t* r, const char** error, ...)
+int intop_eval_eval(intop_eval_context_t* c, uint64_t* r, const char** error, ...)
 {
 	// reset context
-	context->e_n = 0;
-	context->s_error = 0;
-	context->i_error = 0;
+	c->e_n = 0;
+	c->s_error = 0;
+	c->i_error = 0;
 
-	intop_u64 a, b;
+	intop_u64_t a, b;
 	int i;
 
-	for (i = 0; i < context->s_n; i++) {
-		switch (context->stack[i].type) {
-			case intop_eval_NUMBER:
-				context->eval[context->e_n] = context->stack[i];
-				context->e_n += 1;
+	for (i = 0; i < c->s_n; i++) {
+		switch (c->stack[i].type) {
+			case INTOP_EVAL_NUMBER:
+				c->eval[c->e_n] = c->stack[i];
+				c->e_n += 1;
 				break;
-			case intop_eval_PLUS:
-			case intop_eval_MULT:
-				assert(context->e_n >= 2);
-				assert(context->eval[context->e_n - 1].type == intop_eval_NUMBER);
-				assert(context->eval[context->e_n - 2].type == intop_eval_NUMBER);
-				a = context->eval[context->e_n - 1].number;
-				b = context->eval[context->e_n - 2].number;
-				context->eval[context->e_n - 2].type = intop_eval_NUMBER;
-				context->eval[context->e_n - 2].number = (context->stack[i].type == intop_eval_PLUS) ? u64_add(a, b) : u64_mult(a, b);
-				context->e_n -= 1;
-				break;
-			case intop_eval_VARIABLE:
+			case INTOP_EVAL_VARIABLE:
 				*error = "not supported yet";
 				return 0;
+			case INTOP_EVAL_SUB:
+			case INTOP_EVAL_ADD:
+			case INTOP_EVAL_DIV:
+			case INTOP_EVAL_MUL:
+				assert(c->e_n >= 2);
+				assert(c->eval[c->e_n - 1].type == INTOP_EVAL_NUMBER);
+				assert(c->eval[c->e_n - 2].type == INTOP_EVAL_NUMBER);
+				a = c->eval[c->e_n - 1].number;
+				b = c->eval[c->e_n - 2].number;
+				c->eval[c->e_n - 2].type = INTOP_EVAL_NUMBER;
+
+				if (c->stack[i].type == INTOP_EVAL_SUB) {
+					if (b.value > a.value) {
+						*error = "underflow";
+						return 0;
+					}
+
+					c->eval[c->e_n - 2].number.is_overflow = a.is_overflow || b.is_overflow;
+					c->eval[c->e_n - 2].number.value = a.value - b.value;
+
+				} else if (c->stack[i].type == INTOP_EVAL_ADD) {
+					c->eval[c->e_n - 2].number = intop_u64_add(a, b);
+				} else if (c->stack[i].type == INTOP_EVAL_DIV) {
+					if (b.value == 0) {
+						*error = "division by zero";
+						return 0;
+					}
+
+					c->eval[c->e_n - 2].number.is_overflow = a.is_overflow || b.is_overflow;
+					c->eval[c->e_n - 2].number.value = a.value / b.value;
+				} else {
+					c->eval[c->e_n - 2].number = intop_u64_mult(a, b);
+				}
+
+				c->e_n -= 1;
+				break;
 			default:
 				*error = "invalid token";
 				return 0;
 		}
 	}
 
-	if (context->e_n != 1 || context->eval[0].type != intop_eval_NUMBER) {
+	if (c->e_n != 1 || c->eval[0].type != INTOP_EVAL_NUMBER) {
 		*error = "compile/eval error";
 		return 0;
 	}
 
-	if (context->eval[0].number.is_overflow) {
+	if (c->eval[0].number.is_overflow) {
 		*error = "eval overflow";
 		return 0;
 	}
 
-	*r = context->eval[0].number.value;
+	*r = c->eval[0].number.value;
 	return 1;
 }

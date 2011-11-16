@@ -27,7 +27,7 @@ void pointless_dynarray_pop(pointless_dynarray_t* a)
 // debug stuff
 // #include <stdio.h>
 
-static intop_sizet next_size(size_t n_alloc)
+static intop_sizet_t next_size(size_t n_alloc)
 {
 	size_t small_add[] = {1, 1, 2, 2, 4, 4, 4, 8, 8, 10, 11, 12, 13, 14, 15, 16};
 	size_t a = n_alloc / 16;
@@ -35,15 +35,15 @@ static intop_sizet next_size(size_t n_alloc)
 	size_t c = (n_alloc < 16) ? small_add[n_alloc] : 0;
 
 	// (a + b) + c
-	return sizet_add(sizet_add(intop_sizet_(a), intop_sizet_(b)), intop_sizet_(c));
+	return intop_sizet_add(intop_sizet_add(intop_sizet_init(a), intop_sizet_init(b)), intop_sizet_init(c));
 }
 
 int pointless_dynarray_push(pointless_dynarray_t* a, void* i)
 {
 	if (a->n_items == a->n_alloc) {
 		// get next allocation size, in terms of items and bytes, with overflow check
-		intop_sizet next_n_alloc = next_size(a->n_alloc);
-		intop_sizet next_n_bytes = sizet_mult(next_n_alloc, intop_sizet_(a->item_size));
+		intop_sizet_t next_n_alloc = next_size(a->n_alloc);
+		intop_sizet_t next_n_bytes = intop_sizet_mult(next_n_alloc, intop_sizet_init(a->item_size));
 
 		if (next_n_bytes.is_overflow)
 			return 0;

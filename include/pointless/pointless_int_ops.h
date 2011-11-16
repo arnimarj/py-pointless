@@ -12,64 +12,66 @@
 typedef struct {
 	int is_overflow;
 	size_t value;
-} intop_sizet;
+} intop_sizet_t;
 
 typedef struct {
 	int is_overflow;
 	uint32_t value;
-} intop_u32;
+} intop_u32_t;
 
 typedef struct {
 	int is_overflow;
 	uint64_t value;
-} intop_u64;
+} intop_u64_t;
 
 // multiply
-intop_sizet sizet_mult(intop_sizet a, intop_sizet b);
-intop_u64 u64_mult(intop_u64 a, intop_u64 b);
-intop_u32 u32_mult(intop_u32, intop_u32 b);
+intop_sizet_t intop_sizet_mult(intop_sizet_t a, intop_sizet_t b);
+intop_u64_t intop_u64_mult(intop_u64_t a, intop_u64_t b);
+intop_u32_t intop_u32_mult(intop_u32_t, intop_u32_t b);
 
 // add
-intop_sizet sizet_add(intop_sizet a, intop_sizet b);
-intop_u32 u32_add(intop_u32 a, intop_u32 b);
-intop_u64 u64_add(intop_u64 a, intop_u64 b);
+intop_sizet_t intop_sizet_add(intop_sizet_t a, intop_sizet_t b);
+intop_u32_t intop_u32_add(intop_u32_t a, intop_u32_t b);
+intop_u64_t intop_u64_add(intop_u64_t a, intop_u64_t b);
 
 // value constructors
-intop_sizet intop_sizet_(size_t v);
-intop_u32 intop_u32_(uint32_t v);
-intop_u64 intop_u64_(uint64_t v);
+intop_sizet_t intop_sizet_init(size_t v);
+intop_u32_t intop_u32_init(uint32_t v);
+intop_u64_t intop_u64_init(uint64_t v);
 
 // expression evalator, roughly the grammar:
 // E = T+T, T = E*E, F = (E)|number|x
 // x is a standin for a positional variable
 
-#define intop_eval_NUMBER   0
-#define intop_eval_PLUS     1
-#define intop_eval_MULT     2
-#define intop_eval_LPAREN   3
-#define intop_eval_RPAREN   4
-#define intop_eval_VARIABLE 5
+#define INTOP_EVAL_NUMBER   0
+#define INTOP_EVAL_ADD      1
+#define INTOP_EVAL_SUB      2
+#define INTOP_EVAL_MUL      3
+#define INTOP_EVAL_DIV      4
+#define INTOP_EVAL_LPAREN   5
+#define INTOP_EVAL_RPAREN   6
+#define INTOP_EVAL_VARIABLE 7
 
 typedef struct {
 	int type;
-	intop_u64 number;
+	intop_u64_t number;
 	int var_index;
 } intop_eval_token_t;
 
-#define intop_eval_MAX_N 512
+#define INTOP_EVAL_MAX_N 512
 
 typedef struct {
 	// token list, and current token
 	int i;
 	int n;
-	intop_eval_token_t tokens[intop_eval_MAX_N];
+	intop_eval_token_t tokens[INTOP_EVAL_MAX_N];
 
 	// compile stack
-	intop_eval_token_t stack[intop_eval_MAX_N];
+	intop_eval_token_t stack[INTOP_EVAL_MAX_N];
 	int s_n;
 
-	//eval stack
-	intop_eval_token_t eval[intop_eval_MAX_N];
+	// eval stack
+	intop_eval_token_t eval[INTOP_EVAL_MAX_N];
 	int e_n;
 
 	// error
