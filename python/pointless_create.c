@@ -308,19 +308,17 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		// get it from python
 		Py_UNICODE* python_buffer = PyUnicode_AS_UNICODE(py_object);
 
-		// create the handle
-		if (Py_UNICODE_SIZE != 2 && Py_UNICODE_SIZE != 4) {
-			PyErr_Format(PyExc_ValueError, "strange value for Py_UNICODE_SIZE: %u", (unsigned int)Py_UNICODE_SIZE);
-			state->error_line = __LINE__;
-			printf("line: %i\n", __LINE__);
-			state->is_error = 1;
-			return POINTLESS_CREATE_VALUE_FAIL;
-		}
-
-		if (Py_UNICODE_SIZE == 4)
-			handle = pointless_create_unicode_ucs4(&state->c, (uint32_t*)python_buffer);
-		else
-			handle = pointless_create_unicode_ucs2(&state->c, (uint16_t*)python_buffer);
+		#if Py_UNICODE_SIZE == 4
+			if (pointless_is_ucs4_ascii((uint32_t*)python_buffer))
+				handle = pointless_create_string_ucs4(&state->c, python_buffer);
+			else
+				handle = pointless_create_unicode_ucs4(&state->c, python_buffer);
+		#else
+			if (pointless_is_ucs2_ascii(python_buffer))
+				handle = pointless_create_string_ucs2(&state->c, python_buffer);
+			else
+				handle = pointless_create_unicode_ucs2(&state->c, python_buffer);
+		#endif
 
 		RETURN_OOM_IF_FAIL(handle, state);
 
@@ -328,18 +326,10 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			RETURN_OOM(state);
 		}
 
-	// string object, converts to unicode
+	// string object
 	} else if (PyString_Check(py_object)) {
-		const char* error = 0;
-		handle = pointless_create_unicode_ascii(&state->c, PyString_AS_STRING(py_object), &error);
-
-		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
-			PyErr_Format(PyExc_ValueError, "error creating/converting (assumed) ascii string to UCS-4: %s", error);
-			state->error_line = __LINE__;
-			printf("line: %i\n", __LINE__);
-			state->is_error = 1;
-			return POINTLESS_CREATE_VALUE_FAIL;
-		}
+		handle = pointless_create_string_ascii(&state->c, (uint8_t*)PyString_AS_STRING(py_object));
+		RETURN_OOM_IF_FAIL(handle, state);
 
 		if (!pointless_export_set_seen(state, py_object, handle)) {
 			RETURN_OOM(state);

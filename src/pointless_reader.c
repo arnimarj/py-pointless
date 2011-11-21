@@ -29,7 +29,7 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 
 	// right, we need some number of bytes for the offset vectors
 	uint64_t mandatory_size = sizeof(pointless_header_t);
-	mandatory_size += p->header->n_unicode * sizeof(uint32_t);
+	mandatory_size += p->header->n_string_unicode * sizeof(uint32_t);
 	mandatory_size += p->header->n_vector * sizeof(uint32_t);
 	mandatory_size += p->header->n_bitvector * sizeof(uint32_t);
 	mandatory_size += p->header->n_set * sizeof(uint32_t);
@@ -41,17 +41,17 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 	}
 
 	// offset vectors
-	p->unicode_offsets_32   = (uint32_t*)(p->header + 1);
-	p->vector_offsets_32    = (uint32_t*)(p->unicode_offsets_32   + p->header->n_unicode);
-	p->bitvector_offsets_32 = (uint32_t*)(p->vector_offsets_32    + p->header->n_vector);
-	p->set_offsets_32       = (uint32_t*)(p->bitvector_offsets_32 + p->header->n_bitvector);
-	p->map_offsets_32       = (uint32_t*)(p->set_offsets_32       + p->header->n_set);
+	p->string_unicode_offsets_32   = (uint32_t*)(p->header + 1);
+	p->vector_offsets_32           = (uint32_t*)(p->string_unicode_offsets_32   + p->header->n_string_unicode);
+	p->bitvector_offsets_32        = (uint32_t*)(p->vector_offsets_32           + p->header->n_vector);
+	p->set_offsets_32              = (uint32_t*)(p->bitvector_offsets_32        + p->header->n_bitvector);
+	p->map_offsets_32              = (uint32_t*)(p->set_offsets_32              + p->header->n_set);
 
-	p->unicode_offsets_64   = (uint64_t*)(p->header + 1);
-	p->vector_offsets_64    = (uint64_t*)(p->unicode_offsets_64   + p->header->n_unicode);
-	p->bitvector_offsets_64 = (uint64_t*)(p->vector_offsets_64    + p->header->n_vector);
-	p->set_offsets_64       = (uint64_t*)(p->bitvector_offsets_64 + p->header->n_bitvector);
-	p->map_offsets_64       = (uint64_t*)(p->set_offsets_64       + p->header->n_set);
+	p->string_unicode_offsets_64   = (uint64_t*)(p->header + 1);
+	p->vector_offsets_64           = (uint64_t*)(p->string_unicode_offsets_64   + p->header->n_string_unicode);
+	p->bitvector_offsets_64        = (uint64_t*)(p->vector_offsets_64           + p->header->n_vector);
+	p->set_offsets_64              = (uint64_t*)(p->bitvector_offsets_64        + p->header->n_bitvector);
+	p->map_offsets_64              = (uint64_t*)(p->set_offsets_64              + p->header->n_set);
 
 	// our heap
 	p->heap_len = (buflen - mandatory_size);
@@ -148,16 +148,16 @@ pointless_value_t* pointless_root(pointless_t* p)
 
 uint32_t pointless_reader_unicode_len(pointless_t* p, pointless_value_t* v)
 {
-	assert(v->data.data_u32 < p->header->n_unicode);
-	uint32_t* u_len = (uint32_t*)PC_HEAP_OFFSET(p, unicode_offsets, v->data.data_u32);
+	assert(v->data.data_u32 < p->header->n_string_unicode);
+	uint32_t* u_len = (uint32_t*)PC_HEAP_OFFSET(p, string_unicode_offsets, v->data.data_u32);
 	return *u_len;
 }
 
-static pointless_char_t* pointless_reader_unicode_value(pointless_t* p, pointless_value_t* v)
+static pointless_unicode_char_t* pointless_reader_unicode_value(pointless_t* p, pointless_value_t* v)
 {
-	assert(v->data.data_u32 < p->header->n_unicode);
-	uint32_t* u_len = (uint32_t*)PC_HEAP_OFFSET(p, unicode_offsets, v->data.data_u32);
-	return (pointless_char_t*)(u_len + 1);
+	assert(v->data.data_u32 < p->header->n_string_unicode);
+	uint32_t* u_len = (uint32_t*)PC_HEAP_OFFSET(p, string_unicode_offsets, v->data.data_u32);
+	return (pointless_unicode_char_t*)(u_len + 1);
 }
 
 uint32_t* pointless_reader_unicode_value_ucs4(pointless_t* p, pointless_value_t* v)
@@ -181,6 +181,20 @@ uint16_t* pointless_reader_unicode_value_ucs2_alloc(pointless_t* p, pointless_va
 		*error = "out of memory";
 
 	return s;
+}
+
+uint32_t pointless_reader_string_len(pointless_t* p, pointless_value_t* v)
+{
+	assert(v->data.data_u32 < p->header->n_string_unicode);
+	uint32_t* u_len = (uint32_t*)PC_HEAP_OFFSET(p, string_unicode_offsets, v->data.data_u32);
+	return *u_len;
+}
+
+uint8_t* pointless_reader_string_value_ascii(pointless_t* p, pointless_value_t* v)
+{
+	assert(v->data.data_u32 < p->header->n_string_unicode);
+	uint32_t* u_len = (uint32_t*)PC_HEAP_OFFSET(p, string_unicode_offsets, v->data.data_u32);
+	return (uint8_t*)(u_len + 1);
 }
 
 uint32_t pointless_reader_vector_n_items(pointless_t* p, pointless_value_t* v)

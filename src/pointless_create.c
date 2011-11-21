@@ -206,13 +206,15 @@ static void pointless_create_begin_(pointless_create_t* c, uint32_t version)
 	pointless_dynarray_init(&c->outside_vector_values, sizeof(pointless_create_vector_outside_t));
 	pointless_dynarray_init(&c->set_values, sizeof(pointless_create_set_t));
 	pointless_dynarray_init(&c->map_values, sizeof(pointless_create_map_t));
-	pointless_dynarray_init(&c->unicode_values, sizeof(void*));
+	pointless_dynarray_init(&c->string_unicode_values, sizeof(void*));
 	pointless_dynarray_init(&c->bitvector_values, sizeof(void*));
 
-	c->unicode_map_judy = 0;
+	c->string_unicode_map_judy = 0;
 	c->bitvector_map_judy = 0;
-	c->unicode_map_judy_count = 0;
+
+	c->string_unicode_map_judy_count = 0;
 	c->bitvector_map_judy_count = 0;
+
 	c->version = version;
 }
 
@@ -249,8 +251,11 @@ static void pointless_create_value_free(pointless_create_t* c, uint32_t i)
 		case POINTLESS_BITVECTOR:
 			pointless_free(cv_bitvector_at(i));
 			break;
-		case POINTLESS_UNICODE:
+		case POINTLESS_UNICODE_:
 			pointless_free(cv_unicode_at(i));
+			break;
+		case POINTLESS_STRING_:
+			pointless_free(cv_string_at(i));
 			break;
 		case POINTLESS_SET_VALUE:
 			pointless_dynarray_destroy(&cv_set_at(i)->keys);
@@ -276,27 +281,46 @@ void pointless_create_end(pointless_create_t* c)
 	pointless_dynarray_destroy(&c->outside_vector_values);
 	pointless_dynarray_destroy(&c->set_values);
 	pointless_dynarray_destroy(&c->map_values);
-	pointless_dynarray_destroy(&c->unicode_values);
+	pointless_dynarray_destroy(&c->string_unicode_values);
 	pointless_dynarray_destroy(&c->bitvector_values);
 
 	Word_t Rc_word = 0;
 
-	JHSFA(Rc_word, c->unicode_map_judy);
+	JHSFA(Rc_word, c->string_unicode_map_judy);
 	JHSFA(Rc_word, c->bitvector_map_judy);
 
-	c->unicode_map_judy = 0;
+	c->string_unicode_map_judy = 0;
 	c->bitvector_map_judy = 0;
+}
+
+static int pointless_serialize_string(pointless_create_cb_t* cb, void* string_buffer, const char** error)
+{
+	uint32_t* len = (uint32_t*)string_buffer;
+	pointless_string_char_t* s = (pointless_string_char_t*)(len + 1);
+
+	assert(pointless_string_len(s) == *len);
+
+	if (!(*cb->write)(len, sizeof(*len), cb->user, error))
+		return 0;
+
+	if (!(*cb->write)(s, (*len + 1) * sizeof(uint8_t), cb->user, error))
+		return 0;
+
+	if (!(*cb->align_4)(cb->user, error))
+		return 0;
+
+	return 1;
 }
 
 static int pointless_serialize_unicode(pointless_create_cb_t* cb, void* unicode_buffer, const char** error)
 {
 	uint32_t* len = (uint32_t*)unicode_buffer;
-	pointless_char_t* s = (pointless_char_t*)(len + 1);
+	pointless_unicode_char_t* s = (pointless_unicode_char_t*)(len + 1);
 
 	if (!(*cb->write)(len, sizeof(*len), cb->user, error))
 		return 0;
 
-	if (!(*cb->write)(s, (*len + 1) * sizeof(pointless_char_t), cb->user, error))
+	if (!(*cb->write)(s, (*len + 1) * sizeof(pointless_unicode_char_t), cb->user, error))
 		return 0;
 
 	if (!(*cb->align_4)(cb->user, error))
@@ -936,7 +960,7 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 	// header
 	pointless_header_t header;
 	header.root = pointless_create_to_read_value(c, c->root, n_priv_vectors);
-	header.n_unicode = c->unicode_map_judy_count;
+	header.n_string_unicode = c->string_unicode_map_judy_count;
 	header.n_vector = n_priv_vectors + n_outside_vectors;
 	header.n_bitvector = c->bitvector_map_judy_count;
 	header.n_set = n_sets;
@@ -952,24 +976,33 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 	uint64_t current_offset_64 = 0;
 
 	// write out offset vectors, first unicodes
-	uint32_t debug_n_unicode = 0;
+	uint32_t debug_n_string_unicode = 0;
 
 	#define PC_WRITE_OFFSET() if (is_32_offset && !(*cb->write)(&current_offset_32, sizeof(current_offset_32), cb->user, error)) {goto error_cleanup;} if (is_64_offset && !(*cb->write)(&current_offset_64, sizeof(current_offset_64), cb->user, error)) {goto error_cleanup;}
 	#define PC_INCREMENT_OFFSET(f) {current_offset_32 += (f); current_offset_64 += (f);}
 	#define PC_ALIGN_OFFSET() {current_offset_32 = align_next_4_32(current_offset_32); current_offset_64 = align_next_4_64(current_offset_64);}
 
 	for (i = 0; i < n_values; i++) {
-		if (cv_value_type(i) == POINTLESS_UNICODE) {
-			assert(cv_value_data_u32(i) == debug_n_unicode);
+		if (cv_value_type(i) == POINTLESS_UNICODE_) {
+			assert(cv_value_data_u32(i) == debug_n_string_unicode);
 
 			PC_WRITE_OFFSET();
-			PC_INCREMENT_OFFSET(sizeof(uint32_t) + (*((uint32_t*)cv_unicode_at(i)) + 1) * sizeof(pointless_char_t));
+			PC_INCREMENT_OFFSET(sizeof(uint32_t) + (*((uint32_t*)cv_unicode_at(i)) + 1) * sizeof(pointless_unicode_char_t));
 			PC_ALIGN_OFFSET();
-			debug_n_unicode += 1;
+			debug_n_string_unicode += 1;
+		}
+
+		if (cv_value_type(i) == POINTLESS_STRING_) {
+			assert(cv_value_data_u32(i) == debug_n_string_unicode);
+
+			PC_WRITE_OFFSET();
+			PC_INCREMENT_OFFSET(sizeof(uint32_t) + (*((uint8_t*)cv_string_at(i)) + 1) * sizeof(uint8_t));
+			PC_ALIGN_OFFSET();
+			debug_n_string_unicode += 1;
 		}
 	}
 
-	assert(debug_n_unicode == c->unicode_map_judy_count);
+	assert(debug_n_string_unicode == c->unicode_map_judy_count);
 
 	// then private vectors
 	uint32_t debug_n_priv_vectors = 0;
@@ -1135,8 +1168,13 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 
 	// write out heap, unicodes first
 	for (i = 0; i < n_values; i++) {
-		if (cv_value_type(i) == POINTLESS_UNICODE) {
+		if (cv_value_type(i) == POINTLESS_UNICODE_) {
 			if (!pointless_serialize_unicode(cb, cv_unicode_at(i), error))
+				goto error_cleanup;
+		}
+
+		if (cv_value_type(i) == POINTLESS_STRING_) {
+			if (!pointless_serialize_string(cb, cv_string_at(i), error))
 				goto error_cleanup;
 		}
 	}
@@ -1238,6 +1276,7 @@ static int file_align_4(void* user, const char** error)
 	long pos = ftell(f);
 
 	if (pos == -1) {
+		perror("ftell");
 		*error = "ftell() failure";
 		return 0;
 	}
@@ -1561,19 +1600,19 @@ uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v)
 
 	// create buffer to hold [uint32 + v]
 	size_t unicode_len = pointless_ucs4_len(v);
-	void* unicode_buffer = pointless_malloc(sizeof(uint32_t) + sizeof(pointless_char_t) * (unicode_len + 1));
+	void* unicode_buffer = pointless_malloc(sizeof(uint32_t) + sizeof(pointless_unicode_char_t) * (unicode_len + 1));
 
 	if (unicode_buffer == 0)
 		goto cleanup;
 
 	// setup buffer data
 	*((uint32_t*)unicode_buffer) = (uint32_t)unicode_len;
-	pointless_char_t* vv = (pointless_char_t*)((uint32_t*)unicode_buffer + 1);
+	pointless_unicode_char_t* vv = (pointless_unicode_char_t*)((uint32_t*)unicode_buffer + 1);
 	pointless_ucs4_cpy(vv, v);
 
 	// see if it already exists
 	Word_t* prev_ref = 0;
-	JHSG(prev_ref, c->unicode_map_judy, unicode_buffer, sizeof(uint32_t) + (unicode_len + 1) * sizeof(pointless_char_t));
+	JHSG(prev_ref, c->string_unicode_map_judy, unicode_buffer, sizeof(uint32_t) + (unicode_len + 1) * sizeof(pointless_unicode_char_t));
 
 	if (prev_ref) {
 		pointless_free(unicode_buffer);
@@ -1582,11 +1621,11 @@ uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v)
 
 	// create an appropriate value
 	pointless_create_value_t value;
-	value.header.type_29 = POINTLESS_UNICODE;
+	value.header.type_29 = POINTLESS_UNICODE_;
 	value.header.is_outside_vector = 0;
 	value.header.is_compressed_vector = 0;
 	value.header.is_set_map_vector = 0;
-	value.data.data_u32 = c->unicode_map_judy_count;
+	value.data.data_u32 = c->string_unicode_map_judy_count;
 
 	// add to value vector
 	if (!pointless_dynarray_push(&c->values, &value))
@@ -1594,23 +1633,23 @@ uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v)
 
 	pop_value = 1;
 
-	if (!pointless_dynarray_push(&c->unicode_values, &unicode_buffer))
+	if (!pointless_dynarray_push(&c->string_unicode_values, &unicode_buffer))
 		goto cleanup;
 
 	pop_unicode = 1;
 
 	// add to mapping
 	Word_t* PValue = 0;
-	JHSI(PValue, c->unicode_map_judy, unicode_buffer, sizeof(uint32_t) + (unicode_len + 1) * sizeof(pointless_char_t));
+	JHSI(PValue, c->string_unicode_map_judy, unicode_buffer, sizeof(uint32_t) + (unicode_len + 1) * sizeof(pointless_unicode_char_t));
 
 	if (PValue == 0)
 		goto cleanup;
 
 	*PValue = (Word_t)(pointless_dynarray_n_items(&c->values) - 1);
 
-	c->unicode_map_judy_count += 1;
+	c->string_unicode_map_judy_count += 1;
 
-	assert(c->unicode_map_judy_count == pointless_dynarray_n_items(&c->unicode_values));
+	assert(c->unicode_map_judy_count == pointless_dynarray_n_items(&c->string_unicode_values));
 	// we're done
 	return (pointless_dynarray_n_items(&c->values) - 1);
 
@@ -1622,9 +1661,112 @@ cleanup:
 		pointless_dynarray_pop(&c->values);
 
 	if (pop_unicode)
-		pointless_dynarray_pop(&c->unicode_values);
+		pointless_dynarray_pop(&c->string_unicode_values);
 
 	return POINTLESS_CREATE_VALUE_FAIL;
+}
+
+// big-values
+uint32_t pointless_create_string_ascii(pointless_create_t* c, uint8_t* v)
+{
+	// resources we allocate
+	int pop_value = 0;
+	int pop_string = 0;
+
+	// create buffer to hold [uint32 + v]
+	size_t string_len = pointless_ascii_len(v);
+	void* string_buffer = pointless_malloc(sizeof(uint32_t) + sizeof(uint8_t) * (string_len + 1));
+
+	if (string_buffer == 0)
+		goto cleanup;
+
+	// setup buffer data
+	*((uint32_t*)string_buffer) = (uint32_t)string_len;
+	uint8_t* vv = (uint8_t*)((uint32_t*)string_buffer + 1);
+	pointless_ascii_cpy(vv, v);
+
+	// see if it already exists
+	Word_t* prev_ref = 0;
+	JHSG(prev_ref, c->string_unicode_map_judy, string_buffer, sizeof(uint32_t) + (string_len + 1) * sizeof(uint8_t));
+
+	if (prev_ref) {
+		pointless_free(string_buffer);
+		return (uint32_t)(*prev_ref);
+	}
+
+	// create an appropriate value
+	pointless_create_value_t value;
+	value.header.type_29 = POINTLESS_STRING_;
+	value.header.is_outside_vector = 0;
+	value.header.is_compressed_vector = 0;
+	value.header.is_set_map_vector = 0;
+	value.data.data_u32 = c->string_unicode_map_judy_count;
+
+	// add to value vector
+	if (!pointless_dynarray_push(&c->values, &value))
+		goto cleanup;
+
+	pop_value = 1;
+
+	if (!pointless_dynarray_push(&c->string_unicode_values, &string_buffer))
+		goto cleanup;
+
+	pop_string = 1;
+
+	// add to mapping
+	Word_t* PValue = 0;
+	JHSI(PValue, c->string_unicode_map_judy, string_buffer, sizeof(uint32_t) + (string_len + 1) * sizeof(uint8_t));
+
+	if (PValue == 0)
+		goto cleanup;
+
+	*PValue = (Word_t)(pointless_dynarray_n_items(&c->values) - 1);
+
+	c->string_unicode_map_judy_count += 1;
+
+	assert(c->unicode_map_judy_count == pointless_dynarray_n_items(&c->string_unicode_values));
+	// we're done
+	return (pointless_dynarray_n_items(&c->values) - 1);
+
+cleanup:
+
+	pointless_free(string_buffer);
+
+	if (pop_value)
+		pointless_dynarray_pop(&c->values);
+
+	if (pop_string)
+		pointless_dynarray_pop(&c->string_unicode_values);
+
+	return POINTLESS_CREATE_VALUE_FAIL;
+}
+
+uint32_t pointless_create_string_ucs2(pointless_create_t* c, uint16_t* v)
+{
+	uint8_t* ascii = pointless_ucs2_to_ascii(v);
+
+	if (ascii == 0)
+		return POINTLESS_CREATE_VALUE_FAIL;
+
+	uint32_t handle = pointless_create_string_ascii(c, ascii);
+
+	pointless_free(ascii);
+
+	return handle;
+}
+
+uint32_t pointless_create_string_ucs4(pointless_create_t* c, uint32_t* v)
+{
+	uint8_t* ascii = pointless_ucs4_to_ascii(v);
+
+	if (ascii == 0)
+		return POINTLESS_CREATE_VALUE_FAIL;
+
+	uint32_t handle = pointless_create_string_ascii(c, ascii);
+
+	pointless_free(ascii);
+
+	return handle;
 }
 
 uint32_t pointless_create_unicode_ucs2(pointless_create_t* c, uint16_t* s)

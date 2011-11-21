@@ -98,6 +98,50 @@ static uint32_t pointless_hash_create_unicode_32(pointless_create_t* c, pointles
 	return hash;
 }
 
+static uint32_t pointless_hash_reader_string_32(pointless_t* p, pointless_value_t* v)
+{
+	uint8_t* s = pointless_reader_string_value_ascii(p, v);
+	uint32_t hash = 0;
+
+	switch (p->header->version) {
+		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
+			hash = pointless_hash_string_v0_32(s);
+			break;
+		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
+		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
+			hash = pointless_hash_string_v1_32(s);
+			break;
+		default:
+			assert(0);
+			break;
+	}
+
+	return hash;
+}
+
+static uint32_t pointless_hash_create_string_32(pointless_create_t* c, pointless_create_value_t* v)
+{
+	uint8_t* s = (uint8_t*)((uint32_t*)cv_get_string(v) + 1);
+
+	uint32_t hash = 0;
+
+	switch (c->version) {
+		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
+			hash = pointless_hash_string_v0_32(s);
+			break;
+		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
+		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
+			hash = pointless_hash_string_v1_32(s);
+			break;
+		default:
+			assert(0);
+			break;
+	}
+
+	return hash;
+}
+
+
 // integers are easy
 uint32_t pointless_hash_i32_32(int32_t v)
 {
@@ -412,8 +456,10 @@ static uint32_t pointless_hash_create_vector_32(pointless_create_t* c, pointless
 static pointless_hash_reader_32_cb pointless_hash_reader_func_32(uint32_t t)
 {
 	switch (t) {
-		case POINTLESS_UNICODE:
+		case POINTLESS_UNICODE_:
 			return pointless_hash_reader_unicode_32;
+		case POINTLESS_STRING_:
+			return pointless_hash_reader_string_32;
 		case POINTLESS_I32:
 		case POINTLESS_U32:
 		case POINTLESS_BOOLEAN:
@@ -457,8 +503,10 @@ static pointless_hash_reader_32_cb pointless_hash_reader_func_32(uint32_t t)
 static pointless_hash_create_32_cb pointless_hash_create_func_32(uint32_t t)
 {
 	switch (t) {
-		case POINTLESS_UNICODE:
+		case POINTLESS_UNICODE_:
 			return pointless_hash_create_unicode_32;
+		case POINTLESS_STRING_:
+			return pointless_hash_create_string_32;
 		case POINTLESS_I32:
 		case POINTLESS_U32:
 		case POINTLESS_BOOLEAN:

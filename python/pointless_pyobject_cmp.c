@@ -110,7 +110,7 @@ static int32_t pypointless_cmp_rec(pypointless_cmp_value_t* a, pypointless_cmp_v
 // forward declerations of all type-specific comparison functions
 typedef int32_t (*pypointless_cmp_cb)(pypointless_cmp_value_t* a, pypointless_cmp_value_t* b, pypointless_cmp_state_t* state);
 
-static int32_t pypointless_cmp_unicode(pypointless_cmp_value_t* a, pypointless_cmp_value_t* b, pypointless_cmp_state_t* state);
+static int32_t pypointless_cmp_string_unicode(pypointless_cmp_value_t* a, pypointless_cmp_value_t* b, pypointless_cmp_state_t* state);
 static int32_t pypointless_cmp_int_float_bool(pypointless_cmp_value_t* a, pypointless_cmp_value_t* b, pypointless_cmp_state_t* state);
 static int32_t pypointless_cmp_none(pypointless_cmp_value_t* a, pypointless_cmp_value_t* b, pypointless_cmp_state_t* state);
 static int32_t pypointless_cmp_vector(pypointless_cmp_value_t* a, pypointless_cmp_value_t* b, pypointless_cmp_state_t* state);
@@ -130,8 +130,9 @@ static pypointless_cmp_cb pypointless_cmp_func(pypointless_cmp_value_t* v, uint3
 				return pypointless_cmp_int_float_bool;
 			case POINTLESS_NULL:
 				return pypointless_cmp_none;
-			case POINTLESS_UNICODE:
-				return pypointless_cmp_unicode;
+			case POINTLESS_STRING_:
+			case POINTLESS_UNICODE_:
+				return pypointless_cmp_string_unicode;
 			case POINTLESS_SET_VALUE:
 			case POINTLESS_MAP_VALUE_VALUE:
 			case POINTLESS_EMPTY_SLOT:
@@ -185,8 +186,13 @@ static pypointless_cmp_cb pypointless_cmp_func(pypointless_cmp_value_t* v, uint3
 		}
 
 		if (PyString_Check(py_object) || PyUnicode_Check(py_object)) {
-			*type = POINTLESS_UNICODE;
-			return pypointless_cmp_unicode;
+			*type = POINTLESS_STRING_;
+			return pypointless_cmp_string_unicode;
+		}
+
+		if (PyUnicode_Check(py_object)) {
+			*type = POINTLESS_UNICODE_;
+			return pypointless_cmp_string_unicode;
 		}
 
 		if (PyAnySet_Check(py_object)) {
@@ -229,7 +235,12 @@ static void pypointless_cmp_extract_unicode_or_string(pypointless_cmp_value_t* v
 #else
 	if (v->is_pointless) {
 		pointless_value_t v_ = pointless_value_from_complete(&v->value.pointless.v);
-		*unicode = pointless_reader_unicode_value_ucs4(v->value.pointless.p, &v_);
+
+		if (v_.type == POINTLESS_UNICODE_)
+			*unicode = pointless_reader_unicode_value_ucs4(v->value.pointless.p, &v_);
+		else
+			*string = pointless_reader_string_value_ascii(v->value.pointless.p, &v_);
+
 		return;
 	}
 
@@ -242,7 +253,7 @@ static void pypointless_cmp_extract_unicode_or_string(pypointless_cmp_value_t* v
 #endif
 }
 
-static int32_t pypointless_cmp_unicode(pypointless_cmp_value_t* a, pypointless_cmp_value_t* b, pypointless_cmp_state_t* state)
+static int32_t pypointless_cmp_string_unicode(pypointless_cmp_value_t* a, pypointless_cmp_value_t* b, pypointless_cmp_state_t* state)
 {
 	uint32_t* unicode_a = 0;
 	uint8_t* string_a = 0;
@@ -261,17 +272,17 @@ static int32_t pypointless_cmp_unicode(pypointless_cmp_value_t* a, pypointless_c
 		return 0;
 
 	if (unicode_a && unicode_b)
-		return pointless_cmp_unicode_ucs4_ucs4(unicode_a, unicode_b);
+		return pointless_cmp_ucs4_ucs4(unicode_a, unicode_b);
 
 	if (unicode_a && string_b)
-		return pointless_cmp_unicode_ucs4_ascii(unicode_a, string_b);
+		return pointless_cmp_ucs4_ascii(unicode_a, string_b);
 
 	if (string_a && unicode_b)
-		return pointless_cmp_unicode_ascii_ucs4(string_a, unicode_b);
+		return pointless_cmp_ascii_ucs4(string_a, unicode_b);
 
 	assert(string_a && string_b);
 
-	return pointless_cmp_unicode_ascii_ascii(string_a, string_b);
+	return pointless_cmp_ascii_ascii(string_a, string_b);
 }
 
 static pypointless_cmp_int_float_bool_t pypointless_cmp_int_float_bool_from_value(pypointless_cmp_value_t* v, pypointless_cmp_state_t* state)

@@ -7,9 +7,12 @@
 // the root value
 pointless_value_t* pointless_root(pointless_t* p);
 
-// unicode values, and encoders
+// string/unicode values, and encoders
 uint32_t pointless_reader_unicode_len(pointless_t* p, pointless_value_t* v);
 uint32_t* pointless_reader_unicode_value_ucs4(pointless_t* p, pointless_value_t* v);
+
+uint32_t pointless_reader_string_len(pointless_t* p, pointless_value_t* v);
+uint8_t* pointless_reader_string_value_ascii(pointless_t* p, pointless_value_t* v);
 
 #ifdef POINTLESS_WCHAR_T_IS_4_BYTES
 wchar_t* pointless_reader_unicode_value_wchar(pointless_t* p, pointless_value_t* v);

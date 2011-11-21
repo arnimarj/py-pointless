@@ -20,6 +20,8 @@ POINTLESS_FUNC_N_DOC(pointless_pyobject_hash_32);
 POINTLESS_FUNC_N_DOC(pointless_cmp);
 POINTLESS_FUNC_N_DOC(pointless_is_eq);
 
+STATIC_ASSERT(Py_UNICODE_SIZE == 2 || Py_UNICODE_SIZE == 4, "Py_UNICODE_SIZE must be 2 or 4");
+
 typedef struct {
 	PyObject_HEAD
 	int is_open;
@@ -146,6 +148,7 @@ PyObject* pypointless_u32(PyPointless* p, uint32_t v);
 PyObject* pypointless_i64(PyPointless* p, int64_t v);
 PyObject* pypointless_u64(PyPointless* p, uint64_t v);
 PyObject* pypointless_float(PyPointless* p, float v);
+PyObject* pypointless_value_string(pointless_t* p, pointless_value_t* v);
 PyObject* pypointless_value_unicode(pointless_t* p, pointless_value_t* v);
 PyObject* pypointless_value(PyPointless* p, pointless_value_t* v);
 

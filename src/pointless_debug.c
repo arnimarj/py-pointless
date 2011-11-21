@@ -151,8 +151,8 @@ static void pointless_print_vector_other(pointless_debug_state_t* state, pointle
 
 static void pointless_print_unicode(pointless_debug_state_t* state, pointless_value_t* v)
 {
-	assert(v->type == POINTLESS_UNICODE);
-	pointless_char_t* s = pointless_reader_unicode_value_ucs4(state->p, v);
+	assert(v->type == POINTLESS_UNICODE_);
+	uint32_t* s = pointless_reader_unicode_value_ucs4(state->p, v);
 
 	fprintf(state->out, "\"");
 
@@ -168,6 +168,24 @@ static void pointless_print_unicode(pointless_debug_state_t* state, pointless_va
 	fprintf(state->out, "\"");
 }
 
+static void pointless_print_string(pointless_debug_state_t* state, pointless_value_t* v)
+{
+	assert(v->type == POINTLESS_STRING_);
+	uint8_t* s = pointless_reader_string_value_ascii(state->p, v);
+
+	fprintf(state->out, "\"");
+
+	while (*s) {
+		if (*s < 128)
+			fprintf(state->out, "%c", (char)*s);
+		else
+			fprintf(state->out, "?");
+
+		s++;
+	}
+
+	fprintf(state->out, "\"");
+}
 static void pointless_print_bitvector(pointless_debug_state_t* state, pointless_value_t* v)
 {
 	uint32_t i, n_bits = pointless_reader_bitvector_n_bits(state->p, v);
@@ -397,8 +415,11 @@ static void pointless_print_map(pointless_debug_state_t* state, pointless_value_
 static void pointless_print_value(pointless_debug_state_t* state, pointless_value_t* v, uint32_t depth)
 {
 	switch (v->type) {
-		case POINTLESS_UNICODE:
+		case POINTLESS_UNICODE_:
 			pointless_print_unicode(state, v);
+			break;
+		case POINTLESS_STRING_:
+			pointless_print_string(state, v);
 			break;
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:

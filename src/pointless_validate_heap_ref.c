@@ -32,7 +32,8 @@ int32_t pointless_validate_inline_invariants(pointless_validate_context_t* conte
 			}
 
 			break;
-		case POINTLESS_UNICODE:
+		case POINTLESS_UNICODE_:
+		case POINTLESS_STRING_:
 		case POINTLESS_BITVECTOR_01:
 		case POINTLESS_BITVECTOR_10:
 		case POINTLESS_BITVECTOR_0:
@@ -73,9 +74,10 @@ int32_t pointless_validate_inline_invariants(pointless_validate_context_t* conte
 int32_t pointless_validate_heap_ref(pointless_validate_context_t* context, pointless_value_t* v, const char** error)
 {
 	switch (v->type) {
-		case POINTLESS_UNICODE:
-			if (v->data.data_u32 >= context->p->header->n_unicode) {
-				*error = "unicode reference out of bounds";
+		case POINTLESS_UNICODE_:
+		case POINTLESS_STRING_:
+			if (v->data.data_u32 >= context->p->header->n_string_unicode) {
+				*error = "string/unicode reference out of bounds";
 				return 0;
 			}
 

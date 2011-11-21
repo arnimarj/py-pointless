@@ -11,22 +11,46 @@ typedef struct {
 static int check_string(pointless_t* p, pointless_value_t* v, void* user)
 {
 	uint8_t* key_s = (uint8_t*)user;
-	uint32_t* s = pointless_reader_unicode_value_ucs4(p, v);
-	return (v->type == POINTLESS_UNICODE && pointless_cmp_unicode_ucs4_ascii(s, key_s) == 0);
+
+	if (v->type == POINTLESS_UNICODE_) {
+		uint32_t* s = pointless_reader_unicode_value_ucs4(p, v);
+		return (pointless_cmp_ucs4_ascii(s, key_s) == 0);
+	} else if (v->type == POINTLESS_STRING_) {
+		uint8_t* s = pointless_reader_string_value_ascii(p, v);
+		return (pointless_cmp_ascii_ascii(s, key_s) == 0);
+	}
+
+	return 0;
 }
 
 static int check_string_n(pointless_t* p, pointless_value_t* v, void* user)
 {
 	check_string_n_t* key = (check_string_n_t*)user;
-	uint32_t* s = pointless_reader_unicode_value_ucs4(p, v);
-	return (v->type == POINTLESS_UNICODE && pointless_cmp_unicode_ucs4_ascii_n(s, key->s, key->n) == 0);
+
+	if (v->type == POINTLESS_UNICODE_) {
+		uint32_t* s = pointless_reader_unicode_value_ucs4(p, v);
+		return ( pointless_cmp_ucs4_ascii_n(s, key->s, key->n) == 0);
+	} else if (v->type == POINTLESS_STRING_) {
+		uint8_t* s = pointless_reader_string_value_ascii(p, v);
+		return ( pointless_cmp_ascii_ascii_n(s, key->s, key->n) == 0);
+	}
+
+	return 0;
 }
 
 static int check_unicode(pointless_t* p, pointless_value_t* v, void* user)
 {
 	uint32_t* key_s = (uint32_t*)user;
-	uint32_t* s = pointless_reader_unicode_value_ucs4(p, v);
-	return (v->type == POINTLESS_UNICODE && pointless_cmp_unicode_ucs4_ucs4(s, key_s) == 0);
+
+	if (v->type == POINTLESS_UNICODE_) {
+		uint32_t* s = pointless_reader_unicode_value_ucs4(p, v);
+		return (pointless_cmp_ucs4_ucs4(s, key_s) == 0);
+	} else if (v->type == POINTLESS_STRING_) {
+		uint8_t* s = pointless_reader_string_value_ascii(p, v);
+		return (pointless_cmp_ascii_ucs4(s, key_s) == 0);
+	}
+
+	return 0;
 }
 
 static int check_i64(pointless_t* p, pointless_value_t* v, void* user)

@@ -122,7 +122,7 @@ static uint64_t measure_32_64_difference(const char* fname)
 
 	uint64_t increase = 0;
 
-	increase += p.header->n_unicode;
+	increase += p.header->n_string_unicode;
 	increase += p.header->n_vector;
 	increase += p.header->n_bitvector;
 	increase += p.header->n_set;

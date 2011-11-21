@@ -45,6 +45,11 @@ uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* s);
 uint32_t pointless_create_unicode_ucs2(pointless_create_t* c, uint16_t* s);
 uint32_t pointless_create_unicode_ascii(pointless_create_t* c, const char* s, const char** error);
 
+// string constructors, using different sources (each value must be at most 8 bits)
+uint32_t pointless_create_string_ucs4(pointless_create_t* c, uint32_t* v);
+uint32_t pointless_create_string_ucs2(pointless_create_t* c, uint16_t* s);
+uint32_t pointless_create_string_ascii(pointless_create_t* c, uint8_t* s);
+
 // bitvectors
 uint32_t pointless_create_bitvector(pointless_create_t* c, void* v, uint32_t n_bits);
 

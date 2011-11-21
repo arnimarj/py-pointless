@@ -71,18 +71,25 @@ void create_simple(pointless_create_t* c)
 	uint32_t bitvector_handle = pointless_create_bitvector(c, &value, 27);
 	CHECK_HANDLE(bitvector_handle);
 
-	// unicode
+	// string
+	uint32_t string_handle = pointless_create_string_ascii(c, (uint8_t*)"Arni Mar Jonsson");
+
+	if (string_handle == POINTLESS_CREATE_VALUE_FAIL) {
+		fprintf(stderr, "pointless_create_string_ascii() failure\n");
+		exit(EXIT_FAILURE);
+	}
+
 	uint32_t unicode_handle = pointless_create_unicode_ascii(c, "Arni Mar Jonsson", &error);
 
-	if (unicode_handle == POINTLESS_CREATE_VALUE_FAIL) {
+	if (string_handle == POINTLESS_CREATE_VALUE_FAIL) {
 		fprintf(stderr, "pointless_create_unicode_ascii() failure: %s\n", error);
 		exit(EXIT_FAILURE);
 	}
 
 	// add to vector
-	uint32_t i, handles[] = { bitvector_handle, vector_handle, unicode_handle };
+	uint32_t i, handles[] = { bitvector_handle, vector_handle, string_handle, unicode_handle };
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 4; i++) {
 		if (pointless_create_vector_value_append(c, vector_handle, handles[i]) == POINTLESS_CREATE_VALUE_FAIL) {
 			fprintf(stderr, "pointless_create_vector_append() failure\n");
 			exit(EXIT_FAILURE);

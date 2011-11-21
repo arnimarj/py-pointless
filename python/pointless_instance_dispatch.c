@@ -79,6 +79,12 @@ PyObject* pypointless_value_unicode(pointless_t* p, pointless_value_t* v)
 #endif
 }
 
+PyObject* pypointless_value_string(pointless_t* p, pointless_value_t* v)
+{
+	uint8_t* string_ascii = pointless_reader_string_value_ascii(p, v);
+	return PyString_FromString((const char*)string_ascii);
+}
+
 PyObject* pypointless_value(PyPointless* p, pointless_value_t* v)
 {
 	// create the actual value
@@ -97,7 +103,10 @@ PyObject* pypointless_value(PyPointless* p, pointless_value_t* v)
 		case POINTLESS_VECTOR_EMPTY:
 			return (PyObject*)PyPointlessVector_New(p, v, 0, pointless_reader_vector_n_items(&p->p, v));
 
-		case POINTLESS_UNICODE:
+		case POINTLESS_STRING_:
+			return pypointless_value_string(&p->p, v);
+
+		case POINTLESS_UNICODE_:
 			return pypointless_value_unicode(&p->p, v);
 
 		case POINTLESS_BITVECTOR:

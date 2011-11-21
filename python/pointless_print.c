@@ -36,6 +36,7 @@ static void print_state_pop(pypointless_print_state_t* state)
 }
 
 static PyObject* pypointless_unicode_str(pointless_t* p, pointless_value_t* v);
+static PyObject* pypointless_string_str(pointless_t* p, pointless_value_t* v);
 static PyObject* pypointless_vector_str(pointless_t* p, pointless_value_t* v, pypointless_print_state_t* state, uint32_t slice_i, uint32_t slice_n);
 static PyObject* pypointless_set_str(pointless_t* p, pointless_value_t* v, pypointless_print_state_t* state);
 static PyObject* pypointless_map_str(pointless_t* p, pointless_value_t* v, pypointless_print_state_t* state);
@@ -58,8 +59,10 @@ static PyObject* pypointless_str_rec(pointless_t* p, pointless_complete_value_t*
 	char buffer[1024];
 
 	switch (v->type) {
-		case POINTLESS_UNICODE:
+		case POINTLESS_UNICODE_:
 			return pypointless_unicode_str(p, &_v);
+		case POINTLESS_STRING_:
+			return pypointless_string_str(p, &_v);
 		case POINTLESS_SET_VALUE:
 			return pypointless_set_str(p, &_v, state);
 		case POINTLESS_MAP_VALUE_VALUE:
@@ -91,6 +94,18 @@ static PyObject* pypointless_str_rec(pointless_t* p, pointless_complete_value_t*
 static PyObject* pypointless_unicode_str(pointless_t* p, pointless_value_t* v)
 {
 	PyObject* s = pypointless_value_unicode(p, v);
+
+	if (s == 0)
+		return 0;
+
+	PyObject* str = PyObject_Repr(s);
+	Py_DECREF(s);
+	return str;
+}
+
+static PyObject* pypointless_string_str(pointless_t* p, pointless_value_t* v)
+{
+	PyObject* s = pypointless_value_string(p, v);
 
 	if (s == 0)
 		return 0;

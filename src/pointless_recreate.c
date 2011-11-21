@@ -7,7 +7,7 @@ typedef struct {
 
 	const char** error;
 
-	uint32_t* unicode_r_c_mapping;
+	uint32_t* string_unicode_r_c_mapping;
 	uint32_t* vector_r_c_mapping;
 	uint32_t* bitvector_r_c_mapping;
 	uint32_t* set_r_c_mapping;
@@ -68,8 +68,9 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 		case POINTLESS_VECTOR_FLOAT:
 			handle = state->vector_r_c_mapping[v->data.data_u32];
 			break;
-		case POINTLESS_UNICODE:
-			handle = state->unicode_r_c_mapping[v->data.data_u32];
+		case POINTLESS_UNICODE_:
+		case POINTLESS_STRING_:
+			handle = state->string_unicode_r_c_mapping[v->data.data_u32];
 			break;
 		case POINTLESS_BITVECTOR:
 			handle = state->bitvector_r_c_mapping[v->data.data_u32];
@@ -163,9 +164,15 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 			POINTLESS_RECREATE_FUNC_1(pointless_create_vector_value, state->c);
 			state->vector_r_c_mapping[v->data.data_u32] = handle;
 			return handle;
-		case POINTLESS_UNICODE:
+		case POINTLESS_UNICODE_:
 			POINTLESS_RECREATE_FUNC_2(pointless_create_unicode_ucs4, state->c, pointless_reader_unicode_value_ucs4(state->p, v));
-			state->unicode_r_c_mapping[v->data.data_u32] = handle;
+			state->string_unicode_r_c_mapping[v->data.data_u32] = handle;
+			if (handle == POINTLESS_CREATE_VALUE_FAIL)
+				*state->error = "out of memory";
+			return handle;
+		case POINTLESS_STRING_:
+			POINTLESS_RECREATE_FUNC_2(pointless_create_string_ascii, state->c, pointless_reader_string_value_ascii(state->p, v));
+			state->string_unicode_r_c_mapping[v->data.data_u32] = handle;
 			if (handle == POINTLESS_CREATE_VALUE_FAIL)
 				*state->error = "out of memory";
 			return handle;
@@ -283,19 +290,19 @@ uint32_t pointless_recreate_value(pointless_t* p_in, pointless_value_t* v_in, po
 
 	state.error = error;
 
-	state.unicode_r_c_mapping = 0;
+	state.string_unicode_r_c_mapping = 0;
 	state.vector_r_c_mapping = 0;
 	state.bitvector_r_c_mapping = 0;
 	state.set_r_c_mapping = 0;
 	state.map_r_c_mapping = 0;
 
-	state.unicode_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_unicode, UINT32_MAX);
+	state.string_unicode_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_string_unicode, UINT32_MAX);
 	state.vector_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_vector, UINT32_MAX);
 	state.bitvector_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_bitvector, UINT32_MAX);
 	state.set_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_set, UINT32_MAX);
 	state.map_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_map, UINT32_MAX);
 
-	if (state.unicode_r_c_mapping == 0 || state.vector_r_c_mapping == 0 || state.bitvector_r_c_mapping == 0) {
+	if (state.string_unicode_r_c_mapping == 0 || state.vector_r_c_mapping == 0 || state.bitvector_r_c_mapping == 0) {
 		*error = "out of memory";
 		goto error;
 	}
@@ -309,7 +316,7 @@ uint32_t pointless_recreate_value(pointless_t* p_in, pointless_value_t* v_in, po
 
 error:
 
-	pointless_free(state.unicode_r_c_mapping);
+	pointless_free(state.string_unicode_r_c_mapping);
 	pointless_free(state.vector_r_c_mapping);
 	pointless_free(state.bitvector_r_c_mapping);
 	pointless_free(state.set_r_c_mapping);

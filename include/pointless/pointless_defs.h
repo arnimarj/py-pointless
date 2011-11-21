@@ -39,8 +39,9 @@
 #define POINTLESS_WCHAR_T_IS_4_BYTES
 #endif
 
-// we use UCS4 for internal string representation
-#define pointless_char_t uint32_t
+// we use 32-bits for unicodes, and 8-bits for those who can
+#define pointless_string_char_t uint8_t
+#define pointless_unicode_char_t uint32_t
 
 // returned from create functions which fail
 #define POINTLESS_CREATE_VALUE_FAIL UINT32_MAX
@@ -65,7 +66,8 @@
 #define POINTLESS_VECTOR_EMPTY          9
 
 // unicode strings
-#define POINTLESS_UNICODE 10
+#define POINTLESS_UNICODE_ 10
+#define POINTLESS_STRING_ 29
 
 // bitvector
 #define POINTLESS_BITVECTOR        11
@@ -174,7 +176,7 @@ FILE FORMAT
 -----------
 
 pointless_value_t: root
-uint32_t: n_unicode
+uint32_t: n_string_unicode
 uint32_t: n_vectors
 uint32_t: n_bitvectors
 uint32_t: n_sets
@@ -182,7 +184,7 @@ uint32_t: n_maps
 
 pointless_value_t[n_inline_values_and_refs]
 
-uint32/64_t unicode_offsets[n_unicode]
+uint32/64_t string_offsets[n_unicode + n_string]
 uint32/64_t vector_offsets[n_vector]
 uint32/64_t bitvector_offsets[n_bitvectors]
 uint32/64_t set_offsets[n_sets]
@@ -193,7 +195,7 @@ uint32/64_t map_offsets[n_maps]
 
 typedef struct {
 	pointless_value_t root;
-	uint32_t n_unicode;
+	uint32_t n_string_unicode;
 	uint32_t n_vector;
 	uint32_t n_bitvector;
 	uint32_t n_set;
@@ -215,13 +217,13 @@ typedef struct {
 	pointless_header_t* header;
 
 	// offset vectors
-	uint32_t* unicode_offsets_32;
+	uint32_t* string_unicode_offsets_32;
 	uint32_t* vector_offsets_32;
 	uint32_t* bitvector_offsets_32;
 	uint32_t* set_offsets_32;
 	uint32_t* map_offsets_32;
 
-	uint64_t* unicode_offsets_64;
+	uint64_t* string_unicode_offsets_64;
 	uint64_t* vector_offsets_64;
 	uint64_t* bitvector_offsets_64;
 	uint64_t* set_offsets_64;
@@ -327,15 +329,15 @@ typedef struct {
 	// map-create-id -> map info
 	pointless_dynarray_t map_values;
 
-	// unicode-create-id -> unicode buffer (void*)
-	pointless_dynarray_t unicode_values;
+	// string/unicode-create-id -> string/unicode buffer (void*)
+	pointless_dynarray_t string_unicode_values;
 
 	// bitvector-create-id -> bitvector buffer (void*)
 	pointless_dynarray_t bitvector_values;
 
-	// unicode value -> unicode reference
-	Pvoid_t unicode_map_judy;
-	uint32_t unicode_map_judy_count;
+	// string/unicode value -> unicode reference
+	Pvoid_t string_unicode_map_judy;
+	uint32_t string_unicode_map_judy_count;
 
 	// bitvector value -> bitvector reference
 	Pvoid_t bitvector_map_judy;
@@ -363,14 +365,16 @@ typedef struct {
 #define cv_set_at(v) (&pointless_dynarray_ITEM_AT(pointless_create_set_t, &c->set_values, cv_value_data_u32(v)))
 #define cv_map_at(v) (&pointless_dynarray_ITEM_AT(pointless_create_map_t, &c->map_values, cv_value_data_u32(v)))
 #define cv_bitvector_at(v) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->bitvector_values, cv_value_data_u32(v))))
-#define cv_unicode_at(v) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->unicode_values, cv_value_data_u32(v))))
+#define cv_unicode_at(v) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->string_unicode_values, cv_value_data_u32(v))))
+#define cv_string_at(v) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->string_unicode_values, cv_value_data_u32(v))))
 
 #define cv_get_priv_vector(cv) (&pointless_dynarray_ITEM_AT(pointless_create_vector_priv_t, &c->priv_vector_values, (cv)->data.data_u32))
 #define cv_get_outside_vector(cv) (&pointless_dynarray_ITEM_AT(pointless_create_vector_outside_t, &c->outside_vector_values, (cv)->data.data_u32))
 #define cv_get_set(cv) (&pointless_dynarray_ITEM_AT(pointless_create_set_t, &c->set_values, (cv)->data.data_u32))
 #define cv_get_map(cv) (&pointless_dynarray_ITEM_AT(pointless_create_map_t, &c->map_values, (cv)->data.data_u32))
 #define cv_get_bitvector(cv) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->bitvector_values, (cv)->data.data_u32)))
-#define cv_get_unicode(cv) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->unicode_values, (cv)->data.data_u32)))
+#define cv_get_unicode(cv) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->string_unicode_values, (cv)->data.data_u32)))
+#define cv_get_string(cv) (*((void**)&pointless_dynarray_ITEM_AT(void*, &c->string_unicode_values, (cv)->data.data_u32)))
 
 // top-level type checkers
 size_t pointless_vector_item_size(uint32_t type);
@@ -415,16 +419,19 @@ uint32_t pointless_hash_create_32(pointless_create_t* c, pointless_create_value_
 
 // comparison functions
 #ifdef POINTLESS_WCHAR_T_IS_4_BYTES
-int32_t pointless_cmp_unicode_wchar_wchar(wchar_t* a, wchar_t* b);
+int32_t pointless_cmp_wchar_wchar(wchar_t* a, wchar_t* b);
 #endif
 
-int32_t pointless_cmp_unicode_ucs4_ucs4(uint32_t* a, uint32_t* b);
-int32_t pointless_cmp_unicode_ucs2_ucs4(uint16_t* a, uint32_t* b);
-int32_t pointless_cmp_unicode_ucs4_ucs2(uint32_t* a, uint16_t* b);
-int32_t pointless_cmp_unicode_ascii_ucs4(uint8_t* a, uint32_t* b);
-int32_t pointless_cmp_unicode_ucs4_ascii(uint32_t* a, uint8_t* b);
-int32_t pointless_cmp_unicode_ucs4_ascii_n(uint32_t* a, uint8_t* b, size_t n_b);
-int32_t pointless_cmp_unicode_ascii_ascii(uint8_t* a, uint8_t* b);
+int32_t pointless_cmp_ucs4_ucs4(uint32_t* a, uint32_t* b);
+int32_t pointless_cmp_ucs2_ucs4(uint16_t* a, uint32_t* b);
+int32_t pointless_cmp_ucs4_ucs2(uint32_t* a, uint16_t* b);
+int32_t pointless_cmp_ascii_ucs4(uint8_t* a, uint32_t* b);
+int32_t pointless_cmp_ucs4_ascii(uint32_t* a, uint8_t* b);
+int32_t pointless_cmp_ascii_ascii(uint8_t* a, uint8_t* b);
+
+int32_t pointless_cmp_ascii_ascii_n(uint8_t* a, uint8_t* b, size_t n_b);
+int32_t pointless_cmp_ucs4_ascii_n(uint32_t* a, uint8_t* b, size_t n_b);
+
 int32_t pointless_cmp_reader(pointless_t* p_a, pointless_complete_value_t* a, pointless_t* p_b, pointless_complete_value_t* b, const char** error);
 int32_t pointless_cmp_reader_acyclic(pointless_t* p_a, pointless_complete_value_t* a, pointless_t* p_b, pointless_complete_value_t* b);
 int32_t pointless_cmp_create(pointless_create_t* c, uint32_t a, uint32_t b, const char** error);
