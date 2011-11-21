@@ -288,35 +288,10 @@ void pointless_create_end(pointless_create_t* c)
 	c->bitvector_map_judy = 0;
 }
 
-static size_t pointless_unicode_len(pointless_char_t* s)
-{
-	size_t n = 0;
-
-	while (*s) {
-		n++;
-		s++;
-	}
-
-	return n;
-}
-
-static void pointless_unicode_cpy(pointless_char_t* dst, const pointless_char_t* src)
-{
-	while (*src) {
-		*dst = *src;
-		src += 1;
-		dst += 1;
-	}
-
-	*dst = 0;
-}
-
 static int pointless_serialize_unicode(pointless_create_cb_t* cb, void* unicode_buffer, const char** error)
 {
 	uint32_t* len = (uint32_t*)unicode_buffer;
 	pointless_char_t* s = (pointless_char_t*)(len + 1);
-
-	assert(pointless_unicode_len(s) == *len);
 
 	if (!(*cb->write)(len, sizeof(*len), cb->user, error))
 		return 0;
@@ -1585,7 +1560,7 @@ uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v)
 	int pop_unicode = 0;
 
 	// create buffer to hold [uint32 + v]
-	size_t unicode_len = pointless_unicode_len(v);
+	size_t unicode_len = pointless_ucs4_len(v);
 	void* unicode_buffer = pointless_malloc(sizeof(uint32_t) + sizeof(pointless_char_t) * (unicode_len + 1));
 
 	if (unicode_buffer == 0)
@@ -1594,7 +1569,7 @@ uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v)
 	// setup buffer data
 	*((uint32_t*)unicode_buffer) = (uint32_t)unicode_len;
 	pointless_char_t* vv = (pointless_char_t*)((uint32_t*)unicode_buffer + 1);
-	pointless_unicode_cpy(vv, v);
+	pointless_ucs4_cpy(vv, v);
 
 	// see if it already exists
 	Word_t* prev_ref = 0;
@@ -1654,7 +1629,7 @@ cleanup:
 
 uint32_t pointless_create_unicode_ucs2(pointless_create_t* c, uint16_t* s)
 {
-	uint32_t* ucs4 = pointless_unicode_ucs2_to_ucs4(s);
+	uint32_t* ucs4 = pointless_ucs2_to_ucs4(s);
 
 	if (ucs4 == 0)
 		return POINTLESS_CREATE_VALUE_FAIL;
@@ -1668,10 +1643,12 @@ uint32_t pointless_create_unicode_ucs2(pointless_create_t* c, uint16_t* s)
 
 uint32_t pointless_create_unicode_ascii(pointless_create_t* c, const char* s, const char** error)
 {
-	uint32_t* ucs4 = pointless_unicode_ascii_to_ucs4((char*)s, error);
+	uint32_t* ucs4 = pointless_ascii_to_ucs4((uint8_t*)s);
 
-	if (ucs4 == 0)
+	if (ucs4 == 0) {
+		*error = "out of memory";
 		return POINTLESS_CREATE_VALUE_FAIL;
+	}
 
 	uint32_t handle = pointless_create_unicode_ucs4(c, ucs4);
 

@@ -175,7 +175,12 @@ wchar_t* pointless_reader_unicode_value_wchar(pointless_t* p, pointless_value_t*
 
 uint16_t* pointless_reader_unicode_value_ucs2_alloc(pointless_t* p, pointless_value_t* v, const char** error)
 {
-	return pointless_unicode_ucs4_to_ucs2(pointless_reader_unicode_value_ucs4(p, v), error);
+	uint16_t* s = pointless_ucs4_to_ucs2(pointless_reader_unicode_value_ucs4(p, v));
+
+	if (s == 0)
+		*error = "out of memory";
+
+	return s;
 }
 
 uint32_t pointless_reader_vector_n_items(pointless_t* p, pointless_value_t* v)

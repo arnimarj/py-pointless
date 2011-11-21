@@ -98,24 +98,12 @@ static int32_t pointless_validate_unicode_heap(pointless_validate_context_t* con
 		return 0;
 	}
 
-	// right, try all the conversions
-	uint16_t* ucs2 = 0;
-	int retval = 0;
-
-	if (context->force_ucs2) {
-		ucs2 = pointless_unicode_ucs4_to_ucs2(s, error);
-
-		if (ucs2 == 0)
-			goto cleanup;
+	if (context->force_ucs2 && !pointless_is_ucs4_ucs2(s)) {
+		*error = "there are strings which don't fit in 16-bits";
+		return 0;
 	}
 
-	retval = 1;
-
-cleanup:
-
-	pointless_free(ucs2);
-
-	return retval;
+	return 1;
 }
 
 static int32_t pointless_validate_set_heap(pointless_validate_context_t* context, pointless_value_t* v, const char** error)

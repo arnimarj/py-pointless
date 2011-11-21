@@ -3,9 +3,10 @@
 static void PyPointlessSet_dealloc(PyPointlessSet* self)
 {
 	if (self->pp) {
-		self->pp->n_set_refs += 1;
+		self->pp->n_set_refs -= 1;
 		Py_DECREF(self->pp);
 	}
+
 	self->pp = 0;
 	self->v = 0;
 	self->container_id = 0;

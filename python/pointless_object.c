@@ -22,6 +22,7 @@ static void PyPointless_dealloc(PyPointless* self)
 		printf("WTF C: %zu\n", self->n_bitvector_refs);
 		printf("WTF D: %zu\n", self->n_map_refs);
 		printf("WTF E: %zu\n", self->n_set_refs);
+		printf("-------------------------------------\n");
 	}
 
 	self->n_root_refs = 0;
