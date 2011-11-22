@@ -1,59 +1,5 @@
 #include <pointless/pointless_validate.h>
 
-/*
-static int pointless_validate_set_complicated(pointless_validate_state_t* state, pointless_value_t* v)
-{
-	// get header
-	assert(v->data.data_u32 < state->p->header->n_set);
-	uint32_t offset = state->p->set_offsets[v->data.data_u32];
-	pointless_set_header_t* header = (pointless_set_header_t*)((char*)state->p->heap_ptr + offset);
-
-	// vectors must have the same number of items
-	uint32_t n_hash = pointless_reader_vector_n_items(state->p, &header->hash_vector);
-	uint32_t n_keys = pointless_reader_vector_n_items(state->p, &header->key_vector);
-
-	if (n_hash != n_keys) {
-		state->error = "set hash and key vectors do not contain the same number of items";
-		return 0;
-	}
-
-	// get base pointers for both
-	uint32_t* hashes = pointless_reader_vector_u32(state->p, &header->hash_vector);
-	pointless_value_t* keys = pointless_reader_vector_value(state->p, &header->key_vector);
-
-	// at this stage, all items have been validated, all that is left is to test the hash-map invariants
-	return pointless_hash_table_validate(state->p, header->n_items, n_keys, hashes, keys, 0, &state->error);
-}
-
-static int pointless_validate_map_complicated(pointless_validate_state_t* state, pointless_value_t* v)
-{
-	// get header
-	assert(v->data.data_u32 < state->p->header->n_map);
-	uint32_t offset = state->p->map_offsets[v->data.data_u32];
-	pointless_map_header_t* header = (pointless_map_header_t*)((char*)state->p->heap_ptr + offset);
-
-	// vectors must have the same number of items
-	uint32_t n_hash = pointless_reader_vector_n_items(state->p, &header->hash_vector);
-	uint32_t n_keys = pointless_reader_vector_n_items(state->p, &header->key_vector);
-	uint32_t n_values = pointless_reader_vector_n_items(state->p, &header->value_vector);
-
-	// (a == b && b == c) <=> !(a != b || b != c)
-	if (n_hash != n_keys || n_hash != n_values) {
-		state->error = "map hash, key and value vectors do not contain the same number of items";
-		return 0;
-
-	}
-
-	// get base pointers for both
-	uint32_t* hashes = pointless_reader_vector_u32(state->p, &header->hash_vector);
-	pointless_value_t* keys = pointless_reader_vector_value(state->p, &header->key_vector);
-	pointless_value_t* values = pointless_reader_vector_value(state->p, &header->value_vector);
-
-	// at this stage, all items have been validated, all that is left is to test the hash-map invariants
-	return pointless_hash_table_validate(state->p, header->n_items, n_keys, hashes, keys, values, &state->error);
-}
-*/
-
 typedef struct {
 	pointless_validate_context_t* context;
 	uint32_t pass;
@@ -64,11 +10,59 @@ typedef struct {
 	void* map;
 } pointless_validate_state_t;
 
+static int pointless_validate_set_complicated(pointless_validate_state_t* state, pointless_value_t* v)
+{
+	// get header
+	pointless_set_header_t* header = (pointless_set_header_t*)PC_HEAP_OFFSET(state->context->p, set_offsets, v->data.data_u32);
+
+	// vectors must have the same number of items
+	uint32_t n_hash = pointless_reader_vector_n_items(state->context->p, &header->hash_vector);
+	uint32_t n_keys = pointless_reader_vector_n_items(state->context->p, &header->key_vector);
+
+	if (n_hash != n_keys) {
+		state->error = "set hash and key vectors do not contain the same number of items";
+		return 0;
+	}
+
+	// get base pointers for both
+	uint32_t* hashes = pointless_reader_vector_u32(state->context->p, &header->hash_vector);
+	pointless_value_t* keys = pointless_reader_vector_value(state->context->p, &header->key_vector);
+
+	// at this stage, all items have been validated, all that is left is to test the hash-map invariants
+	return pointless_hash_table_validate(state->context->p, header->n_items, n_keys, hashes, keys, 0, &state->error);
+}
+
+static int pointless_validate_map_complicated(pointless_validate_state_t* state, pointless_value_t* v)
+{
+	// get header
+	// get header
+	pointless_map_header_t* header = (pointless_map_header_t*)PC_HEAP_OFFSET(state->context->p, map_offsets, v->data.data_u32);
+
+	// vectors must have the same number of items
+	uint32_t n_hash = pointless_reader_vector_n_items(state->context->p, &header->hash_vector);
+	uint32_t n_keys = pointless_reader_vector_n_items(state->context->p, &header->key_vector);
+	uint32_t n_values = pointless_reader_vector_n_items(state->context->p, &header->value_vector);
+
+	// (a == b && b == c) <=> !(a != b || b != c)
+	if (n_hash != n_keys || n_hash != n_values) {
+		state->error = "map hash, key and value vectors do not contain the same number of items";
+		return 0;
+	}
+
+	// get base pointers for both
+	uint32_t* hashes = pointless_reader_vector_u32(state->context->p, &header->hash_vector);
+	pointless_value_t* keys = pointless_reader_vector_value(state->context->p, &header->key_vector);
+	pointless_value_t* values = pointless_reader_vector_value(state->context->p, &header->value_vector);
+
+	// at this stage, all items have been validated, all that is left is to test the hash-map invariants
+	return pointless_hash_table_validate(state->context->p, header->n_items, n_keys, hashes, keys, values, &state->error);
+}
+
 static uint32_t pointless_validate_pass_cb(pointless_t* p, pointless_value_t* v, uint32_t depth, void* user)
 {
 	pointless_validate_state_t* state = (pointless_validate_state_t*)user;
 
-	assert(state->pass == 1 || state->pass == 2);
+	assert(state->pass == 1 || state->pass == 2 || state->pass == 3);
 
 	if (depth >= POINTLESS_MAX_DEPTH) {
 		state->error = "maximum depth exceeded";
@@ -123,6 +117,13 @@ static uint32_t pointless_validate_pass_cb(pointless_t* p, pointless_value_t* v,
 				return POINTLESS_WALK_STOP; 
 			}
 		}
+	// pass-3, hash test
+	} else if (state->pass == 2) {
+		if (v->type == POINTLESS_MAP_VALUE_VALUE && !pointless_validate_map_complicated(state, v))
+			return POINTLESS_WALK_STOP;
+
+		if (v->type == POINTLESS_SET_VALUE && !pointless_validate_set_complicated(state, v))
+			return POINTLESS_WALK_STOP;
 	}
 
 	// visit children
@@ -174,7 +175,17 @@ int pointless_validate(pointless_validate_context_t* context, const char** error
 	if (state.error)
 		goto cleanup;
 
-	//! TBD: hashability test
+	// reset visited vector
+	memset(state.vector, 0, ICEIL(context->p->header->n_vector, 8));
+	memset(state.set, 0, ICEIL(context->p->header->n_set, 8));
+	memset(state.map, 0, ICEIL(context->p->header->n_map, 8));
+
+	// pass 3
+	state.pass = 3;
+	pointless_walk(context->p, pointless_validate_pass_cb, (void*)&state);
+
+	if (state.error)
+		goto cleanup;
 
 	retval = 1;
 

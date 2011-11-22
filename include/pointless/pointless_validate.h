@@ -61,4 +61,7 @@ int32_t pointless_validate_inline_invariants(pointless_validate_context_t* conte
 // check heap data
 int32_t pointless_validate_heap_value(pointless_validate_context_t* context, pointless_value_t* v, const char** error);
 
+// validate hash table invariants
+int32_t pointless_hash_table_validate(pointless_t* p, uint32_t n_items, uint32_t n_buckets, uint32_t* hash_vector, pointless_value_t* key_vector, pointless_value_t* value_vector, const char** error);
+
 #endif
