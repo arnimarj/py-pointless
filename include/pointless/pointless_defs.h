@@ -3,12 +3,9 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <math.h>
 
 #include <Judy.h>
 
-#include <pointless/pointless_malloc.h>
 #include <pointless/pointless_dynarray.h>
 
 #define POINTLESS_FILE_FORMAT_OLDEST_VERSION_ 0

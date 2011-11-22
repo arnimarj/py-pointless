@@ -2,7 +2,6 @@
 #define __POINTLESS__DYNARRAY__H__
 
 #include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 #include <stdint.h>
 
