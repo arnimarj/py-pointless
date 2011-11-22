@@ -75,6 +75,10 @@ static uint32_t pointless_validate_pass_cb(pointless_t* p, pointless_value_t* v,
 		return POINTLESS_WALK_STOP;
 	}
 
+	// test heap reference
+	if (state->pass == 1 && !pointless_validate_heap_ref(state->context, v, &state->error))
+		return POINTLESS_WALK_STOP;
+
 	// if we have validate this container already, stop iterating downwards, otherwise, mark it as visited
 	switch (v->type) {
 		case POINTLESS_VECTOR_VALUE:
@@ -103,9 +107,6 @@ static uint32_t pointless_validate_pass_cb(pointless_t* p, pointless_value_t* v,
 
 	// pass-1, basic sanity checks
 	if (state->pass == 1) {
-		if (!pointless_validate_heap_ref(state->context, v, &state->error))
-			return POINTLESS_WALK_STOP;
-
 		if (!pointless_validate_inline_invariants(state->context, v, &state->error))
 			return POINTLESS_WALK_STOP;
 
