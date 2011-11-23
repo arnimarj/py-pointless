@@ -1,6 +1,6 @@
 #include <pointless/pointless_unicode_utils.h>
 
-#define POINTLESS_BELOW_RANGE(s, i_max) do {while (*(s) <= (i_max)) (s)++; return (*(s) == 0);} while (0);
+#define POINTLESS_BELOW_RANGE(s, i_max) do {while (*(s) && *(s) <= (i_max)) (s)++; return (*(s) == 0);} while (0);
 #define POINTLESS_STRING_LEN(s) do {size_t i = 0; while (*(s)) {(s)++; i++;} return i;} while (0);
 #define POINTLESS_STRING_CPY(dst, src) do {while (*(src)) {*(dst++) = *(src++);} *(dst) = 0;} while (0);
 
@@ -40,7 +40,7 @@ uint16_t* pointless_ucs4_to_ucs2(uint32_t* ucs4)
 
 	uint16_t* ucs2 = ucs2_;
 
-	while (ucs4)
+	while (*ucs4)
 		*ucs2++ = (uint16_t)*ucs4++;
 
 	*ucs2 = 0;
@@ -58,7 +58,7 @@ uint8_t* pointless_ucs4_to_ascii(uint32_t* ucs4)
 
 	uint8_t* ascii = ascii_;
 
-	while (ascii)
+	while (*ucs4)
 		*ascii++ = (uint8_t)*ucs4++;
 
 	*ascii = 0;
@@ -83,7 +83,7 @@ uint32_t* pointless_ucs2_to_ucs4(uint16_t* ucs2)
 	uint32_t* ucs4 = ucs4_;
 
 	while (*ucs2)
-		*ucs4++ = (uint32_t)(*ucs2++);
+		*ucs4++ = (uint32_t)*ucs2++;
 
 	*ucs4 = 0;
 	return ucs4_;
@@ -100,7 +100,7 @@ uint8_t* pointless_ucs2_to_ascii(uint16_t* ucs2)
 
 	uint8_t* ascii = ascii_;
 
-	while (ascii)
+	while (*ucs2)
 		*ascii++ = (uint16_t)*ucs2++;
 
 	*ascii = 0;
@@ -125,7 +125,7 @@ uint32_t* pointless_ascii_to_ucs4(uint8_t* ascii)
 	uint32_t* ucs4 = ucs4_;
 
 	while (*ascii)
-		*ucs4++ = (uint32_t)(*ascii++);
+		*ucs4++ = (uint32_t)*ascii++;
 
 	*ucs4 = 0;
 	return ucs4_;
