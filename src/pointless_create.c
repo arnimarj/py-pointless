@@ -605,8 +605,8 @@ static uint32_t pointless_create_vector_compression(pointless_create_t* c, uint3
 
 	// value ranges we've found, we do not support 64 bit integers, only 8, 16 and 32
 	// so these should hold them just fine
-	int64_t min_int = 0, max_int = 0, cur_int = 0, is_int = 0, init_int = 0;
-	float init_float = 0;
+	int64_t min_int = 0, max_int = 0, cur_int = 0;
+	int is_int = 0, init_int = 0, init_float = 0;
 
 	// create-time IDs for this vector
 	size_t n_items = pointless_dynarray_n_items(&cv_priv_vector_at(vector)->vector);
@@ -645,11 +645,8 @@ static uint32_t pointless_create_vector_compression(pointless_create_t* c, uint3
 				min_int = max_int = cur_int;
 				init_int = 1;
 			} else {
-				if (min_int > cur_int)
-					min_int = cur_int;
-
-				if (max_int < cur_int)
-					max_int = cur_int;
+				min_int = SIMPLE_MIN(min_int, cur_int);
+				max_int = SIMPLE_MAX(max_int, cur_int);
 			}
 		}
 	}
@@ -998,7 +995,7 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 			assert(cv_value_data_u32(i) == debug_n_string_unicode);
 
 			PC_WRITE_OFFSET();
-			PC_INCREMENT_OFFSET(sizeof(uint32_t) + (*((uint8_t*)cv_string_at(i)) + 1) * sizeof(uint8_t));
+			PC_INCREMENT_OFFSET(sizeof(uint32_t) + (*((uint32_t*)cv_string_at(i)) + 1) * sizeof(uint8_t));
 			PC_ALIGN_OFFSET();
 			debug_n_string_unicode += 1;
 		}

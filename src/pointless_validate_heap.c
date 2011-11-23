@@ -1,6 +1,10 @@
 #include <pointless/pointless_validate.h>
 
-#define POINTLESS_REQUIRE_HEAP(offset, n_bytes, error_msg) if (offset + n_bytes > context->p->heap_len) { *error = error_msg; return 0; }
+static int pointless_require_heap(pointless_validate_context_t* context, uint64_t offset, uint64_t n_bytes)
+{
+	intop_u64_t _past_last_byte = intop_u64_add(intop_u64_init(offset), intop_u64_init(n_bytes));
+	return (!_past_last_byte.is_overflow && _past_last_byte.value <= context->p->heap_len);
+}
 
 static int32_t pointless_validate_vector_heap(pointless_validate_context_t* context, pointless_value_t* v, const char** error)
 {
@@ -8,7 +12,10 @@ static int32_t pointless_validate_vector_heap(pointless_validate_context_t* cont
 
 	uint64_t offset = PC_OFFSET(context->p, vector_offsets, v->data.data_u32);
 
-	POINTLESS_REQUIRE_HEAP(offset, sizeof(uint32_t), "vector header too large for heap");
+	if (!pointless_require_heap(context, offset, sizeof(uint32_t))) {
+		*error = "vector header too large for heap";
+		return 0;
+	}
 
 	uint32_t* n_items = (uint32_t*)((char*)context->p->heap_ptr + offset);
 	uint32_t item_len = 0;
@@ -50,7 +57,13 @@ static int32_t pointless_validate_vector_heap(pointless_validate_context_t* cont
 			break;
 	}
 
-	POINTLESS_REQUIRE_HEAP(offset, sizeof(uint32_t) + (uint64_t)item_len * (uint64_t)(*n_items), "vector body too large for heap");
+	// sizeof(uint32_t) + (item_len * (*n_items))
+	intop_u64_t n_bytes = intop_u64_add(intop_u64_init(sizeof(uint32_t)), intop_u64_mult(intop_u64_init(item_len), intop_u64_init(*n_items)));
+
+	if (n_bytes.is_overflow || !pointless_require_heap(context, offset, n_bytes.value)) {
+		*error = "vector body too large for heap";
+		return 0;
+	}
 
 	return 1;
 }
@@ -61,11 +74,17 @@ static int32_t pointless_validate_bitvector_heap(pointless_validate_context_t* c
 	uint64_t offset = PC_OFFSET(context->p, bitvector_offsets, v->data.data_u32);
 
 	// uint32_t | bits
-	POINTLESS_REQUIRE_HEAP(offset, sizeof(uint32_t), "bitvector too large for heap");
+	if (!pointless_require_heap(context, offset, sizeof(uint32_t))) {
+		*error = "bitvector too large for heap";
+		return 0;
+	}
 
 	uint32_t* n_bits = (uint32_t*)((char*)context->p->heap_ptr + offset);
 
-	POINTLESS_REQUIRE_HEAP(offset, sizeof(uint32_t) + ICEIL(*n_bits, 8), "bitvector too large for heap");
+	if (!pointless_require_heap(context, offset, sizeof(uint32_t) + ICEIL(*n_bits, 8))) {
+		*error = "bitvector too large for heap";
+		return 0;
+	}
 
 	return 1;
 }
@@ -76,15 +95,23 @@ static int32_t pointless_validate_unicode_heap(pointless_validate_context_t* con
 	uint64_t offset = PC_OFFSET(context->p, string_unicode_offsets, v->data.data_u32);
 
 	// uint32_t | pointless_char_t * (len + 1)
-	POINTLESS_REQUIRE_HEAP(offset, sizeof(uint32_t), "unicode too large for heap");
+	if (!pointless_require_heap(context, offset, sizeof(uint32_t))) {
+		*error = "unicode too large for heap";
+		return 0;
+	}
 
 	uint32_t* s_len = (uint32_t*)((char*)context->p->heap_ptr + offset);
 
-	POINTLESS_REQUIRE_HEAP(offset, sizeof(uint32_t) + (uint64_t)(*s_len + 1) * (uint64_t)sizeof(pointless_unicode_char_t), "unicode too large for heap");
+	intop_u64_t n_bytes = intop_u64_add(intop_u64_init(sizeof(uint32_t)), intop_u64_mult(intop_u64_init((uint64_t)*s_len + 1), intop_u64_init(sizeof(pointless_unicode_char_t))));
+
+	if (n_bytes.is_overflow || !pointless_require_heap(context, offset, n_bytes.value)) {
+		*error = "unicode too large for heap";
+		return 0;
+	}
 
 	pointless_unicode_char_t* s = (pointless_unicode_char_t*)(s_len + 1);
 
-	uint32_t i;
+	uint64_t i;
 
 	for (i = 0; i < *s_len; i++) {
 		if (s[i] == 0) {
@@ -112,15 +139,23 @@ static int32_t pointless_validate_string_heap(pointless_validate_context_t* cont
 	uint64_t offset = PC_OFFSET(context->p, string_unicode_offsets, v->data.data_u32);
 
 	// uint32_t | pointless_char_t * (len + 1)
-	POINTLESS_REQUIRE_HEAP(offset, sizeof(uint32_t), "string too large for heap");
+	if (!pointless_require_heap(context, offset, sizeof(uint32_t))) {
+		*error = "string too large for heap";
+		return 0;
+	}
 
 	uint32_t* s_len = (uint32_t*)((char*)context->p->heap_ptr + offset);
 
-	POINTLESS_REQUIRE_HEAP(offset, sizeof(uint32_t) + (uint64_t)(*s_len + 1) * (uint64_t)sizeof(uint8_t), "string too large for heap");
+	intop_u64_t n_bytes = intop_u64_add(intop_u64_init(sizeof(uint32_t)), intop_u64_mult(intop_u64_init((uint64_t)*s_len + 1), intop_u64_init(sizeof(uint8_t))));
+
+	if (n_bytes.is_overflow || !pointless_require_heap(context, offset, n_bytes.value)) {
+		*error = "unicode too large for heap";
+		return 0;
+	}
 
 	uint8_t* s = (uint8_t*)(s_len + 1);
 
-	uint32_t i;
+	uint64_t i;
 
 	for (i = 0; i < *s_len; i++) {
 		if (s[i] == 0) {
@@ -130,7 +165,7 @@ static int32_t pointless_validate_string_heap(pointless_validate_context_t* cont
 	}
 
 	if (s[i] != 0) {
-		*error = "missing end-of-string";
+		*error = "missing end-of-string";	
 		return 0;
 	}
 
@@ -144,7 +179,11 @@ static int32_t pointless_validate_set_heap(pointless_validate_context_t* context
 	uint64_t offset = PC_OFFSET(context->p, set_offsets, v->data.data_u32);
 
 	// get header
-	POINTLESS_REQUIRE_HEAP(offset, sizeof(pointless_set_header_t), "set header too large for heap");
+	if (!pointless_require_heap(context, offset, sizeof(pointless_set_header_t))) {
+		*error = "set header too large for heap";
+		return 0;
+	}
+
 	pointless_set_header_t* header = (pointless_set_header_t*)((char*)context->p->heap_ptr + offset);
 
 	// hash/key vectors must be of a certain type
@@ -168,7 +207,11 @@ static int32_t pointless_validate_map_heap(pointless_validate_context_t* context
 	uint64_t offset = PC_OFFSET(context->p, map_offsets, v->data.data_u32);
 
 	// get header
-	POINTLESS_REQUIRE_HEAP(offset, sizeof(pointless_map_header_t), "map header too large for heap");
+	if (!pointless_require_heap(context, offset, sizeof(pointless_map_header_t))) {
+		*error = "map header too large for heap";
+		return 0;
+	}
+
 	pointless_map_header_t* header = (pointless_map_header_t*)((char*)context->p->heap_ptr + offset);
 
 	// hash/key vectors must be of a certain type
