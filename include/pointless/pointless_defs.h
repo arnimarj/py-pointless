@@ -7,6 +7,7 @@
 #include <Judy.h>
 
 #include <pointless/pointless_dynarray.h>
+#include <pointless/pointless_create_cache.h>
 
 #define POINTLESS_FILE_FORMAT_OLDEST_VERSION_ 0
 #define POINTLESS_FILE_FORMAT_LATEST_VERSION_ 2
