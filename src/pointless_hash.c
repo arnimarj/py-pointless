@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include <pointless/pointless_defs.h>
 #include <pointless/pointless_value.h>
 #include <pointless/pointless_reader.h>

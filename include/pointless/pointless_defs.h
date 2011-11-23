@@ -290,20 +290,6 @@ typedef struct {
 	uint32_t serialize_values;
 } pointless_create_map_t;
 
-#define POINTLESS_CREATE_CACHE_N_U32 (10000)
-
-#define POINTLESS_CREATE_CACHE_MIN_I32 (-10000)
-#define POINTLESS_CREATE_CACHE_MAX_I32  (10000)
-
-typedef struct {
-	uint32_t u32_cache[POINTLESS_CREATE_CACHE_N_U32];
-	uint32_t i32_cache[POINTLESS_CREATE_CACHE_MAX_I32 - POINTLESS_CREATE_CACHE_MIN_I32 + 1];
-	uint32_t null_handle;
-	uint32_t empty_slot_handle;
-	uint32_t true_handle;
-	uint32_t false_handle;
-} pointless_create_cache_t;
-
 typedef struct {
 	// root, index into 'values', or UINT32_MAX
 	uint32_t root;

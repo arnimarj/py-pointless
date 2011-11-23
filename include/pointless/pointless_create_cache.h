@@ -1,10 +1,26 @@
 #ifndef __POINTLESS__CREATE__CACHE__H__
 #define __POINTLESS__CREATE__CACHE__H__
 
-#include <pointless/pointless_defs.h>
+#include <stdint.h>
+
+#define POINTLESS_CREATE_CACHE_N_U32 (10000)
+
+#define POINTLESS_CREATE_CACHE_MIN_I32 (-10000)
+#define POINTLESS_CREATE_CACHE_MAX_I32  (10000)
+
+typedef struct {
+	uint32_t init;
+	uint32_t u32_cache[POINTLESS_CREATE_CACHE_N_U32];
+	uint32_t i32_cache[POINTLESS_CREATE_CACHE_MAX_I32 - POINTLESS_CREATE_CACHE_MIN_I32 + 1];
+	uint32_t null_handle;
+	uint32_t empty_slot_handle;
+	uint32_t true_handle;
+	uint32_t false_handle;
+} pointless_create_cache_t;
+
 
 // initialize cache
-void pointless_create_cache_init(pointless_create_cache_t* cache);
+void pointless_create_cache_init(pointless_create_cache_t* cache, uint32_t init_value);
 
 // U32
 uint32_t pointless_create_cache_get_u32(pointless_create_cache_t* cache, uint32_t u32);

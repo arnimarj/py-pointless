@@ -1556,11 +1556,6 @@ static PyObject* PyPointlessPrimVector_sizeof(PyPointlessPrimVector* self)
 	return PyLong_FromSize_t(sizeof(PyPointlessPrimVector) + pointless_dynarray_n_heap_bytes(&self->array));
 }
 
-static PyObject* PyPointlessPrimVector_malloc_sizeof(PyPointlessPrimVector* self)
-{
-	return PyLong_FromSize_t(sizeof(PyPointlessPrimVector) + pointless_malloc_sizeof(self->array._data));
-}
-
 static PyObject* PyPointlessPrimVector_get_typecode(PyPointlessPrimVector* self, void* closure)
 {
 	const char* s = 0;
@@ -1916,7 +1911,6 @@ static PyMethodDef PyPointlessPrimVector_methods[] = {
 	{"sort",        (PyCFunction)PyPointlessPrimVector_sort,          METH_NOARGS,  ""},
 	{"sort_proj",   (PyCFunction)PyPointlessPrimVector_sort_proj,     METH_VARARGS, ""},
 	{"__sizeof__",  (PyCFunction)PyPointlessPrimVector_sizeof,        METH_NOARGS,  ""},
-	{"__sizeof2__", (PyCFunction)PyPointlessPrimVector_malloc_sizeof, METH_NOARGS,  ""},
 	{"clear",       (PyCFunction)PyPointlessPrimVector_clear,         METH_NOARGS,  ""},
 	{"FromRemap",   (PyCFunction)PyPointlessPrimVector_from_remap,    METH_VARARGS | METH_CLASS, ""},
 	{"max",         (PyCFunction)PyPointlessPrimVector_max,           METH_NOARGS, ""},

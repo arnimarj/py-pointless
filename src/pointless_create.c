@@ -6,20 +6,22 @@ typedef struct {
 	void* user;
 } pointless_create_cb_t;
 
+static size_t align_next_4_size_t(size_t v)
+{
+	static size_t lookup[4] = {0, 3, 2, 1};
+	return v + lookup[v%4];
+}
+
 static uint32_t align_next_4_32(uint32_t v)
 {
-	while (v % 4)
-		v += 1;
-	
-	return v;
+	static uint32_t lookup[4] = {0, 3, 2, 1};
+	return v + lookup[v%4];
 }
 
 static uint64_t align_next_4_64(uint64_t v)
 {
-	while (v % 4)
-		v += 1;
-
-	return v;
+	static uint64_t lookup[4] = {0, 3, 2, 1};
+	return v + lookup[v%4];
 }
 
 // convert create-time value to serializable value, with offset correction
@@ -199,7 +201,7 @@ static void pointless_create_begin_(pointless_create_t* c, uint32_t version)
 {
 	c->root = UINT32_MAX;
 
-	pointless_create_cache_init(&c->cache);
+	pointless_create_cache_init(&c->cache, POINTLESS_CREATE_VALUE_FAIL);
 
 	pointless_dynarray_init(&c->values, sizeof(pointless_create_value_t));
 	pointless_dynarray_init(&c->priv_vector_values, sizeof(pointless_create_vector_priv_t));
@@ -298,7 +300,7 @@ static int pointless_serialize_string(pointless_create_cb_t* cb, void* string_bu
 	uint32_t* len = (uint32_t*)string_buffer;
 	pointless_string_char_t* s = (pointless_string_char_t*)(len + 1);
 
-	assert(pointless_string_len(s) == *len);
+	assert(pointless_ascii_len(s) == *len);
 
 	if (!(*cb->write)(len, sizeof(*len), cb->user, error))
 		return 0;
@@ -1002,7 +1004,7 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 		}
 	}
 
-	assert(debug_n_string_unicode == c->unicode_map_judy_count);
+	assert(debug_n_string_unicode == c->string_unicode_map_judy_count);
 
 	// then private vectors
 	uint32_t debug_n_priv_vectors = 0;
@@ -1426,10 +1428,10 @@ static int dynarray_write(void* buf, size_t buflen, void* user, const char** err
 static int dynarray_align_4(void* user, const char** error)
 {
 	pointless_dynarray_t* a = (pointless_dynarray_t*)user;
+	uint8_t zero = 0;
+	size_t i, n = align_next_4_size_t(pointless_dynarray_n_items(a));
 
-	while (pointless_dynarray_n_items(a) % 4) {
-		unsigned char zero = 0;
-
+	for (i = 0; i < n; i++) {
 		if (!pointless_dynarray_push(a, &zero)) {
 			*error = "out of memory";
 			return 0;
@@ -1649,7 +1651,8 @@ uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v)
 
 	c->string_unicode_map_judy_count += 1;
 
-	assert(c->unicode_map_judy_count == pointless_dynarray_n_items(&c->string_unicode_values));
+	assert(c->string_unicode_map_judy_count == pointless_dynarray_n_items(&c->string_unicode_values));
+
 	// we're done
 	return (pointless_dynarray_n_items(&c->values) - 1);
 
@@ -1724,7 +1727,7 @@ uint32_t pointless_create_string_ascii(pointless_create_t* c, uint8_t* v)
 
 	c->string_unicode_map_judy_count += 1;
 
-	assert(c->unicode_map_judy_count == pointless_dynarray_n_items(&c->string_unicode_values));
+	assert(c->string_unicode_map_judy_count == pointless_dynarray_n_items(&c->string_unicode_values));
 	// we're done
 	return (pointless_dynarray_n_items(&c->values) - 1);
 

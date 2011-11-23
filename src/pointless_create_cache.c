@@ -1,26 +1,27 @@
 #include <pointless/pointless_create_cache.h>
 
 // initialize cache
-void pointless_create_cache_init(pointless_create_cache_t* cache)
+void pointless_create_cache_init(pointless_create_cache_t* cache, uint32_t init_value)
 {
 	uint32_t i;
+	cache->init = init_value;
 
 	for (i = 0; i < POINTLESS_CREATE_CACHE_N_U32; i++)
-		cache->u32_cache[i] = POINTLESS_CREATE_VALUE_FAIL;
+		cache->u32_cache[i] = cache->init;
 
 	for (i = 0; i < (POINTLESS_CREATE_CACHE_MAX_I32 - POINTLESS_CREATE_CACHE_MIN_I32 + 1); i++)
-		cache->i32_cache[i] = POINTLESS_CREATE_VALUE_FAIL;
+		cache->i32_cache[i] = cache->init;
 
-	cache->null_handle = POINTLESS_CREATE_VALUE_FAIL;
-	cache->empty_slot_handle = POINTLESS_CREATE_VALUE_FAIL;
-	cache->true_handle = POINTLESS_CREATE_VALUE_FAIL;
-	cache->false_handle = POINTLESS_CREATE_VALUE_FAIL;
+	cache->null_handle = cache->init;
+	cache->empty_slot_handle = cache->init;
+	cache->true_handle = cache->init;
+	cache->false_handle = cache->init;
 }
 
 // U32
 uint32_t pointless_create_cache_get_u32(pointless_create_cache_t* cache, uint32_t u32)
 {
-	uint32_t handle = POINTLESS_CREATE_VALUE_FAIL;
+	uint32_t handle = cache->init;
 
 	if (u32 < POINTLESS_CREATE_CACHE_N_U32)
 		handle = cache->u32_cache[u32];
@@ -37,7 +38,7 @@ void pointless_create_cache_set_u32(pointless_create_cache_t* cache, uint32_t u3
 // I32
 uint32_t pointless_create_cache_get_i32(pointless_create_cache_t* cache, int32_t i32)
 {
-	uint32_t handle = POINTLESS_CREATE_VALUE_FAIL;
+	uint32_t handle = cache->init;
 
 	if (POINTLESS_CREATE_CACHE_MIN_I32 <= i32 && i32 <= POINTLESS_CREATE_CACHE_MAX_I32)
 		handle = cache->i32_cache[i32 - POINTLESS_CREATE_CACHE_MIN_I32];

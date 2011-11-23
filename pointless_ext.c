@@ -13,8 +13,6 @@ static PyPointless_CAPI CAPI = {
 	pointless_free,
 	pointless_realloc,
 	pointless_strdup,
-	pointless_malloc_sizeof,
-	pointless_malloc_stats,
 	PyPointlessPrimVector_from_T_vector,
 	PyPointlessPrimVector_from_buffer,
 	bentley_sort_,
