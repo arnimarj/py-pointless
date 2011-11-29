@@ -22,7 +22,7 @@ static const char* skip_whitespace(const char* e)
 	return e;
 }
 
-static const char* pointless_eval_get_(pointless_t* p, pointless_value_t* root, const char* e, va_list ap)
+static const char* pointless_eval_get_single(pointless_t* p, pointless_value_t* root, const char* e, va_list ap)
 {
 	// skip whitespace
 	e = skip_whitespace(e);
@@ -195,18 +195,145 @@ static const char* pointless_eval_get_(pointless_t* p, pointless_value_t* root, 
 	return skip_whitespace(e + 1);
 }
 
+static int pointless_eval_get_(pointless_t* p, pointless_value_t* root, pointless_value_t* v, const char* e, va_list ap)
+{
+	*v = *root;
+
+	while (e && *e)
+		e = pointless_eval_get_single(p, v, e, ap);
+
+	return (e != 0);
+}
+
 int pointless_eval_get(pointless_t* p, pointless_value_t* root, pointless_value_t* v, const char* e, ...)
 {
 	va_list ap;
 	va_start(ap, e);
+	int i = pointless_eval_get_(p, root, v, e, ap);
+	va_end(ap);
+	return i;
+}
 
-	const char* s = e;
-	*v = *root;
-
-	while (s && *s)
-		s = pointless_eval_get_(p, v, s, ap);
-
+int pointless_eval_get_as_string(pointless_t* p, pointless_value_t* root, uint8_t** v, const char* e, ...)
+{
+	pointless_value_t v_;
+	va_list ap;
+	va_start(ap, e);
+	int i = pointless_eval_get_(p, root, &v_, e, ap);
 	va_end(ap);
 
-	return (s != 0);
+	if (i && v_.type == POINTLESS_STRING_) {
+		*v = pointless_reader_string_value_ascii(p, &v_);
+		return 1;
+	}
+
+	return 0;
+}
+
+int pointless_eval_get_as_u32(pointless_t* p, pointless_value_t* root, uint32_t* v, const char* e, ...)
+{
+	pointless_value_t v_;
+	va_list ap;
+	va_start(ap, e);
+	int i = pointless_eval_get_(p, root, &v_, e, ap);
+	va_end(ap);
+
+	if (i && v_.type == POINTLESS_U32) {
+		*v = pointless_value_get_u32(v_.type, &v_.data);
+		return 1;
+	}
+
+	return 0;
+}
+
+int pointless_eval_get_as_map(pointless_t* p, pointless_value_t* root, pointless_value_t* v, const char* e, ...)
+{
+	va_list ap;
+	va_start(ap, e);
+	int i = pointless_eval_get_(p, root, v, e, ap);
+	va_end(ap);
+
+	return (i && v->type == POINTLESS_MAP_VALUE_VALUE);
+}
+
+int pointless_eval_get_as_vector_u16(pointless_t* p, pointless_value_t* root, uint16_t** v, uint32_t* n, const char* e, ...)
+{
+	pointless_value_t v_;
+	va_list ap;
+	va_start(ap, e);
+	int i = pointless_eval_get_(p, root, &v_, e, ap);
+	va_end(ap);
+
+	if (i && v_.type == POINTLESS_VECTOR_U16) {
+		*n = pointless_reader_vector_n_items(p, &v_);
+		*v = pointless_reader_vector_u16(p, &v_);
+		return 1;
+	}
+
+	return 0;
+}
+
+int pointless_eval_get_as_vector_u32(pointless_t* p, pointless_value_t* root, uint32_t** v, uint32_t* n, const char* e, ...)
+{
+	pointless_value_t v_;
+	va_list ap;
+	va_start(ap, e);
+	int i = pointless_eval_get_(p, root, &v_, e, ap);
+	va_end(ap);
+
+	if (i && v_.type == POINTLESS_VECTOR_U32) {
+		*n = pointless_reader_vector_n_items(p, &v_);
+		*v = pointless_reader_vector_u32(p, &v_);
+		return 1;
+	}
+
+	return 0;
+}
+
+int pointless_eval_get_as_vector_f(pointless_t* p, pointless_value_t* root, float** v, uint32_t* n, const char* e, ...)
+{
+	pointless_value_t v_;
+	va_list ap;
+	va_start(ap, e);
+	int i = pointless_eval_get_(p, root, &v_, e, ap);
+	va_end(ap);
+
+	if (i && v_.type == POINTLESS_VECTOR_FLOAT) {
+		*n = pointless_reader_vector_n_items(p, &v_);
+		*v = pointless_reader_vector_float(p, &v_);
+		return 1;
+	}
+
+	return 0;
+}
+
+int pointless_eval_get_as_bitvector(pointless_t* p, pointless_value_t* root, pointless_value_t* v, uint32_t* n, const char* e, ...)
+{
+	va_list ap;
+	va_start(ap, e);
+	int i = pointless_eval_get_(p, root, v, e, ap);
+	va_end(ap);
+
+	if (i && pointless_is_bitvector_type(v->type)) {
+		*n = pointless_reader_bitvector_n_bits(p, v);
+		return 1;
+	}
+
+	return 0;
+}
+
+int pointless_eval_get_as_boolean(pointless_t* p, pointless_value_t* root, uint32_t* v, const char* e, ...)
+{
+	pointless_value_t v_;
+	va_list ap;
+	va_start(ap, e);
+	int i = pointless_eval_get_(p, root, &v_, e, ap);
+	va_end(ap);
+
+	if (i && v_.type == POINTLESS_BOOLEAN) {
+		*v = pointless_value_get_bool(v_.type, &v_.data);
+		return 1;
+	}
+
+	return 0;
 }

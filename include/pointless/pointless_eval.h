@@ -26,4 +26,14 @@
 //   %i64:  int64_t
 int pointless_eval_get(pointless_t* p, pointless_value_t* root, pointless_value_t* v, const char* e, ...);
 
+// and convencience functions
+int pointless_eval_get_as_u32(pointless_t* p, pointless_value_t* root, uint32_t* v, const char* e, ...);
+int pointless_eval_get_as_map(pointless_t* p, pointless_value_t* root, pointless_value_t* v, const char* e, ...);
+int pointless_eval_get_as_string(pointless_t* p, pointless_value_t* root, uint8_t** v, const char* e, ...);
+int pointless_eval_get_as_vector_u16(pointless_t* p, pointless_value_t* root, uint16_t** v, uint32_t* n, const char* e, ...);
+int pointless_eval_get_as_vector_u32(pointless_t* p, pointless_value_t* root, uint32_t** v, uint32_t* n, const char* e, ...);
+int pointless_eval_get_as_vector_f(pointless_t* p, pointless_value_t* root, float** v, uint32_t* n, const char* e, ...);
+int pointless_eval_get_as_bitvector(pointless_t* p, pointless_value_t* root, pointless_value_t* v, uint32_t* n, const char* e, ...);
+int pointless_eval_get_as_boolean(pointless_t* p, pointless_value_t* root, uint32_t* v, const char* e, ...);
+
 #endif
