@@ -46,14 +46,14 @@ static const char* pointless_eval_get_single(pointless_t* p, pointless_value_t* 
 
 	switch (*e) {
 		// string
-		case '\"':
+		case '\'':
 			e += 1;
 			s = e;
-			while (*e && *e != '\"') {
+			while (*e && *e != '\'') {
 				e++;
 				s_n++;
 			}
-			if (*e != '\"')
+			if (*e != '\'')
 				return 0;
 			e += 1;
 			break;

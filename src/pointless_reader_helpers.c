@@ -29,10 +29,10 @@ static int check_string_n(pointless_t* p, pointless_value_t* v, void* user)
 
 	if (v->type == POINTLESS_UNICODE_) {
 		uint32_t* s = pointless_reader_unicode_value_ucs4(p, v);
-		return ( pointless_cmp_ucs4_ascii_n(s, key->s, key->n) == 0);
+		return (pointless_cmp_ucs4_ascii_n(s, key->s, key->n) == 0);
 	} else if (v->type == POINTLESS_STRING_) {
 		uint8_t* s = pointless_reader_string_value_ascii(p, v);
-		return ( pointless_cmp_ascii_ascii_n(s, key->s, key->n) == 0);
+		return (pointless_cmp_ascii_ascii_n(s, key->s, key->n) == 0);
 	}
 
 	return 0;

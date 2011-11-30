@@ -1,26 +1,28 @@
 import sys, commands
 from distutils.core import setup, Extension
 
-print('INFO: building judy static library...')
+def build_judy():
 
-if sys.maxint == 2**63-1:
-	CFLAGS = '-O3 -fPIC -DJU_64BIT'
-elif sys.maxint == 2**31-1:
-	CFLAGS = '-O3 -fPIC'
-else:
-	sys.exit('bad sys.maxint')
+	print('INFO: building judy static library...')
 
-a, b = commands.getstatusoutput('(cd judy/src; COPT=\'%s\' sh ./sh_build)' % (CFLAGS,))
+	if sys.maxint == 2**63-1:
+		CFLAGS = '-O3 -fPIC -DJU_64BIT'
+	elif sys.maxint == 2**31-1:
+		CFLAGS = '-O3 -fPIC'
+	else:
+		sys.exit('bad sys.maxint')
 
-if a != 0:
-	sys.exit(b)
+	a, b = commands.getstatusoutput('(cd judy/src; COPT=\'%s\' sh ./sh_build)' % (CFLAGS,))
+
+	if a != 0:
+		sys.exit(b)
+
+build_judy()
 
 extra_compile_args = [
 	'-I./judy/src',
 	'-I./include',
 	'-I/usr/local/include',
-	'-pedantic',
-	'-std=c99',
 	'-Wall',
 	'-Wno-strict-prototypes',
 	'-g',

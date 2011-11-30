@@ -91,7 +91,7 @@ int pointless_open_f(pointless_t* p, const char* fname, int force_ucs2, const ch
 			case ENODEV:       *error = "fopen(): ENODEV";       break;
 			case ENOMEM:       *error = "fopen(): ENOMEM";       break;
 			case EOVERFLOW:    *error = "fopen(): EOVERFLOW";    break;
-			case EFBIG:        *error = "fopen(): EFBIG";    break;
+			case EFBIG:        *error = "fopen(): EFBIG";        break;
 			default:           *error = "fopen(): error";        break;
 		}
 
