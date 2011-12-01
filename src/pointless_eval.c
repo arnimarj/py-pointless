@@ -307,6 +307,23 @@ int pointless_eval_get_as_vector_f(pointless_t* p, pointless_value_t* root, floa
 	return 0;
 }
 
+int pointless_eval_get_as_vector_value(pointless_t* p, pointless_value_t* root, pointless_value_t** v, uint32_t* n, const char* e, ...)
+{
+	pointless_value_t v_;
+	va_list ap;
+	va_start(ap, e);
+	int i = pointless_eval_get_(p, root, &v_, e, ap);
+	va_end(ap);
+
+	if (i && (v_.type == POINTLESS_VECTOR_VALUE || v_.type == POINTLESS_VECTOR_VALUE_HASHABLE)) {
+		*n = pointless_reader_vector_n_items(p, &v_);
+		*v = pointless_reader_vector_value(p, &v_);
+		return 1;
+	}
+
+	return 0;
+}
+
 int pointless_eval_get_as_bitvector(pointless_t* p, pointless_value_t* root, pointless_value_t* v, uint32_t* n, const char* e, ...)
 {
 	va_list ap;

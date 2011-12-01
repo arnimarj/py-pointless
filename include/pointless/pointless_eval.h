@@ -33,6 +33,7 @@ int pointless_eval_get_as_string(pointless_t* p, pointless_value_t* root, uint8_
 int pointless_eval_get_as_vector_u16(pointless_t* p, pointless_value_t* root, uint16_t** v, uint32_t* n, const char* e, ...);
 int pointless_eval_get_as_vector_u32(pointless_t* p, pointless_value_t* root, uint32_t** v, uint32_t* n, const char* e, ...);
 int pointless_eval_get_as_vector_f(pointless_t* p, pointless_value_t* root, float** v, uint32_t* n, const char* e, ...);
+int pointless_eval_get_as_vector_value(pointless_t* p, pointless_value_t* root, pointless_value_t** v, uint32_t* n, const char* e, ...);
 int pointless_eval_get_as_bitvector(pointless_t* p, pointless_value_t* root, pointless_value_t* v, uint32_t* n, const char* e, ...);
 int pointless_eval_get_as_boolean(pointless_t* p, pointless_value_t* root, uint32_t* v, const char* e, ...);
 
