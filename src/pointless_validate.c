@@ -118,7 +118,7 @@ static uint32_t pointless_validate_pass_cb(pointless_t* p, pointless_value_t* v,
 			}
 		}
 	// pass-3, hash test
-	} else if (state->pass == 2) {
+	} else if (state->pass == 3) {
 		if (v->type == POINTLESS_MAP_VALUE_VALUE && !pointless_validate_map_complicated(state, v))
 			return POINTLESS_WALK_STOP;
 

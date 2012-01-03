@@ -139,8 +139,10 @@ static void pointless_print_vector_other(pointless_debug_state_t* state, pointle
 			fprintf(state->out, "%llu", uu);
 		else if (is_signed)
 			fprintf(state->out, "%lli", ii);
-		else
+		else if (is_float)
 			fprintf(state->out, "%.f", ff);
+		else
+			assert(0);
 
 		if (i + 1 < n)
 			fprintf(state->out, ",");
