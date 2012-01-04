@@ -5,7 +5,7 @@ typedef struct {
 	int is_error;           // true iff error, python exception is also set
 	int error_line;
 	Pvoid_t objects_used;   // PyObject* -> create-time-handle
-
+	int unwiden_strings;    // true iff: we find the smallest representations for strings
 } pointless_export_state_t;
 
 static uint32_t pointless_export_get_seen(pointless_export_state_t* state, PyObject* py_object)
@@ -309,12 +309,12 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		Py_UNICODE* python_buffer = PyUnicode_AS_UNICODE(py_object);
 
 		#if Py_UNICODE_SIZE == 4
-			if (pointless_is_ucs4_ascii((uint32_t*)python_buffer))
+			if (state->unwiden_strings && pointless_is_ucs4_ascii((uint32_t*)python_buffer))
 				handle = pointless_create_string_ucs4(&state->c, python_buffer);
 			else
 				handle = pointless_create_unicode_ucs4(&state->c, python_buffer);
 		#else
-			if (pointless_is_ucs2_ascii(python_buffer))
+			if (state->unwiden_strings && pointless_is_ucs2_ascii(python_buffer))
 				handle = pointless_create_string_ucs2(&state->c, python_buffer);
 			else
 				handle = pointless_create_unicode_ucs2(&state->c, python_buffer);
@@ -510,7 +510,7 @@ const char pointless_write_object_doc[] =
 "  object: the object\n"
 "  fname:  the file name\n"
 ;
-PyObject* pointless_write_object(PyObject* self, PyObject* args)
+PyObject* pointless_write_object(PyObject* self, PyObject* args, PyObject* kwds)
 {
 	const char* fname = 0;
 	PyObject* object = 0;
@@ -523,9 +523,16 @@ PyObject* pointless_write_object(PyObject* self, PyObject* args)
 	state.objects_used = 0;
 	state.is_error = 0;
 	state.error_line = -1;
+	state.unwiden_strings = 0;
 
-	if (!PyArg_ParseTuple(args, "Os:write_object", &object, &fname))
+	PyObject* unwiden_strings = 0;
+	static char* kwargs[] = {"object", "filename", "unwiden_strings", 0};
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "Os|O!:serialize", kwargs, &object, &fname, &PyBool_Type, &unwiden_strings))
 		return 0;
+
+	if (unwiden_strings == Py_True)
+		state.unwiden_strings = 1;
 
 	pointless_create_begin_64(&state.c);
 
@@ -534,10 +541,9 @@ PyObject* pointless_write_object(PyObject* self, PyObject* args)
 	if (state.is_error)
 		goto cleanup;
 
-	int c = pointless_create_output_and_end_f(&state.c, fname, &error);
 	create_end = 0;
 
-	if (!c) {
+	if (!pointless_create_output_and_end_f(&state.c, fname, &error)) {
 		PyErr_Format(PyExc_IOError, "pointless_create_output: %s", error);
 		goto cleanup;
 	}

@@ -24,23 +24,27 @@ static PyPointless_CAPI CAPI = {
 	&PyPointlessPrimVectorType
 };
 
+PyObject* pointless_write_object(PyObject* self, PyObject* args, PyObject* kwds);
+extern const char pointless_write_object_doc[];
+
+PyObject* pointless_pyobject_hash_32(PyObject* self, PyObject* args);
+extern const char pointless_pyobject_hash_32_doc[];
+
+PyObject* pointless_cmp(PyObject* self, PyObject* args);
+extern const char pointless_cmp_doc[];
+
+PyObject* pointless_is_eq(PyObject* self, PyObject* args);
+extern const char pointless_is_eq_doc[];
+
 static PyMethodDef pointless_methods[] =
 {
-	POINTLESS_FUNC_DEF("serialize",         pointless_write_object),
-	POINTLESS_FUNC_DEF("pyobject_hash",     pointless_pyobject_hash_32),
-	POINTLESS_FUNC_DEF("pyobject_hash_32",  pointless_pyobject_hash_32),
-	POINTLESS_FUNC_DEF("pointless_cmp",     pointless_cmp),
-	POINTLESS_FUNC_DEF("pointless_is_eq",   pointless_is_eq),
+	{"serialize",        (PyCFunction)pointless_write_object,     METH_VARARGS | METH_KEYWORDS, pointless_write_object_doc     },
+	{"pyobject_hash",    (PyCFunction)pointless_pyobject_hash_32, METH_VARARGS,                 pointless_pyobject_hash_32_doc },
+	{"pyobject_hash_32", (PyCFunction)pointless_pyobject_hash_32, METH_VARARGS,                 pointless_pyobject_hash_32_doc },
+	{"pointless_cmp",    (PyCFunction)pointless_cmp,              METH_VARARGS,                 pointless_cmp_doc              },
+	{"pointless_is_eq",  (PyCFunction)pointless_is_eq,            METH_VARARGS,                 pointless_is_eq_doc            },
 	{NULL, NULL},
 };
-
-#define POINTLESS_FUNC_DEF(pyfunc, func) { pyfunc, func, METH_VARARGS, func##_doc}
-
-// helpers
-#define TRY_MODULE_INIT(module, description) PyObject* module##_module = 0; if ((module##_module = Py_InitModule4(#module, module##_methods, description, 0, PYTHON_API_VERSION)) == 0) { return; }
-#define TRY_MODULE_ADD_OBJECT(module, key, value) if (PyModule_AddObject(module, key, value) != 0) return;
-
-#include <stdlib.h>
 
 PyMODINIT_FUNC
 initpointless(void)
@@ -50,80 +54,47 @@ initpointless(void)
 		return;
 	}
 
-	TRY_MODULE_INIT(pointless, "Pointless Python API");
+	PyObject* module_pointless = 0;
 
-	if (PyType_Ready(&PyPointlessType) < 0)
+	if ((module_pointless = Py_InitModule4("pointless", pointless_methods, "Pointless Python API", 0, PYTHON_API_VERSION)) == 0)
 		return;
 
-	if (PyType_Ready(&PyPointlessVectorType) < 0)
-		return;
+	struct {
+		PyTypeObject* type;
+		const char* name;
+	} types[13] = {
+		{&PyPointlessType,               "Pointless"               },
+		{&PyPointlessVectorType,         "PointlessVector"         },
+		{&PyPointlessVectorIterType,     "PointlessVectorIter"     },
+		{&PyPointlessBitvectorType,      "PointlessBitvector"      },
+		{&PyPointlessBitvectorIterType,  "PointlessBitvectorIter"  },
+		{&PyPointlessSetType,            "PointlessSet"            },
+		{&PyPointlessSetIterType,        "PointlessSetIter"        },
+		{&PyPointlessMapType,            "PointlessMap"            },
+		{&PyPointlessMapKeyIterType,     "PointlessMapKeyIter"     },
+		{&PyPointlessMapValueIterType,   "PointlessMapValueIter"   },
+		{&PyPointlessMapItemIterType,    "PointlessMapItemIter"    },
+		{&PyPointlessPrimVectorType,     "PointlessPrimVector"     },
+		{&PyPointlessPrimVectorIterType, "PointlessPrimVectorIter" }
+	};
 
-	if (PyType_Ready(&PyPointlessVectorIterType) < 0)
-		return;
+	int i;
 
-	if (PyType_Ready(&PyPointlessBitvectorType) < 0)
-		return;
+	for (i = 0; i < 13; i++) {
+		if (PyType_Ready(types[i].type) < 0)
+			return;
 
-	if (PyType_Ready(&PyPointlessBitvectorIterType) < 0)
-		return;
+		Py_INCREF((PyObject*)types[i].type);
 
-	if (PyType_Ready(&PyPointlessSetType) < 0)
-		return;
-
-	if (PyType_Ready(&PyPointlessSetIterType) < 0)
-		return;
-
-	if (PyType_Ready(&PyPointlessMapType) < 0)
-		return;
-
-	if (PyType_Ready(&PyPointlessMapKeyIterType) < 0)
-		return;
-
-	if (PyType_Ready(&PyPointlessMapValueIterType) < 0)
-		return;
-
-	if (PyType_Ready(&PyPointlessMapItemIterType) < 0)
-		return;
-
-	if (PyType_Ready(&PyPointlessPrimVectorType) < 0)
-		return;
-
-	if (PyType_Ready(&PyPointlessPrimVectorIterType) < 0)
-		return;
-
-	// add custom types to the different modules
-	Py_INCREF(&PyPointlessType);
-	Py_INCREF(&PyPointlessVectorType);
-	Py_INCREF(&PyPointlessVectorIterType);
-	Py_INCREF(&PyPointlessBitvectorType);
-	Py_INCREF(&PyPointlessBitvectorIterType);
-	Py_INCREF(&PyPointlessSetType);
-	Py_INCREF(&PyPointlessSetIterType);
-	Py_INCREF(&PyPointlessMapType);
-	Py_INCREF(&PyPointlessMapKeyIterType);
-	Py_INCREF(&PyPointlessMapValueIterType);
-	Py_INCREF(&PyPointlessMapItemIterType);
-	Py_INCREF(&PyPointlessPrimVectorType);
-	Py_INCREF(&PyPointlessPrimVectorIterType);
-
-	TRY_MODULE_ADD_OBJECT(pointless_module, "Pointless",               (PyObject*)&PyPointlessType);
-	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessVector",         (PyObject*)&PyPointlessVectorType);
-	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessVectorIter",     (PyObject*)&PyPointlessVectorIterType);
-	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessBitvector",      (PyObject*)&PyPointlessBitvectorType);
-	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessBitvectorIter",  (PyObject*)&PyPointlessBitvectorIterType);
-	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessSet",            (PyObject*)&PyPointlessSetType);
-	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessSetIter",        (PyObject*)&PyPointlessSetIterType);
-	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessMap",            (PyObject*)&PyPointlessMapType);
-	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessMapKeyIter",     (PyObject*)&PyPointlessMapKeyIterType);
-	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessMapValueIter",   (PyObject*)&PyPointlessMapValueIterType);
-	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessMapItemIter",    (PyObject*)&PyPointlessMapItemIterType);
-	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessPrimVector",     (PyObject*)&PyPointlessPrimVectorType);
-	TRY_MODULE_ADD_OBJECT(pointless_module, "PointlessPrimVectorIter", (PyObject*)&PyPointlessPrimVectorIterType);
+		if (PyModule_AddObject(module_pointless, types[i].name, (PyObject*)types[i].type) != 0)
+			return;
+	}
 
 	PyObject* c_api = PyCObject_FromVoidPtrAndDesc(&CAPI, (void*)POINTLESS_API_MAGIC, NULL);
 
 	if (c_api == 0)
 		return;
 
-	TRY_MODULE_ADD_OBJECT(pointless_module, "pointless_CAPI", c_api);
+	if (PyModule_AddObject(module_pointless, "pointless_CAPI", c_api) != 0)
+		return;
 }

@@ -4,9 +4,8 @@ void validate_hash_semantics()
 {
 	uint64_t i = 0;
 	int32_t v = INT32_MIN;
-	uint32_t h_i32, h_u32, h_f;
 
-	pointless_value_t i32, u32, f;
+	uint32_t h_i32, h_u32, h_f;
 
 	union {
 		int32_t i32;
@@ -16,10 +15,6 @@ void validate_hash_semantics()
 
 	while (i <= 0xFFFFFFFF) {
 		i += 1;
-
-		i32.data.data_i32 = v;
-		u32.data.data_i32 = v;
-		f.data.data_f = (float)v;
 
 		hash.i32 = v;
 		h_i32 = pointless_hash_i32_32(hash.i32);

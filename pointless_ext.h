@@ -12,14 +12,6 @@
 #include <pointless/pointless.h>
 #include <pointless/pointless_dynarray.h>
 
-#define POINTLESS_FUNC_N_DOC(func) PyObject* func(PyObject* o, PyObject* args); extern const char func##_doc[]
-#define POINTLESS_FUNC_DEF(pyfunc, func) { pyfunc, func, METH_VARARGS, func##_doc}
-
-POINTLESS_FUNC_N_DOC(pointless_write_object);
-POINTLESS_FUNC_N_DOC(pointless_pyobject_hash_32);
-POINTLESS_FUNC_N_DOC(pointless_cmp);
-POINTLESS_FUNC_N_DOC(pointless_is_eq);
-
 STATIC_ASSERT(Py_UNICODE_SIZE == 2 || Py_UNICODE_SIZE == 4, "Py_UNICODE_SIZE must be 2 or 4");
 
 typedef struct {
