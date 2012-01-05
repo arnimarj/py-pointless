@@ -492,8 +492,12 @@ PyObject* PyPointless_str(PyObject* py_object)
 	if (PyPointlessBitvector_Check(py_object)) {
 		PyPointlessBitvector* b = (PyPointlessBitvector*)py_object;
 
-		if (!b->is_pointless)
-			return pypointless_bitvector_str_buffer(b->primitive_bits, b->primitive_n_bits);
+		if (!b->is_pointless) {
+			if (b->allow_print)
+				return pypointless_bitvector_str_buffer(b->primitive_bits, b->primitive_n_bits);
+			else
+				return PyString_FromFormat("<%s object at %p>", Py_TYPE(py_object)->tp_name, (void*)py_object);
+		}
 	}
 
 	// the pointless handle and pointless value
