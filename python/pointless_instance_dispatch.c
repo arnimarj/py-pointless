@@ -79,10 +79,37 @@ PyObject* pypointless_value_unicode(pointless_t* p, pointless_value_t* v)
 #endif
 }
 
+static int pointless_value_string_is_7bit(uint8_t* s)
+{
+	while (*s) {
+		if (*s >= 128)
+			return 0;
+
+		s++;
+	}
+
+	return 1;
+}
+
 PyObject* pypointless_value_string(pointless_t* p, pointless_value_t* v)
 {
 	uint8_t* string_ascii = pointless_reader_string_value_ascii(p, v);
-	return PyString_FromString((const char*)string_ascii);
+
+	// if 7-bit, string, otherwise unicode
+	if (pointless_value_string_is_7bit(string_ascii))
+		return PyString_FromString((const char*)string_ascii);
+	else
+		return PyUnicode_DecodeLatin1((const char*)string_ascii, strlen((const char*)string_ascii), 0);
+
+	// we do this for a reason, this, in Python 2.7 fails:
+	//
+	// u'\x80'.startswith('\x80')
+	//
+	// but
+	//
+	// u'\x80'.startswith('\x80'.decode('latin1')) 
+	//
+	// does not
 }
 
 PyObject* pypointless_value(PyPointless* p, pointless_value_t* v)
