@@ -308,6 +308,23 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		// get it from python
 		Py_UNICODE* python_buffer = PyUnicode_AS_UNICODE(py_object);
 
+		// string must not contain zero's
+		Py_ssize_t s_len_python = PyUnicode_GET_SIZE(py_object);
+
+		#if Py_UNICODE_SIZE == 4
+		uint32_t s_len_pointless = pointless_ucs4_len(python_buffer);
+		#else
+		uint32_t s_len_pointless = pointless_ucs2_len(python_buffer);
+		#endif
+
+		if (s_len_python < 0 || (uint64_t)s_len_python != s_len_pointless) {
+			PyErr_SetString(PyExc_ValueError, "unicode string contains a zero, where it shouldn't");
+			state->error_line = __LINE__;
+			printf("line: %i\n", __LINE__);
+			state->is_error = 1;
+			return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
 		#if Py_UNICODE_SIZE == 4
 			if (state->unwiden_strings && pointless_is_ucs4_ascii((uint32_t*)python_buffer))
 				handle = pointless_create_string_ucs4(&state->c, python_buffer);
@@ -328,7 +345,22 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 
 	// string object
 	} else if (PyString_Check(py_object)) {
-		handle = pointless_create_string_ascii(&state->c, (uint8_t*)PyString_AS_STRING(py_object));
+		// get it from python
+		uint8_t* python_buffer = (uint8_t*)PyString_AS_STRING(py_object);
+
+		// string must not contain zero's
+		Py_ssize_t s_len_python = PyString_GET_SIZE(py_object);
+		uint32_t s_len_pointless = pointless_ascii_len(python_buffer);
+
+		if (s_len_python < 0 || (uint64_t)s_len_python != s_len_pointless) {
+			PyErr_SetString(PyExc_ValueError, "string contains a zero, where it shouldn't");
+			state->error_line = __LINE__;
+			printf("line: %i\n", __LINE__);
+			state->is_error = 1;
+			return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
+		handle = pointless_create_string_ascii(&state->c, python_buffer);
 		RETURN_OOM_IF_FAIL(handle, state);
 
 		if (!pointless_export_set_seen(state, py_object, handle)) {
