@@ -69,7 +69,7 @@ static PyObject* PyPointless_GetRefs(PyPointless* self)
 
 static PyObject* PyPointless_sizeof(PyPointless* self)
 {
-	return PyLong_FromUnsignedLongLong(self->p.fd_len);
+	return PyLong_FromUnsignedLongLong(sizeof(PyPointless) + self->p.fd_len);
 }
 
 static PyMethodDef PyPointless_methods[] = {

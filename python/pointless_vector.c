@@ -474,8 +474,7 @@ static void PyPointlessVector_releasebuffer(PyPointlessVector* obj, Py_buffer *v
 
 static PyObject* PyPointlessVector_sizeof(PyPointlessVector* self)
 {
-	// TBD: support slice_i
-	return PyLong_FromSize_t(sizeof(PyPointlessVector) + pointless_vector_n_bytes(self));
+	return PyLong_FromSize_t(sizeof(PyPointlessVector));
 }
 
 #define POINTLESS_VECTOR_MAX_LOOP(T, v, n) \
