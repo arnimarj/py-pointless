@@ -1334,10 +1334,6 @@ static int prim_sort_proj_cmp(int a, int b, int* c, void* user)
 	for (i = 0; i < state->n && *c == 0; i++)
 		*c = (*(state->cmp_cmp[i]))(i_a_u, i_b_u, state->v_b[i]);
 
-	// stable -> deterministic -> more easily testable
-	if (*c == 0)
-		*c = SIMPLE_CMP(a, b);
-
 	return 1;
 }
 
