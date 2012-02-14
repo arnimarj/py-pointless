@@ -1,5 +1,9 @@
 #include "pointless_ext.h"
 
+uint32_t PyPointlessBitvector_is_set(PyPointlessBitvector* self, uint32_t i);
+uint32_t PyPointlessBitvector_n_items(PyPointlessBitvector* self);
+
+
 static PyPointless_CAPI CAPI = {
 	pointless_dynarray_init,
 	pointless_dynarray_n_items,
@@ -21,7 +25,9 @@ static PyPointless_CAPI CAPI = {
 	&PyPointlessBitvectorType,
 	&PyPointlessSetType,
 	&PyPointlessMapType,
-	&PyPointlessPrimVectorType
+	&PyPointlessPrimVectorType,
+	PyPointlessBitvector_is_set,
+	PyPointlessBitvector_n_items
 };
 
 PyObject* pointless_write_object(PyObject* self, PyObject* args, PyObject* kwds);

@@ -203,12 +203,17 @@ static int PyPointlessBitvectorIter_init(PyPointlessBitvector* self, PyObject* a
 	return -1;
 }
 
-static Py_ssize_t PyPointlessBitvector_length(PyPointlessBitvector* self)
+uint32_t PyPointlessBitvector_n_items(PyPointlessBitvector* self)
 {
 	if (self->is_pointless)
-		return (Py_ssize_t)pointless_reader_bitvector_n_bits(&self->pointless_pp->p, self->pointless_v);
+		return pointless_reader_bitvector_n_bits(&self->pointless_pp->p, self->pointless_v);
 	else
-		return (Py_ssize_t)self->primitive_n_bits;
+		return self->primitive_n_bits;
+}
+
+static Py_ssize_t PyPointlessBitvector_length(PyPointlessBitvector* self)
+{
+	return (Py_ssize_t)PyPointlessBitvector_n_items(self);
 }
 
 static int PyPointlessBitvector_check_index(PyPointlessBitvector* self, PyObject* item, Py_ssize_t* i)
@@ -238,7 +243,7 @@ static int PyPointlessBitvector_check_index(PyPointlessBitvector* self, PyObject
 	return 1;
 }
 
-static uint32_t PyPointlessBitvector_subscript_priv_int(PyPointlessBitvector* self, uint32_t i)
+uint32_t PyPointlessBitvector_is_set(PyPointlessBitvector* self, uint32_t i)
 {
 	if (self->is_pointless)
 		return pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, i);
@@ -260,7 +265,7 @@ static int PyPointlessBitvector_ass_subscript(PyPointlessBitvector* self, PyObje
 		return -1;
 
 	// true iff: the value was set
-	uint32_t was_set = PyPointlessBitvector_subscript_priv_int(self, i);
+	uint32_t was_set = PyPointlessBitvector_is_set(self, i);
 
 	// we only want 0|1|True|False
 	if (PyBool_Check(value)) {
@@ -305,7 +310,7 @@ static int PyPointlessBitvector_ass_subscript(PyPointlessBitvector* self, PyObje
 
 static PyObject* PyPointlessBitvector_subscript_priv(PyPointlessBitvector* self, uint32_t i)
 {
-	if (PyPointlessBitvector_subscript_priv_int(self, i))
+	if (PyPointlessBitvector_is_set(self, i))
 		Py_RETURN_TRUE;
 	else
 		Py_RETURN_FALSE;
@@ -343,8 +348,8 @@ static PyObject* PyPointlessBitvector_richcompare(PyObject* a, PyObject* b, int 
 
 	// first item where they differ
 	for (i = 0; i < n_bits; i++) {
-		is_set_a = PyPointlessBitvector_subscript_priv_int((PyPointlessBitvector*)a, i);
-		is_set_b = PyPointlessBitvector_subscript_priv_int((PyPointlessBitvector*)b, i);
+		is_set_a = PyPointlessBitvector_is_set((PyPointlessBitvector*)a, i);
+		is_set_b = PyPointlessBitvector_is_set((PyPointlessBitvector*)b, i);
 
 		if (is_set_a != is_set_b)
 			break;

@@ -208,9 +208,13 @@ typedef struct {
 	PyTypeObject* PyPointlessSetType_ptr;
 	PyTypeObject* PyPointlessMapType_ptr;
 	PyTypeObject* PyPointlessPrimVectorType_ptr;
+
+	// bitvector utilities
+	uint32_t(*PyPointlessBitvector_is_set)(PyPointlessBitvector* self, uint32_t i);
+	uint32_t(*PyPointlessBitvector_n_items)(PyPointlessBitvector* self);
 } PyPointless_CAPI;
 
-#define POINTLESS_API_MAGIC 0xC6D89E26
+#define POINTLESS_API_MAGIC 0xC6D89E27
 
 static PyPointless_CAPI* PyPointlessAPI = 0;
 static int PyPointlessAPI_magic = 0;
