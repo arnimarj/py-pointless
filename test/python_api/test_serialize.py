@@ -74,3 +74,12 @@ class TestSerialize(unittest.TestCase):
 
 			del root
 			del p
+
+class TestString(unittest.TestCase):
+	def testString(self):
+		fname = 'test_string.mpa'
+		v = ['string', 'value', u'string', unichr(1000)]
+		pointless.serialize(v, fname)
+		p = pointless.Pointless(fname)
+		v_ = p.GetRoot()
+		print v_
