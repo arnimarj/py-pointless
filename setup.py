@@ -17,7 +17,7 @@ def build_judy():
 	if a != 0:
 		sys.exit(b)
 
-# build_judy()
+build_judy()
 
 extra_compile_args = [
 	'-I./judy/src',
