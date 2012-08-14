@@ -1311,9 +1311,9 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 {
 	// our file descriptors
 	int fd = -1;
-	int fd_exists = 0;
 	FILE* f = 0;
 	char* temp_fname = 0;
+	const char* unlink_fname = 0;
 
 	// create and open a unique file
 	temp_fname = (char*)pointless_malloc(strlen(fname) + 32);
@@ -1333,7 +1333,8 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 		goto cleanup;
 	}
 
-	fd_exists = 1;
+	unlink_fname = temp_fname;
+
 	f = fdopen(fd, "w");
 
 	if (f == 0) {
@@ -1361,11 +1362,15 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 		goto cleanup;
 	}
 
+	fd = -1;
+
 	// rename
 	if (rename(temp_fname, fname) != 0) {
 		*error = "error renaming file";
 		goto cleanup;
 	}
+
+	unlink_fname = fname;
 
 	// fclose
 	if (fclose(f) == EOF) {
@@ -1376,11 +1381,6 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 
 	f = 0;
 
-	// fclose() on fdopen() closes origina handle
-	fd = -1;
-
-	fd_exists = 0;
-
 	pointless_free(temp_fname);
 	temp_fname = 0;
 
@@ -1389,17 +1389,20 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 cleanup:
 
 	pointless_create_end(c);
-	pointless_free(temp_fname);
-	temp_fname = 0;
 
-	if (f)
+	if (f) {
 		fclose(f);
+		fd = -1;
+	}
 
 	if (fd != -1)
 		close(fd);
 
-	if (fd_exists)
-		unlink(temp_fname);
+	if (unlink_fname)
+		unlink(unlink_fname);
+
+	pointless_free(temp_fname);
+	temp_fname = 0;
 
 	return 0;
 }
