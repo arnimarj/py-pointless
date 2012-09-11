@@ -290,6 +290,23 @@ int pointless_eval_get_as_vector_u32(pointless_t* p, pointless_value_t* root, ui
 	return 0;
 }
 
+int pointless_eval_get_as_vector_u64(pointless_t* p, pointless_value_t* root, uint64_t** v, uint32_t* n, const char* e, ...)
+{
+	pointless_value_t v_;
+	va_list ap;
+	va_start(ap, e);
+	int i = pointless_eval_get_(p, root, &v_, e, ap);
+	va_end(ap);
+
+	if (i && v_.type == POINTLESS_VECTOR_U64) {
+		*n = pointless_reader_vector_n_items(p, &v_);
+		*v = pointless_reader_vector_u64(p, &v_);
+		return 1;
+	}
+
+	return 0;
+}
+
 int pointless_eval_get_as_vector_f(pointless_t* p, pointless_value_t* root, float** v, uint32_t* n, const char* e, ...)
 {
 	pointless_value_t v_;
