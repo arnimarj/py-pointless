@@ -6,6 +6,7 @@ typedef struct {
 	int error_line;
 	Pvoid_t objects_used;   // PyObject* -> create-time-handle
 	int unwiden_strings;    // true iff: we find the smallest representations for strings
+	int normalize_bitvector;
 } pointless_export_state_t;
 
 static uint32_t pointless_export_get_seen(pointless_export_state_t* state, PyObject* py_object)
@@ -463,12 +464,18 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 					bm_set_(bits, i);
 			}
 
-			handle = pointless_create_bitvector(&state->c, bits, n_bits);
+			if (state->normalize_bitvector)
+				handle = pointless_create_bitvector(&state->c, bits, n_bits);
+			else
+				handle = pointless_create_bitvector_no_normalize(&state->c, bits, n_bits);
 			pointless_free(bits);
 			bits = 0;
 
 		} else {
-			handle = pointless_create_bitvector(&state->c, bitvector->primitive_bits, bitvector->primitive_n_bits);
+			if (state->normalize_bitvector)
+				handle = pointless_create_bitvector(&state->c, bitvector->primitive_bits, bitvector->primitive_n_bits);
+			else
+				handle = pointless_create_bitvector_no_normalize(&state->c, bitvector->primitive_bits, bitvector->primitive_n_bits);
 		}
 
 		RETURN_OOM_IF_FAIL(handle, state);
@@ -547,6 +554,8 @@ PyObject* pointless_write_object(PyObject* self, PyObject* args, PyObject* kwds)
 	const char* fname = 0;
 	PyObject* object = 0;
 	PyObject* retval = 0;
+	PyObject* normalize_bitvector = Py_True;
+	PyObject* unwiden_strings = Py_False;
 	int create_end = 0;
 
 	const char* error = 0;
@@ -556,15 +565,15 @@ PyObject* pointless_write_object(PyObject* self, PyObject* args, PyObject* kwds)
 	state.is_error = 0;
 	state.error_line = -1;
 	state.unwiden_strings = 0;
+	state.normalize_bitvector = 1;
 
-	PyObject* unwiden_strings = 0;
-	static char* kwargs[] = {"object", "filename", "unwiden_strings", 0};
+	static char* kwargs[] = {"object", "filename", "unwiden_strings", "normalize_bitvector", 0};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "Os|O!:serialize", kwargs, &object, &fname, &PyBool_Type, &unwiden_strings))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "Os|O!O!:serialize", kwargs, &object, &fname, &PyBool_Type, &unwiden_strings, &PyBool_Type, &normalize_bitvector))
 		return 0;
 
-	if (unwiden_strings == Py_True)
-		state.unwiden_strings = 1;
+	state.unwiden_strings = (unwiden_strings == Py_True);
+	state.normalize_bitvector = (normalize_bitvector == Py_True);
 
 	pointless_create_begin_64(&state.c);
 

@@ -5,6 +5,8 @@ typedef struct {
 	pointless_create_t* c;
 	pointless_t* p;
 
+	int normalize_bitvector;
+
 	const char** error;
 
 	uint32_t* string_unicode_r_c_mapping;
@@ -195,7 +197,10 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 					bm_set_(bits, i);
 			}
 
-			handle = pointless_create_bitvector(state->c, bits, n_bits);
+			if (state->normalize_bitvector)
+				handle = pointless_create_bitvector(state->c, bits, n_bits);
+			else
+				handle = pointless_create_bitvector_no_normalize(state->c, bits, n_bits);
 
 			pointless_free(bits);
 			bits = 0;
@@ -295,6 +300,7 @@ uint32_t pointless_recreate_value(pointless_t* p_in, pointless_value_t* v_in, po
 	state.bitvector_r_c_mapping = 0;
 	state.set_r_c_mapping = 0;
 	state.map_r_c_mapping = 0;
+	state.normalize_bitvector = 1;
 
 	state.string_unicode_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_string_unicode, UINT32_MAX);
 	state.vector_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_vector, UINT32_MAX);

@@ -1874,7 +1874,7 @@ static int pointless_bitvector_is_10(void* v, uint32_t n_bits, uint32_t* n_bits_
 	return 1;
 }
 
-uint32_t pointless_create_bitvector(pointless_create_t* c, void* v, uint32_t n_bits)
+static uint32_t pointless_create_bitvector_(pointless_create_t* c, void* v, uint32_t n_bits, int normalize)
 {
 	// first, check for compression options
 	pointless_create_value_t value;
@@ -1944,13 +1944,15 @@ uint32_t pointless_create_bitvector(pointless_create_t* c, void* v, uint32_t n_b
 	*((uint32_t*)buffer) = n_bits;
 	memcpy((uint32_t*)buffer + 1, v, ICEIL(n_bits, 8));
 
-	// see if it already exists
-	Word_t* prev_ref = 0;
-	JHSG(prev_ref, c->bitvector_map_judy, buffer, sizeof(uint32_t) + ICEIL(n_bits, 8));
+	// try to find if we already have it
+	if (normalize) {
+		Word_t* prev_ref = 0;
+		JHSG(prev_ref, c->bitvector_map_judy, buffer, sizeof(uint32_t) + ICEIL(n_bits, 8));
 
-	if (prev_ref) {
-		pointless_free(buffer);
-		return (uint32_t)(*prev_ref);
+		if (prev_ref) {
+			pointless_free(buffer);
+			return (uint32_t)(*prev_ref);
+		}
 	}
 
 	// it doesn't, create a new value
@@ -1968,18 +1970,18 @@ uint32_t pointless_create_bitvector(pointless_create_t* c, void* v, uint32_t n_b
 	pop_bitvector = 1;
 
 	// add to mapping
-	Word_t* PValue = 0;
+	if (normalize) {
+		Word_t* PValue = 0;
 
-	JHSI(PValue, c->bitvector_map_judy, buffer, sizeof(uint32_t) + ICEIL(n_bits, 8));
+		JHSI(PValue, c->bitvector_map_judy, buffer, sizeof(uint32_t) + ICEIL(n_bits, 8));
 
-	if (PValue == 0)
-		goto cleanup;
+		if (PValue == 0)
+			goto cleanup;
 
-	*PValue = (Word_t)(pointless_dynarray_n_items(&c->values) - 1);
+		*PValue = (Word_t)(pointless_dynarray_n_items(&c->values) - 1);
 
-	c->bitvector_map_judy_count += 1;
-
-	assert(c->bitvector_map_judy_count == pointless_dynarray_n_items(&c->bitvector_values));
+		c->bitvector_map_judy_count += 1;
+	}
 
 	// we're done
 	return (pointless_dynarray_n_items(&c->values) - 1);
@@ -1994,6 +1996,16 @@ cleanup:
 		pointless_dynarray_pop(&c->bitvector_values);
 
 	return POINTLESS_CREATE_VALUE_FAIL;
+}
+
+uint32_t pointless_create_bitvector(pointless_create_t* c, void* v, uint32_t n_bits)
+{
+	return pointless_create_bitvector_(c, v, n_bits, 1);
+}
+
+uint32_t pointless_create_bitvector_no_normalize(pointless_create_t* c, void* v, uint32_t n_bits)
+{
+	return pointless_create_bitvector_(c, v, n_bits, 0);
 }
 
 // vectors, buffer owned by library
