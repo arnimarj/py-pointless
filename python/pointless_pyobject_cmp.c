@@ -324,16 +324,13 @@ static pypointless_cmp_int_float_bool_t pypointless_cmp_int_float_bool_from_valu
 		} else if (PyLong_Check(py_object)) {
 			PY_LONG_LONG v = PyLong_AsLongLong(py_object);
 
-			if (!PyErr_Occurred()) {
-				if (!(INT64_MIN <= v && INT64_MAX <= v)) {
-					state->error = "python long too big for comparison";
-					return r;
-				}
-
+			if (!PyErr_Occurred() && (INT64_MIN <= v && INT64_MAX <= v)) {
 				r.is_signed = 0;
 				r.ii = (int64_t)v;
 				return r;
 			}
+
+			PyErr_Clear();
 
 			unsigned PY_LONG_LONG vv = PyLong_AsUnsignedLongLong(py_object);
 
