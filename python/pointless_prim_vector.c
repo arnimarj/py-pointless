@@ -831,7 +831,7 @@ static PyObject* PyPointlessPrimVector_pop_bulk(PyPointlessPrimVector* self, PyO
 {
 	PY_LONG_LONG n = 0, i = 0;
 
-	if (!PyArg_ParseTuple(args, "I", &n))
+	if (!PyArg_ParseTuple(args, "L", &n))
 		return 0;
 
 	if (n > pointless_dynarray_n_items(&self->array)) {

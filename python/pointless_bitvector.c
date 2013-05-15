@@ -440,6 +440,102 @@ static PyObject* PyPointlessBitvector_is_any_set(PyPointlessBitvector* self)
 	}
 }
 
+static int PyPointlessBitvector_extend_by(PyPointlessBitvector* self, uint32_t n, int is_true)
+{
+	// if extend would make us grow beyond UINT32_MAX
+	uint32_t next_primitive_n_bits = self->primitive_n_bits + n;
+
+	if (next_primitive_n_bits < self->primitive_n_bits || next_primitive_n_bits < n) {
+		PyErr_SetString(PyExc_ValueError, "BitVector would grow beyond 2**32-1 items");
+		return 0;
+	}
+
+	uint32_t next_bytes = self->primitive_n_bytes_alloc;
+
+	while (next_bytes < ICEIL(next_primitive_n_bits, 8)) {
+		printf("A %li\n", (long int)next_bytes);
+		next_bytes = next_size(next_bytes);
+		printf(" -> %li\n", (long int)next_bytes);
+
+		// overflow
+		if (next_bytes < self->primitive_n_bytes_alloc) {
+			next_bytes = ICEIL(UINT32_MAX, 8);
+			assert(next_bytes * 8 >= next_primitive_n_bits);
+		}
+	}
+
+	if (next_bytes != self->primitive_n_bytes_alloc) {
+		void* next_data = pointless_realloc(self->primitive_bits, next_bytes);
+
+		if (next_data == 0) {
+			PyErr_NoMemory();
+			return 0;
+		}
+
+		uint64_t i;
+
+		for (i = self->primitive_n_bytes_alloc; i < next_bytes; i++)
+			((char*)next_data)[i] = 0;
+
+		self->primitive_n_bytes_alloc = next_bytes;
+		self->primitive_bits = next_data;
+	}
+
+	uint32_t i;
+
+	for (i = 0; i < n; i++) {
+		if (is_true)
+			bm_set_(self->primitive_bits, self->primitive_n_bits + i);
+		else
+			bm_reset_(self->primitive_bits, self->primitive_n_bits + i);
+	}
+
+	self->primitive_n_bits += n;
+	return 1;
+}
+
+
+static PyObject* PyPointlessBitvector_extend_(PyPointlessBitvector* self, PyObject* args, int is_true)
+{
+	int n = 0;
+
+	if (!PyArg_ParseTuple(args, "i", &n))
+		return 0;
+
+	if (self->is_pointless) {
+		PyErr_SetString(PyExc_ValueError, "BitVector is pointless based, and thus read-only");
+		return 0;
+	}
+
+	if (n < 0) {
+		PyErr_SetString(PyExc_ValueError, "negative value");
+		return 0;
+	}
+
+	// overflow
+	if (n > UINT32_MAX) {
+		PyErr_SetString(PyExc_ValueError, "resulting bitvector would be too large");
+		return 0;
+	}
+
+	// extend by n
+	if (!PyPointlessBitvector_extend_by(self, (uint32_t)n, is_true))
+		return 0;
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyObject* PyPointlessBitvector_extend_true(PyPointlessBitvector* self, PyObject* args)
+{
+	return PyPointlessBitvector_extend_(self, args, 1);
+}
+
+static PyObject* PyPointlessBitvector_extend_false(PyPointlessBitvector* self, PyObject* args)
+{
+	return PyPointlessBitvector_extend_(self, args, 0);
+}
+
 static PyObject* PyPointlessBitvector_append(PyPointlessBitvector* self, PyObject* args)
 {
 	PyObject* v = 0;
@@ -452,28 +548,9 @@ static PyObject* PyPointlessBitvector_append(PyPointlessBitvector* self, PyObjec
 		return 0;
 	}
 
-	if (self->primitive_n_bits == self->primitive_n_bytes_alloc * 8) {
-		uint32_t next_bytes = next_size(self->primitive_n_bytes_alloc);
-		void* next_data = pointless_realloc(self->primitive_bits, next_bytes);
-
-		if (next_data == 0) {
-			PyErr_NoMemory();
-			return 0;
-		}
-
-		uint32_t i;
-
-		for (i = self->primitive_n_bytes_alloc; i < next_bytes; i++)
-			((char*)next_data)[i] = 0;
-
-		self->primitive_n_bytes_alloc = next_bytes;
-		self->primitive_bits = next_data;
-	}
-
-	if (v == Py_True)
-		bm_set_(self->primitive_bits, self->primitive_n_bits);
-
-	self->primitive_n_bits += 1;
+	// extend by 1
+	if (!PyPointlessBitvector_extend_by(self, 1, v == Py_True))
+		return 0;
 
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -513,10 +590,12 @@ static PyObject* PyPointlessBitvector_sizeof(PyPointlessBitvector* self)
 }
 
 static PyMethodDef PyPointlessBitvector_methods[] = {
-	{"IsAnySet",   (PyCFunction)PyPointlessBitvector_is_any_set, METH_NOARGS, ""},
-	{"append",     (PyCFunction)PyPointlessBitvector_append,     METH_VARARGS, ""},
-	{"pop",        (PyCFunction)PyPointlessBitvector_pop,        METH_NOARGS, ""},
-	{"__sizeof__", (PyCFunction)PyPointlessBitvector_sizeof,     METH_NOARGS,  ""},
+	{"IsAnySet",     (PyCFunction)PyPointlessBitvector_is_any_set, METH_NOARGS, ""},
+	{"append",       (PyCFunction)PyPointlessBitvector_append,     METH_VARARGS, ""},
+	{"extend_false", (PyCFunction)PyPointlessBitvector_extend_false,     METH_VARARGS, ""},
+	{"extend_true",  (PyCFunction)PyPointlessBitvector_extend_true,     METH_VARARGS, ""},
+	{"pop",          (PyCFunction)PyPointlessBitvector_pop,        METH_NOARGS, ""},
+	{"__sizeof__",   (PyCFunction)PyPointlessBitvector_sizeof,     METH_NOARGS,  ""},
 	{NULL, NULL}
 };
 
