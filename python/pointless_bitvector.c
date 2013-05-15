@@ -453,9 +453,7 @@ static int PyPointlessBitvector_extend_by(PyPointlessBitvector* self, uint32_t n
 	uint32_t next_bytes = self->primitive_n_bytes_alloc;
 
 	while (next_bytes < ICEIL(next_primitive_n_bits, 8)) {
-		printf("A %li\n", (long int)next_bytes);
 		next_bytes = next_size(next_bytes);
-		printf(" -> %li\n", (long int)next_bytes);
 
 		// overflow
 		if (next_bytes < self->primitive_n_bytes_alloc) {
