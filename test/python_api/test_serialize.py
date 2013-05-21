@@ -77,9 +77,24 @@ class TestSerialize(unittest.TestCase):
 
 class TestString(unittest.TestCase):
 	def testString(self):
-		fname = 'test_string.mpa'
+		fname = 'test_string.map'
 		v = ['string', 'value', u'string', unichr(1000)]
 		pointless.serialize(v, fname)
 		p = pointless.Pointless(fname)
 		v_ = p.GetRoot()
-		print v_
+#		import StringIO
+#		buffer_a = StringIO.StringIO()
+#		buffer_b = StringIO.StringIO()
+#		print v[3]
+#		print v_[3]
+		str(v)
+		str(v_)
+#		repr(v)
+#		repr(v_)
+#		print >> buffer_a, v
+#		print >> buffer_b, v_
+#		print buffer_a.getvalue()
+#		print buffer_b.getvalue()
+		#print map(ord, (v[3])),map(ord, (v_[3]))
+		#print repr(v)
+		#print repr(v_)
