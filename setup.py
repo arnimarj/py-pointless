@@ -41,7 +41,7 @@ extra_link_args = ['-L./judy/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm']
 
 setup(
 	name = 'pointless',
-	version = '0.2.2',
+	version = '0.2.3',
 	maintainer = 'Arni Mar Jonsson',
 	maintainer_email = 'arnimarj@gmail.com',
 	url = 'http://code.google.com/p/py-pointless/',
