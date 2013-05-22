@@ -60,7 +60,7 @@ setup(
 		'Topic :: Software Development :: Libraries'
 	],
 
-	download_url = 'http://py-pointless.googlecode.com/files/pointless-0.2.2.tar.gz',
+	download_url = 'http://py-pointless.googlecode.com/files/pointless-0.2.3.tar.gz',
 	description = 'A read-only relocatable data structure for JSON like data, with C and Python APIs',
 	# long_description = 
 
