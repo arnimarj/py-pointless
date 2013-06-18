@@ -106,15 +106,9 @@ static int _pypointless_str_rec(pointless_t* p, pointless_complete_value_t* v, _
 	return 0;
 }
 
-static int _pypointless_unicode_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state)
+static int _pypointless_value_repr(pointless_t* p, PyObject* u_value, _pypointless_print_state_t* state)
 {
-	PyObject* u_value = pypointless_value_unicode(p, v);
-
-	if (u_value == 0)
-		return 0;
-
 	PyObject* s_value = PyObject_Repr(u_value);
-	Py_DECREF(u_value);
 
 	if (s_value == 0)
 		return 0;
@@ -128,10 +122,28 @@ static int _pypointless_unicode_str(pointless_t* p, pointless_value_t* v, _pypoi
 	return i;
 }
 
+static int _pypointless_unicode_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state)
+{
+	PyObject* u_value = pypointless_value_unicode(p, v);
+
+	if (u_value == 0)
+		return 0;
+
+	int i = _pypointless_value_repr(p, u_value, state);
+	Py_DECREF(u_value);
+	return i;
+}
+
 static int _pypointless_string_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state)
 {
-	uint8_t* string_ascii = pointless_reader_string_value_ascii(p, v);
-	return _pypointless_print_append_8_(state, (const char*)string_ascii);
+	PyObject* u_value = pypointless_value_string(p, v);
+
+	if (u_value == 0)
+		return 0;
+
+	int i = _pypointless_value_repr(p, u_value, state);
+	Py_DECREF(u_value);
+	return i;
 }
 
 static int _pypointless_vector_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state, uint32_t slice_i, uint32_t slice_n)
