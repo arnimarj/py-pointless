@@ -1362,6 +1362,12 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 		goto cleanup;
 	}
 
+	// change file permission
+	if (fchmod(fd, S_IRUSR) != 0) {
+		*error = "fchmod failure";
+		goto cleanup;
+	}
+
 	fd = -1;
 
 	// rename
