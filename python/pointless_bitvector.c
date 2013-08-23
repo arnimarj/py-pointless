@@ -418,6 +418,101 @@ static uint32_t next_size(uint32_t n_alloc)
 	return (a + b + c);
 }
 
+static PyObject* PyPointlessBitvector_n_zero_prefix(PyPointlessBitvector* self)
+{
+	size_t n_zero = 0, n;
+
+	if (self->is_pointless) {
+		n = pointless_reader_bitvector_n_bits(&self->pointless_pp->p, self->pointless_v);
+
+		for (; n_zero < n; n_zero++) {
+			if (pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, n_zero))
+				break;
+		}
+	} else {
+		n = self->primitive_n_bits;
+
+		for (; n_zero < n; n_zero++) {
+			if (bm_is_set_(self->primitive_bits, n_zero))
+				break;
+		}
+	}
+
+	return PyLong_FromSize_t(n_zero);
+}
+
+
+static PyObject* PyPointlessBitvector_n_zero_postfix(PyPointlessBitvector* self)
+{
+	size_t n_zero = 0, n;
+
+	if (self->is_pointless) {
+		n = pointless_reader_bitvector_n_bits(&self->pointless_pp->p, self->pointless_v);
+
+		for (; n_zero < n; n_zero++) {
+			if (pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, n - 1 - n_zero))
+				break;
+		}
+	} else {
+		n = self->primitive_n_bits;
+
+		for (; n_zero < n; n_zero++) {
+			if (bm_is_set_(self->primitive_bits, n - 1 - n_zero))
+				break;
+		}
+	}
+
+	return PyLong_FromSize_t(n_zero);
+}
+
+
+static PyObject* PyPointlessBitvector_n_one_prefix(PyPointlessBitvector* self)
+{
+	size_t n_one = 0, n;
+
+	if (self->is_pointless) {
+		n = pointless_reader_bitvector_n_bits(&self->pointless_pp->p, self->pointless_v);
+
+		for (; n_one < n; n_one++) {
+			if (!pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, n_one))
+				break;
+		}
+	} else {
+		n = self->primitive_n_bits;
+
+		for (; n_one < n; n_one++) {
+			if (!bm_is_set_(self->primitive_bits, n_one))
+				break;
+		}
+	}
+
+	return PyLong_FromSize_t(n_one);
+}
+
+
+static PyObject* PyPointlessBitvector_n_one_postfix(PyPointlessBitvector* self)
+{
+	size_t n_one = 0, n;
+
+	if (self->is_pointless) {
+		n = pointless_reader_bitvector_n_bits(&self->pointless_pp->p, self->pointless_v);
+
+		for (; n_one < n; n_one++) {
+			if (!pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, n - n_one - 1))
+				break;
+		}
+	} else {
+		n = self->primitive_n_bits;
+
+		for (; n_one < n; n_one++) {
+			if (!bm_is_set_(self->primitive_bits, n - n_one - 1))
+				break;
+		}
+	}
+
+	return PyLong_FromSize_t(n_one);
+}
+
 static PyObject* PyPointlessBitvector_is_any_set(PyPointlessBitvector* self)
 {
 	if (!self->is_pointless) {
@@ -588,12 +683,16 @@ static PyObject* PyPointlessBitvector_sizeof(PyPointlessBitvector* self)
 }
 
 static PyMethodDef PyPointlessBitvector_methods[] = {
-	{"IsAnySet",     (PyCFunction)PyPointlessBitvector_is_any_set, METH_NOARGS, ""},
-	{"append",       (PyCFunction)PyPointlessBitvector_append,     METH_VARARGS, ""},
-	{"extend_false", (PyCFunction)PyPointlessBitvector_extend_false,     METH_VARARGS, ""},
-	{"extend_true",  (PyCFunction)PyPointlessBitvector_extend_true,     METH_VARARGS, ""},
-	{"pop",          (PyCFunction)PyPointlessBitvector_pop,        METH_NOARGS, ""},
-	{"__sizeof__",   (PyCFunction)PyPointlessBitvector_sizeof,     METH_NOARGS,  ""},
+	{"NumZeroPrefix", (PyCFunction)PyPointlessBitvector_n_zero_prefix,  METH_NOARGS, ""},
+	{"NumZeroPostfix",(PyCFunction)PyPointlessBitvector_n_zero_postfix, METH_NOARGS, ""},
+	{"NumOnePrefix",  (PyCFunction)PyPointlessBitvector_n_one_prefix,   METH_NOARGS, ""},
+	{"NumOnePostfix", (PyCFunction)PyPointlessBitvector_n_one_postfix,  METH_NOARGS, ""},
+	{"IsAnySet",      (PyCFunction)PyPointlessBitvector_is_any_set,     METH_NOARGS, ""},
+	{"append",        (PyCFunction)PyPointlessBitvector_append,         METH_VARARGS, ""},
+	{"extend_false",  (PyCFunction)PyPointlessBitvector_extend_false,   METH_VARARGS, ""},
+	{"extend_true",   (PyCFunction)PyPointlessBitvector_extend_true,    METH_VARARGS, ""},
+	{"pop",           (PyCFunction)PyPointlessBitvector_pop,            METH_NOARGS, ""},
+	{"__sizeof__",    (PyCFunction)PyPointlessBitvector_sizeof,         METH_NOARGS,  ""},
 	{NULL, NULL}
 };
 
