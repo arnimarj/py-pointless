@@ -3,6 +3,8 @@
 PyTypeObject PyPointlessBitvectorType;
 PyTypeObject PyPointlessBitvectorIterType;
 
+static int PyPointlessBitvector_extend_by(PyPointlessBitvector* self, uint32_t n, int is_true);
+
 static void PyPointlessBitvector_dealloc(PyPointlessBitvector* self)
 {
 	if (self->is_pointless && self->pointless_pp)
@@ -81,6 +83,7 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 	static char* kwargs[] = {"size", "sequence", "allow_print", 0};
 	PyObject* size = 0;
 	PyObject* sequence = 0;
+	PyObject* sequence_iterator = 0;
 	PyObject* allow_print = Py_True;
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO!", kwargs, &size, &sequence, &PyBool_Type, &allow_print))
@@ -96,7 +99,7 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 		self->allow_print = 0;
 
 	// determine number of items
-	Py_ssize_t n_items = 0, i;
+	Py_ssize_t n_items = 0;
 	int is_error = 0;
 
 	if (size != 0) {
@@ -115,15 +118,15 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 			PyErr_SetString(PyExc_ValueError, "size must be an integer 0 <= i < 2**32");
 			return -1;
 		}
-	} else if (sequence) {
-		if (!PySequence_Check(sequence)) {
-			PyErr_SetString(PyExc_ValueError, "sequence must be a sequence");
+	} else if (sequence != 0) {
+		sequence_iterator = PyObject_GetIter(sequence);
+
+		if (sequence_iterator == 0) {
+			PyErr_SetString(PyExc_ValueError, "sequence must be iterable");
 			return -1;
 		}
-		n_items = PySequence_Size(sequence);
 
-		if (n_items == -1)
-			return -1;
+		n_items = 0;
 	}
 
 	self->primitive_n_bits = (uint32_t)n_items;
@@ -135,6 +138,7 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 
 		if (self->primitive_bits == 0) {
 			self->primitive_n_bytes_alloc = 0;
+			Py_XDECREF(sequence_iterator);
 			PyErr_NoMemory();
 			return -1;
 		}
@@ -143,13 +147,16 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 	// if we have a sequence
 	is_error = 0;
 
-	if (sequence != 0) {
+	if (sequence_iterator != 0) {
 		// for each object
-		for (i = 0; i < n_items; i++) {
-			PyObject* obj = PySequence_GetItem(sequence, i);
+		PyObject* obj = 0;
+		size_t i = 0;
 
-			// 0) GetItem() failure
-			if (obj == 0) {
+		while ((obj = PyIter_Next(sequence_iterator)) != 0) {
+			if (!PyPointlessBitvector_extend_by(self, 1, 0)) {
+				is_error = 1;
+			// 0) PyIter_Next() failure
+			} else if (obj == 0) {
 				is_error = 1;
 			// 1) boolean
 			} else if (PyBool_Check(obj)) {
@@ -187,10 +194,12 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 				self->primitive_n_one = 0;
 
 				if (!PyErr_Occurred())
-					PyErr_SetString(PyExc_ValueError, "init sequence must only contain True, False, 0 or 1");
+					PyErr_SetString(PyExc_ValueError, "sequence must only contain True, False, 0 or 1");
 
-				return -1;
+				return 0;
 			}
+
+			i += 1;
 		}
 	}
 
@@ -577,10 +586,12 @@ static int PyPointlessBitvector_extend_by(PyPointlessBitvector* self, uint32_t n
 	uint32_t i;
 
 	for (i = 0; i < n; i++) {
-		if (is_true)
+		if (is_true) {
 			bm_set_(self->primitive_bits, self->primitive_n_bits + i);
-		else
+			self->primitive_n_one += 1;
+		} else { 
 			bm_reset_(self->primitive_bits, self->primitive_n_bits + i);
+		}
 	}
 
 	self->primitive_n_bits += n;

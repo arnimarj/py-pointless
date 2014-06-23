@@ -377,7 +377,7 @@ static int pointless_is_prim_vector(pointless_value_t* v)
 	return 0;
 }
 
-static size_t pointless_vector_n_bytes(PyPointlessVector* self)
+static size_t pointless_vector_item_size(PyPointlessVector* self)
 {
 	size_t n_bytes = 0;
 
@@ -396,7 +396,12 @@ static size_t pointless_vector_n_bytes(PyPointlessVector* self)
 		default:                     assert(0); break;
 	}
 
-	return n_bytes * self->slice_n;
+	return n_bytes;
+}
+
+static size_t pointless_vector_n_bytes(PyPointlessVector* self)
+{
+	return pointless_vector_item_size(self) * self->slice_n;
 }
 
 static void* pointless_prim_vector_base_ptr(PyPointlessVector* self)
@@ -424,7 +429,8 @@ static void* pointless_prim_vector_base_ptr(PyPointlessVector* self)
 
 static Py_ssize_t PyPointlessVector_buffer_getreadbuf(PyPointlessVector* self, Py_ssize_t index, const void **ptr)
 {
-	// TBD: support slice_i
+	printf("PyPointlessVector_buffer_getreadbuf()\n");
+
 	if (index != 0) {
 		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
 		return -1;
@@ -436,11 +442,12 @@ static Py_ssize_t PyPointlessVector_buffer_getreadbuf(PyPointlessVector* self, P
 	}
 
 	*ptr = pointless_prim_vector_base_ptr(self);
-	return self->slice_n;
+	return pointless_vector_n_bytes(self);
 }
 
 static Py_ssize_t PyPointlessVector_buffer_getsegcount(PyPointlessVector* self, Py_ssize_t* lenp)
 {
+	printf("PyPointlessVector_buffer_getsegcount()\n");
 	if (lenp)
 		*lenp = pointless_vector_n_bytes(self);
 
@@ -449,6 +456,7 @@ static Py_ssize_t PyPointlessVector_buffer_getsegcount(PyPointlessVector* self, 
 
 static Py_ssize_t PyPointlessVector_buffer_getcharbuf(PyPointlessVector* self, Py_ssize_t index, const char** ptr)
 {
+	printf("PyPointlessVector_buffer_getcharbuf()\n");
 	if (index != 0) {
 		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
 		return -1;
@@ -460,12 +468,38 @@ static Py_ssize_t PyPointlessVector_buffer_getcharbuf(PyPointlessVector* self, P
 
 static int PyPointlessVector_getbuffer(PyPointlessVector* self, Py_buffer* view, int flags)
 {
-	// TBD: support slice_i
+	printf("PyPointlessVector_getbuffer()\n");
 	if (view == 0)
 		return 0;
 
-	void* ptr = pointless_prim_vector_base_ptr(self);
-	return PyBuffer_FillInfo(view, (PyObject*)self, ptr, pointless_vector_n_bytes(self), 0, flags);
+	int i = PyBuffer_FillInfo(view, (PyObject*)self, pointless_prim_vector_base_ptr(self), pointless_vector_n_bytes(self), 1, flags);
+
+	if (i != 0)
+		return i;
+
+	switch (self->v->type) {
+		case POINTLESS_VECTOR_I8:
+		case POINTLESS_VECTOR_U8:
+			view->itemsize = 1;
+			break;
+		case POINTLESS_VECTOR_I16:
+		case POINTLESS_VECTOR_U16:
+			view->itemsize = 2;
+			break;
+		case POINTLESS_VECTOR_I32:
+		case POINTLESS_VECTOR_U32:
+		case POINTLESS_VECTOR_FLOAT:
+			view->itemsize = 4;
+			break;
+		case POINTLESS_VECTOR_I64:
+		case POINTLESS_VECTOR_U64:
+			view->itemsize = 8;
+			break;
+	}
+
+	view->len /= view->itemsize;
+
+	return 0;
 }
 
 static void PyPointlessVector_releasebuffer(PyPointlessVector* obj, Py_buffer *view)
@@ -597,6 +631,102 @@ static PyObject* PyPointlessVector_min(PyPointlessVector* self)
 	return PyPointlessVector_subscript_priv(self, m_i);
 }
 
+static int parse_pyobject_number(PyObject* v, int* is_signed, int64_t* i, uint64_t* u)
+{
+	// simple case
+	if (PyInt_Check(v)) {
+		long _v = PyInt_AS_LONG(v);
+		if (_v < 0) {
+			*is_signed = 1;
+			*i = (int64_t)_v;
+		} else {
+			*is_signed = 0;
+			*u = (uint64_t)_v;
+		}
+
+		return 1;
+	}
+
+	// complicated case
+	if (!PyLong_Check(v)) {
+		PyErr_SetString(PyExc_TypeError, "expected an integer");
+		return 0;
+	}
+
+	PY_LONG_LONG ii = 0;
+	unsigned PY_LONG_LONG uu = 0;
+
+	ii = PyLong_AsLongLong(v);
+
+	// negative int
+	if (!(ii == -1 && PyErr_Occurred()) && ii < 0) {
+		*is_signed = 1;
+		*i = (int64_t)ii;
+		return 1;
+	}
+
+	PyErr_Clear();
+
+	uu = PyLong_AsUnsignedLongLong(v);
+
+	if ((uu == (unsigned long long)-1) && PyErr_Occurred()) {
+		PyErr_SetString(PyExc_ValueError, "integer too big");
+		return 0;
+	}
+
+	*is_signed = 0;
+	*u = (uint64_t)uu;
+
+	return 1;
+}
+
+static PyObject* PyPointlessVector_bisect_left(PyPointlessVector* self, PyObject* args)
+{
+	int is_signed = 0;
+	int64_t _ii = 0;
+	uint64_t _uu = 0;
+
+	if (PyTuple_Check(args) && PyTuple_GET_SIZE(args) == 1 && parse_pyobject_number(PyTuple_GET_ITEM(args, 0), &is_signed, &_ii, &_uu)) {
+		if (is_signed) {
+			PyErr_Format(PyExc_ValueError, "value is signed");
+			return 0;
+		}
+	} else {
+		PyErr_Format(PyExc_ValueError, "we need a number in the range [0, 2**64-1]");
+		return 0;
+	}
+
+	// negative number on 
+	switch (self->v->type) {
+		//!
+	}
+
+	// number bigger than biggest number in vector
+	switch (self->v->type) {
+		//!
+	}
+
+	if (self->v->type != POINTLESS_VECTOR_U64) {
+		PyErr_Format(PyExc_ValueError, "vector must be u64");
+		return 0;
+	}
+
+	uint64_t* a = pointless_prim_vector_base_ptr(self);
+	int64_t i, j, mid;
+
+	i = 0, j = self->slice_n; 
+
+	while (i < j) {
+		mid = (i + j) / 2;
+
+		if (a[mid] < _uu)
+			i = mid + 1;
+		else
+			j = mid;
+	}
+
+	return PyLong_FromLongLong((PY_LONG_LONG)i);
+}
 
 static PyGetSetDef PyPointlessVector_getsets [] = {
 	{"typecode", (getter)PyPointlessVector_get_typecode, 0, "the typecode character used to create the vector"},
@@ -612,10 +742,10 @@ static PyMemberDef PyPointlessVector_memberlist[] = {
 static PyMethodDef PyPointlessVector_methods[] = {
 	{"max",         (PyCFunction)PyPointlessVector_max,      METH_NOARGS,  ""}, 
 	{"min",         (PyCFunction)PyPointlessVector_min,      METH_NOARGS,  ""}, 
+	{"bisect_left", (PyCFunction)PyPointlessVector_bisect_left,      METH_VARARGS,  ""}, 
 	{"__sizeof__",  (PyCFunction)PyPointlessVector_sizeof,   METH_NOARGS,  ""}, 
 	{NULL, NULL}
 };
-
 
 static PyMappingMethods PyPointlessVector_as_mapping = {
 	(lenfunc)PyPointlessVector_length,
@@ -684,7 +814,7 @@ PyTypeObject PyPointlessVectorType = {
 	0,                                              /*tp_descr_get */
 	0,                                              /*tp_descr_set */
 	0,                                              /*tp_dictoffset */
-	(initproc)0,               /*tp_init */
+	(initproc)PyPointlessVector_init,               /*tp_init */
 	0,                                              /*tp_alloc */
 	PyPointlessVector_new,                          /*tp_new */
 };
