@@ -12,7 +12,7 @@ def build_judy():
 	else:
 		sys.exit('bad sys.maxint')
 
-	a, b = commands.getstatusoutput('(cd judy/src; COPT=\'%s\' sh ./sh_build)' % (CFLAGS,))
+	a, b = commands.getstatusoutput('(cd judy-1.0.5/src; COPT=\'%s\' sh ./sh_build)' % (CFLAGS,))
 
 	if a != 0:
 		sys.exit(b)
