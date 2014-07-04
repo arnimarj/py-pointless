@@ -429,8 +429,6 @@ static void* pointless_prim_vector_base_ptr(PyPointlessVector* self)
 
 static Py_ssize_t PyPointlessVector_buffer_getreadbuf(PyPointlessVector* self, Py_ssize_t index, const void **ptr)
 {
-	printf("PyPointlessVector_buffer_getreadbuf()\n");
-
 	if (index != 0) {
 		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
 		return -1;
@@ -447,7 +445,6 @@ static Py_ssize_t PyPointlessVector_buffer_getreadbuf(PyPointlessVector* self, P
 
 static Py_ssize_t PyPointlessVector_buffer_getsegcount(PyPointlessVector* self, Py_ssize_t* lenp)
 {
-	printf("PyPointlessVector_buffer_getsegcount()\n");
 	if (lenp)
 		*lenp = pointless_vector_n_bytes(self);
 
@@ -456,7 +453,6 @@ static Py_ssize_t PyPointlessVector_buffer_getsegcount(PyPointlessVector* self, 
 
 static Py_ssize_t PyPointlessVector_buffer_getcharbuf(PyPointlessVector* self, Py_ssize_t index, const char** ptr)
 {
-	printf("PyPointlessVector_buffer_getcharbuf()\n");
 	if (index != 0) {
 		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
 		return -1;
@@ -468,38 +464,11 @@ static Py_ssize_t PyPointlessVector_buffer_getcharbuf(PyPointlessVector* self, P
 
 static int PyPointlessVector_getbuffer(PyPointlessVector* self, Py_buffer* view, int flags)
 {
-	printf("PyPointlessVector_getbuffer()\n");
 	if (view == 0)
 		return 0;
 
-	int i = PyBuffer_FillInfo(view, (PyObject*)self, pointless_prim_vector_base_ptr(self), pointless_vector_n_bytes(self), 1, flags);
-
-	if (i != 0)
-		return i;
-
-	switch (self->v->type) {
-		case POINTLESS_VECTOR_I8:
-		case POINTLESS_VECTOR_U8:
-			view->itemsize = 1;
-			break;
-		case POINTLESS_VECTOR_I16:
-		case POINTLESS_VECTOR_U16:
-			view->itemsize = 2;
-			break;
-		case POINTLESS_VECTOR_I32:
-		case POINTLESS_VECTOR_U32:
-		case POINTLESS_VECTOR_FLOAT:
-			view->itemsize = 4;
-			break;
-		case POINTLESS_VECTOR_I64:
-		case POINTLESS_VECTOR_U64:
-			view->itemsize = 8;
-			break;
-	}
-
-	view->len /= view->itemsize;
-
-	return 0;
+	void* ptr = pointless_prim_vector_base_ptr(self);
+	return PyBuffer_FillInfo(view, (PyObject*)self, ptr, pointless_vector_n_bytes(self), 0, flags);
 }
 
 static void PyPointlessVector_releasebuffer(PyPointlessVector* obj, Py_buffer *view)
@@ -694,16 +663,6 @@ static PyObject* PyPointlessVector_bisect_left(PyPointlessVector* self, PyObject
 	} else {
 		PyErr_Format(PyExc_ValueError, "we need a number in the range [0, 2**64-1]");
 		return 0;
-	}
-
-	// negative number on 
-	switch (self->v->type) {
-		//!
-	}
-
-	// number bigger than biggest number in vector
-	switch (self->v->type) {
-		//!
 	}
 
 	if (self->v->type != POINTLESS_VECTOR_U64) {
