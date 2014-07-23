@@ -56,6 +56,22 @@ static PyObject* PyPointless_GetRoot(PyPointless* self)
 	return pypointless_value(self, &self->p.header->root);
 }
 
+static PyObject* PyPointless_GetINode(PyPointless* self)
+{
+	int f = fileno(self->p.fd);
+	struct stat buf;
+
+	if (f != -1)
+		f = fstat(f, &buf);
+
+	if (f == -1) {
+		PyErr_SetFromErrno(PyExc_OSError);
+		return 0;
+	}
+
+	return PyLong_FromUnsignedLong(buf.st_ino);
+}
+
 static PyObject* PyPointless_GetRefs(PyPointless* self)
 {
 	return Py_BuildValue("{s:n,s:n,s:n,s:n,s:n}",
@@ -75,6 +91,7 @@ static PyObject* PyPointless_sizeof(PyPointless* self)
 static PyMethodDef PyPointless_methods[] = {
 	{"__sizeof__", (PyCFunction)PyPointless_sizeof,  METH_NOARGS, "get size in bytes of backing file or buffer"},
 	{"GetRoot",    (PyCFunction)PyPointless_GetRoot, METH_NOARGS, "get pointless root object" },
+	{"GetINode",   (PyCFunction)PyPointless_GetINode, METH_NOARGS, "get inode of file descriptor" },
 	{"GetRefs",    (PyCFunction)PyPointless_GetRefs, METH_NOARGS, "get inside-reference count to base object" },
 	{NULL}
 };
