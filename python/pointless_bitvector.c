@@ -196,7 +196,7 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 				if (!PyErr_Occurred())
 					PyErr_SetString(PyExc_ValueError, "sequence must only contain True, False, 0 or 1");
 
-				return 0;
+				return -1;
 			}
 
 			i += 1;
