@@ -2,13 +2,14 @@ import sys, commands
 from distutils.core import setup, Extension
 
 def build_judy():
-
 	print('INFO: building judy static library...')
 
+	# adding last two flags because of compiler and/or code bugs
+	# see http://sourceforge.net/p/judy/mailman/message/32417284/
 	if sys.maxint == 2**63-1:
-		CFLAGS = '-O3 -fPIC -DJU_64BIT'
+		CFLAGS = '-DJU_64BIT -O2 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
 	elif sys.maxint == 2**31-1:
-		CFLAGS = '-O3 -fPIC'
+		CFLAGS = '           -O2 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
 	else:
 		sys.exit('bad sys.maxint')
 
@@ -20,24 +21,16 @@ def build_judy():
 build_judy()
 
 extra_compile_args = [
-	'-I./judy/src',
-	'-I./include',
-	'-I/usr/local/include',
+	'-I./judy-1.0.5/src',
 	'-Wall',
 	'-Wno-strict-prototypes',
 	'-g',
 	'-D_GNU_SOURCE',
 	'-O2',
-	'-DNDEBUG',
-#	'-fno-omit-frame-pointer',
-#	'-pg',
-#	'-fno-inline-functions',
-#	'-fno-inline-functions-called-once',
-#	'-fno-optimize-sibling-calls',
-#	'-fno-inline'
+	'-DNDEBUG'
 ]
 
-extra_link_args = ['-L./judy/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm']
+extra_link_args = ['-L./judy-1.0.5/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm']
 
 setup(
 	name = 'pointless',

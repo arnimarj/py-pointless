@@ -406,15 +406,18 @@ uint32_t pointless_hash_create_32(pointless_create_t* c, pointless_create_value_
 int32_t pointless_cmp_wchar_wchar(wchar_t* a, wchar_t* b);
 #endif
 
-int32_t pointless_cmp_ucs4_ucs4(uint32_t* a, uint32_t* b);
-int32_t pointless_cmp_ucs2_ucs4(uint16_t* a, uint32_t* b);
-int32_t pointless_cmp_ucs4_ucs2(uint32_t* a, uint16_t* b);
-int32_t pointless_cmp_ascii_ucs4(uint8_t* a, uint32_t* b);
-int32_t pointless_cmp_ucs4_ascii(uint32_t* a, uint8_t* b);
-int32_t pointless_cmp_ascii_ascii(uint8_t* a, uint8_t* b);
+int32_t pointless_cmp_string_8_8(uint8_t* a, uint8_t* b);
+int32_t pointless_cmp_string_8_16(uint8_t* a, uint16_t* b);
+int32_t pointless_cmp_string_8_32(uint8_t* a, uint32_t* b);
+int32_t pointless_cmp_string_16_8(uint16_t* a, uint8_t* b);
+int32_t pointless_cmp_string_16_16(uint16_t* a, uint16_t* b);
+int32_t pointless_cmp_string_16_32(uint16_t* a, uint32_t* b);
+int32_t pointless_cmp_string_32_8(uint32_t* a, uint8_t* b);
+int32_t pointless_cmp_string_32_16(uint32_t* a, uint16_t* b);
+int32_t pointless_cmp_string_32_32(uint32_t* a, uint32_t* b);
 
-int32_t pointless_cmp_ascii_ascii_n(uint8_t* a, uint8_t* b, size_t n_b);
-int32_t pointless_cmp_ucs4_ascii_n(uint32_t* a, uint8_t* b, size_t n_b);
+int32_t pointless_cmp_string_8_8_n(uint8_t* a, uint8_t* b, size_t n_b);
+int32_t pointless_cmp_string_32_8_n(uint32_t* a, uint8_t* b, size_t n_b);
 
 int32_t pointless_cmp_reader(pointless_t* p_a, pointless_complete_value_t* a, pointless_t* p_b, pointless_complete_value_t* b, const char** error);
 int32_t pointless_cmp_reader_acyclic(pointless_t* p_a, pointless_complete_value_t* a, pointless_t* p_b, pointless_complete_value_t* b);

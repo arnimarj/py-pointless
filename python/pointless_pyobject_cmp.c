@@ -227,62 +227,92 @@ static pypointless_cmp_cb pypointless_cmp_func(pypointless_cmp_value_t* v, uint3
 	}
 }
 
-static void pypointless_cmp_extract_unicode_or_string(pypointless_cmp_value_t* v, uint32_t** unicode, uint8_t** string, pypointless_cmp_state_t* state)
+typedef struct {
+	union {
+		uint32_t* string_32;
+		uint16_t* string_16;
+		uint8_t* string_8;
+	} string;
+	uint8_t n_bits;
+} _var_string_t;
+
+_var_string_t foo()
 {
-#ifndef Py_UNICODE_WIDE
-	state->error = "we only support unicode comparison on UCS-4 builds";
-	return;
-#else
+	_var_string_t s;
+	s.n_bits = 0;
+	return s;
+}
+
+static _var_string_t pypointless_cmp_extract_string(pypointless_cmp_value_t* v, pypointless_cmp_state_t* state)
+{
+	_var_string_t s;
+
+/*
 	if (v->is_pointless) {
 		pointless_value_t v_ = pointless_value_from_complete(&v->value.pointless.v);
 
-		if (v_.type == POINTLESS_UNICODE_)
-			*unicode = pointless_reader_unicode_value_ucs4(v->value.pointless.p, &v_);
-		else
-			*string = pointless_reader_string_value_ascii(v->value.pointless.p, &v_);
+		if (v_.type == POINTLESS_UNICODE_) {
+			s.n_bits = 32;
+			s.string.string_32 = pointless_reader_unicode_value_ucs4(v->value.pointless.p, &v_);
+		} else {
+			s.n_bits = 8;
+			s.string.string_8 = pointless_reader_string_value_ascii(v->value.pointless.p, &v_);
+		}
+	} else {
+		assert(PyString_Check(v->value.py_object) || PyUnicode_Check(v->value.py_object));
 
-		return;
-	}
-
-	assert(PyString_Check(v->value.py_object) || PyUnicode_Check(v->value.py_object));
-
-	if (PyString_Check(v->value.py_object))
-		*string = (uint8_t*)PyString_AS_STRING(v->value.py_object);
-	else
-		*unicode = (uint32_t*)PyUnicode_AS_UNICODE(v->value.py_object);
+		if (PyString_Check(v->value.py_object)) {
+			s.n_bits = 8;
+			s.string.string_8 = (uint8_t*)PyString_AS_STRING(v->value.py_object);
+		} else {
+#ifdef Py_UNICODE_WIDE
+			s.n_bits = 32;
+			s.string.string_32 = (uint32_t*)PyUnicode_AS_UNICODE(v->value.py_object);
+#else
+			s.n_bits = 16;
+			s.string.string_16 = (uint16_t*)PyUnicode_AS_UNICODE(v->value.py_object);
 #endif
+		}
+*/
+	return s;
 }
 
 static int32_t pypointless_cmp_string_unicode(pypointless_cmp_value_t* a, pypointless_cmp_value_t* b, pypointless_cmp_state_t* state)
 {
-	uint32_t* unicode_a = 0;
-	uint8_t* string_a = 0;
-
-	uint32_t* unicode_b = 0;
-	uint8_t* string_b = 0;
-
-	pypointless_cmp_extract_unicode_or_string(a, &unicode_a, &string_a, state);
+	_var_string_t s_a = pypointless_cmp_extract_string(a, state);
 
 	if (state->error)
 		return 0;
 
-	pypointless_cmp_extract_unicode_or_string(b, &unicode_b, &string_b, state);
+	_var_string_t s_b = pypointless_cmp_extract_string(b, state);
 
 	if (state->error)
 		return 0;
 
-	if (unicode_a && unicode_b)
-		return pointless_cmp_ucs4_ucs4(unicode_a, unicode_b);
+	assert(s_a.n_bits == 8 || s_a.n_bits == 16 || s_a.n_bits == 32);
+	assert(s_b.n_bits == 8 || s_b.n_bits == 16 || s_b.n_bits == 32);
 
-	if (unicode_a && string_b)
-		return pointless_cmp_ucs4_ascii(unicode_a, string_b);
+	if (s_a.n_bits == 8 && s_b.n_bits == 8)
+		return pointless_cmp_string_8_8(s_a.string.string_8, s_b.string.string_8);
+	if (s_a.n_bits == 8 && s_b.n_bits == 16)
+		return pointless_cmp_string_8_16(s_a.string.string_8, s_b.string.string_16);
+	if (s_a.n_bits == 8 && s_b.n_bits == 32)
+		return pointless_cmp_string_8_32(s_a.string.string_8, s_b.string.string_32);
+	if (s_a.n_bits == 16 && s_b.n_bits == 8)
+		return pointless_cmp_string_16_8(s_a.string.string_16, s_b.string.string_8);
+	if (s_a.n_bits == 16 && s_b.n_bits == 16)
+		return pointless_cmp_string_16_16(s_a.string.string_16, s_b.string.string_16);
+	if (s_a.n_bits == 16 && s_b.n_bits == 32)
+		return pointless_cmp_string_16_32(s_a.string.string_16, s_b.string.string_32);
+	if (s_a.n_bits == 32 && s_b.n_bits == 8)
+		return pointless_cmp_string_32_8(s_a.string.string_32, s_b.string.string_8);
+	if (s_a.n_bits == 32 && s_b.n_bits == 16)
+		return pointless_cmp_string_32_16(s_a.string.string_32, s_b.string.string_16);
+	if (s_a.n_bits == 32 && s_b.n_bits == 32)
+		return pointless_cmp_string_32_32(s_a.string.string_32, s_b.string.string_32);
 
-	if (string_a && unicode_b)
-		return pointless_cmp_ascii_ucs4(string_a, unicode_b);
-
-	assert(string_a && string_b);
-
-	return pointless_cmp_ascii_ascii(string_a, string_b);
+	assert(0);
+	return 0;
 }
 
 static pypointless_cmp_int_float_bool_t pypointless_cmp_int_float_bool_from_value(pypointless_cmp_value_t* v, pypointless_cmp_state_t* state)

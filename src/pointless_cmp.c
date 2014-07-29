@@ -20,22 +20,28 @@ int32_t pointless_cmp_wchar_wchar(wchar_t* a, wchar_t* b)
 	{ POINTLESS_CMP_STRING(a, b); }
 #endif
 
-int32_t pointless_cmp_ucs4_ucs4(uint32_t* a, uint32_t* b)
+int32_t pointless_cmp_string_8_8(uint8_t* a, uint8_t* b)
 	{ POINTLESS_CMP_STRING(a, b); }
-int32_t pointless_cmp_ucs2_ucs4(uint16_t* a, uint32_t* b)
+int32_t pointless_cmp_string_8_16(uint8_t* a, uint16_t* b)
 	{ POINTLESS_CMP_STRING(a, b); }
-int32_t pointless_cmp_ucs4_ucs2(uint32_t* a, uint16_t* b)
+int32_t pointless_cmp_string_8_32(uint8_t* a, uint32_t* b)
 	{ POINTLESS_CMP_STRING(a, b); }
-int32_t pointless_cmp_ascii_ucs4(uint8_t* a, uint32_t* b)
+int32_t pointless_cmp_string_16_8(uint16_t* a, uint8_t* b)
 	{ POINTLESS_CMP_STRING(a, b); }
-int32_t pointless_cmp_ucs4_ascii(uint32_t* a, uint8_t* b)
+int32_t pointless_cmp_string_16_16(uint16_t* a, uint16_t* b)
 	{ POINTLESS_CMP_STRING(a, b); }
-int32_t pointless_cmp_ascii_ascii(uint8_t* a, uint8_t* b)
+int32_t pointless_cmp_string_16_32(uint16_t* a, uint32_t* b)
+	{ POINTLESS_CMP_STRING(a, b); }
+int32_t pointless_cmp_string_32_8(uint32_t* a, uint8_t* b)
+	{ POINTLESS_CMP_STRING(a, b); }
+int32_t pointless_cmp_string_32_16(uint32_t* a, uint16_t* b)
+	{ POINTLESS_CMP_STRING(a, b); }
+int32_t pointless_cmp_string_32_32(uint32_t* a, uint32_t* b)
 	{ POINTLESS_CMP_STRING(a, b); }
 
-int32_t pointless_cmp_ascii_ascii_n(uint8_t* a, uint8_t* b, size_t n_b)
+int32_t pointless_cmp_string_8_8_n(uint8_t* a, uint8_t* b, size_t n_b)
 	{ POINTLESS_CMP_STRING__N(a, b, n_b); }
-int32_t pointless_cmp_ucs4_ascii_n(uint32_t* a, uint8_t* b, size_t n_b)
+int32_t pointless_cmp_string_32_8_n(uint32_t* a, uint8_t* b, size_t n_b)
 	{ POINTLESS_CMP_STRING__N(a, b, n_b); }
 
 typedef int32_t (*pointless_cmp_reader_cb)(pointless_t* p_a, pointless_complete_value_t* a, pointless_t* p_b, pointless_complete_value_t* b, uint32_t depth, const char** error);
@@ -64,22 +70,22 @@ static int32_t pointless_cmp_reader_string_unicode(pointless_t* p_a, pointless_c
 	if (a->type == POINTLESS_UNICODE_ && b->type == POINTLESS_UNICODE_) {
 		uint32_t* unicode_a = pointless_reader_unicode_value_ucs4(p_a, &_a);
 		uint32_t* unicode_b = pointless_reader_unicode_value_ucs4(p_b, &_b);
-		return pointless_cmp_ucs4_ucs4(unicode_a, unicode_b);
+		return pointless_cmp_string_32_32(unicode_a, unicode_b);
 	// us
 	} else if (a->type == POINTLESS_UNICODE_ && b->type == POINTLESS_STRING_) {
 		uint32_t* unicode_a = pointless_reader_unicode_value_ucs4(p_a, &_a);
 		uint8_t* string_b = pointless_reader_string_value_ascii(p_b, &_b);
-		return pointless_cmp_ucs4_ascii(unicode_a, string_b);
+		return pointless_cmp_string_32_8(unicode_a, string_b);
 	// su
 	} else if (a->type == POINTLESS_STRING_ && b->type == POINTLESS_UNICODE_) {
 		uint8_t* string_a = pointless_reader_string_value_ascii(p_a, &_a);
 		uint32_t* unicode_b = pointless_reader_unicode_value_ucs4(p_b, &_b);
-		return pointless_cmp_ascii_ucs4(string_a, unicode_b);
+		return pointless_cmp_string_8_32(string_a, unicode_b);
 	// ss
 	} else if (a->type == POINTLESS_STRING_ && b->type == POINTLESS_STRING_) {
 		uint8_t* string_a = pointless_reader_string_value_ascii(p_a, &_a);
 		uint8_t* string_b = pointless_reader_string_value_ascii(p_b, &_b);
-		return pointless_cmp_ascii_ascii(string_a, string_b);
+		return pointless_cmp_string_8_8(string_a, string_b);
 	}
 
 	assert(0);
@@ -95,22 +101,22 @@ static int32_t pointless_cmp_create_string_unicode(pointless_create_t* c, pointl
 	if (_a.header.type_29 == POINTLESS_UNICODE_ && _b.header.type_29 == POINTLESS_UNICODE_) {
 		uint32_t* unicode_a = (uint32_t*)cv_get_unicode(&_a) + 1;
 		uint32_t* unicode_b = (uint32_t*)cv_get_unicode(&_b) + 1;
-		return pointless_cmp_ucs4_ucs4(unicode_a, unicode_b);
+		return pointless_cmp_string_32_32(unicode_a, unicode_b);
 	// us
 	} else if (_a.header.type_29 == POINTLESS_UNICODE_ && _b.header.type_29 == POINTLESS_STRING_) {
 		uint32_t* unicode_a = (uint32_t*)cv_get_unicode(&_a) + 1;
 		uint8_t* string_b = (uint8_t*)((uint32_t*)cv_get_string(&_b) + 1);
-		return pointless_cmp_ucs4_ascii(unicode_a, string_b);
+		return pointless_cmp_string_32_8(unicode_a, string_b);
 	// su
 	} else if (_a.header.type_29 == POINTLESS_STRING_ && _b.header.type_29 == POINTLESS_UNICODE_) {
 		uint8_t* string_a = (uint8_t*)((uint32_t*)cv_get_string(&_a) + 1);
 		uint32_t* unicode_b = (uint32_t*)cv_get_unicode(&_b) + 1;
-		return pointless_cmp_ascii_ucs4(string_a, unicode_b);
+		return pointless_cmp_string_8_32(string_a, unicode_b);
 	// ss
 	} else if (_a.header.type_29 == POINTLESS_STRING_ && _b.header.type_29 == POINTLESS_STRING_) {
 		uint8_t* string_a = (uint8_t*)((uint32_t*)cv_get_string(&_a) + 1);
 		uint8_t* string_b = (uint8_t*)((uint32_t*)cv_get_string(&_b) + 1);
-		return pointless_cmp_ascii_ascii(string_a, string_b);
+		return pointless_cmp_string_8_8(string_a, string_b);
 	}
 
 	assert(0);
