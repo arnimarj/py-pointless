@@ -1,52 +1,30 @@
 #!/usr/bin/python
 
-import sys, random
+import pointless, random
 
-def ImportPointlessExt():
-	p = sys.path
+def VectorSlices(fname, py_vector):
+	pointless.serialize(py_vector, fname)
+	po_vector = pointless.Pointless(fname).GetRoot()
 
-	try:
-		sys.path = ['/home/arni/py-pointless/build/lib.linux-x86_64-2.7']
-		import pointless as _pointless
-	finally:
-		sys.path = p
+	# first, the original/pointless vector
+	yield (py_vector, po_vector)
 
-	return _pointless
-
-pointless = ImportPointlessExt()
-
-def VectorSlices(fname):
-	py = range(10000)
-	pointless.serialize(py, fname)
-	po = pointless.Pointless(fname).GetRoot()
-
-	vv = [ ]
-
-	c = pointless.pointless_cmp(py, po)
-
-	if c != 0:
-		raise ValueError('initial comparison of VectorSlices() failed')
-
-	vv.append((py, po))
-
-	random.seed(0)
-
+	# then further slices of those two
 	for i in xrange(100):
-		i_0 = random.randint(-100, 15000)
-		i_1 = random.randint(-100, 15000)
+		i_0 = random.randint(-100, len(py_vector) * 2)
+		i_1 = random.randint(-100, len(py_vector) * 2)
 
-		s_py = py[i_0:i_1]
-		s_po = po[i_0:i_1]
+		s_py_vector = py_vector[i_0:i_1]
+		s_po_vector = po_vector[i_0:i_1]
 
-		vv.append((s_py, s_po))
+		yield s_py_vector, s_po_vector
 
+		# and further slices of those
 		for j in xrange(100):
-			ii_0 = random.randint(-100, 6000)
-			ii_1 = random.randint(-100, 6000)
+			ii_0 = random.randint(-100, len(py_vector) // 2)
+			ii_1 = random.randint(-100, len(py_vector) // 2)
 
-			ss_py = s_py[ii_0:ii_1]
-			ss_po = s_po[ii_0:ii_1]
+			ss_py_vector = s_py_vector[ii_0:ii_1]
+			ss_po_vector = s_po_vector[ii_0:ii_1]
 
-			vv.append((ss_py, ss_po))
-
-	return vv
+			yield ss_py_vector, ss_po_vector

@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-import random
+import random, pointless
+
 from twisted.trial import unittest
-from common import pointless
 
 def SimpleSerializeTestCases():
 	# 1) deep vector
@@ -61,40 +61,20 @@ def AllBitvectorTestCases():
 		pointless.PointlessBitvector(sequence = [0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1])
 	]
 
-from common import pointless
-
 class TestSerialize(unittest.TestCase):
-	def testSetSerialize(self):
+	def testSerialize(self):
 		fname = 'test_serialize.map'
 
 		for v in SimpleSerializeTestCases():
 			pointless.serialize(v, fname)
-			p = pointless.Pointless(fname)
-			root = p.GetRoot()
-
+			root = pointless.Pointless(fname).GetRoot()
 			del root
-			del p
 
-class TestString(unittest.TestCase):
 	def testString(self):
 		fname = 'test_string.map'
 		v = ['string', 'value', u'string', unichr(1000)]
 		pointless.serialize(v, fname)
 		p = pointless.Pointless(fname)
 		v_ = p.GetRoot()
-#		import StringIO
-#		buffer_a = StringIO.StringIO()
-#		buffer_b = StringIO.StringIO()
-#		print v[3]
-#		print v_[3]
 		str(v)
 		str(v_)
-#		repr(v)
-#		repr(v_)
-#		print >> buffer_a, v
-#		print >> buffer_b, v_
-#		print buffer_a.getvalue()
-#		print buffer_b.getvalue()
-		#print map(ord, (v[3])),map(ord, (v_[3]))
-		#print repr(v)
-		#print repr(v_)

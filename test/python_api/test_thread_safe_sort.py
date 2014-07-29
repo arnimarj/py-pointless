@@ -1,12 +1,9 @@
 #!/usr/bin/python
 
-import random, time, sys
+import random, pointless
 
-from twisted.internet import reactor, defer, threads
-from twisted.python import failure
+from twisted.internet import defer, threads
 from twisted.trial import unittest
-
-from common import pointless
 
 class TestThreadSafe(unittest.TestCase):
 	@defer.inlineCallbacks
@@ -56,16 +53,8 @@ class TestThreadSafe(unittest.TestCase):
 
 		d_list = []
 
-		t_0 = time.time()
-
 		def sort_wrapper(P):
-			try:
-				P.sort()
-			except:
-				f = failure.Failure()
-				s = 'ERROR: %s\n' % (f.getErrorMessage(),)
-				reactor.callFromThread(sys.stdout.write, s)
-				reactor.callFromThread(sys.stdout.flush)
+			P.sort()
 
 		THREAD = True
 
@@ -78,5 +67,3 @@ class TestThreadSafe(unittest.TestCase):
 
 		if THREAD:
 			yield defer.DeferredList(d_list)
-
-		t_1 = time.time()

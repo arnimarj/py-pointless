@@ -1,8 +1,6 @@
 #!/usr/bin/python
 
-import sys, random, unittest, types, itertools
-
-from common import pointless
+import random, unittest, itertools, pointless
 
 def RandomPrimVector(n, tc):
 	ranges = {
@@ -31,14 +29,6 @@ class TestPrimVector(unittest.TestCase):
 	def testIndex(self):
 		for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
 			for i in xrange(100):
-				if i > 0 and i % 10 == 0:
-					sys.stdout.write('.')
-
-					if i % 100 == 0:
-						sys.stdout.write(' ')
-
-					sys.stdout.flush()
-
 				v = RandomPrimVector(i, tc)
 				w = list(v)
 
@@ -56,20 +46,9 @@ class TestPrimVector(unittest.TestCase):
 						self.assertRaises(ValueError, w.index, i)
 						self.assertRaises(ValueError, v.index, i)
 
-			sys.stdout.write(' | ')
-			sys.stdout.flush()
-
 	def testRemove(self):
 		for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
 			for i in xrange(100):
-				if i > 0 and i % 10 == 0:
-					sys.stdout.write('.')
-
-					if i % 100 == 0:
-						sys.stdout.write(' ')
-
-					sys.stdout.flush()
-
 				v = RandomPrimVector(i, tc)
 				w = list(v)
 
@@ -87,21 +66,9 @@ class TestPrimVector(unittest.TestCase):
 							self.assertRaises(ValueError, w.remove, V)
 							self.assertRaises(ValueError, v.remove, V)
 
-
-			sys.stdout.write(' | ')
-			sys.stdout.flush()
-
 	def testFastRemove(self):
 		for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
 			for i in xrange(100):
-				if i > 0 and i % 10 == 0:
-					sys.stdout.write('.')
-
-					if i % 100 == 0:
-						sys.stdout.write(' ')
-
-					sys.stdout.flush()
-
 				v = RandomPrimVector(i, tc)
 				w = list(v)
 
@@ -118,9 +85,6 @@ class TestPrimVector(unittest.TestCase):
 						if V not in v:
 							self.assertRaises(ValueError, w.remove, V)
 							self.assertRaises(ValueError, v.fast_remove, V)
-
-			sys.stdout.write(' | ')
-			sys.stdout.flush()
 
 	def testPop(self):
 		w = pointless.PointlessPrimVector('u32')
@@ -141,8 +105,6 @@ class TestPrimVector(unittest.TestCase):
 		t = ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']
 
 		for tc in t:
-			sys.stdout.write('.')
-			sys.stdout.flush()
 			r = range(0, 10) if tc != 'f' else [0.0, 1.0, 2.0, 3.0]
 			v = pointless.PointlessPrimVector(tc, sequence = r)
 			self.assert_(v.typecode == tc)
@@ -160,9 +122,6 @@ class TestPrimVector(unittest.TestCase):
 
 		# legal values, and their output, plus an iterator based creation, and item-by-item comparison
 		for v_type, v_min, v_max in int_info:
-			sys.stdout.write('.')
-			sys.stdout.flush()
-
 			v = pointless.PointlessPrimVector(v_type)
 			v.append(v_min)
 			v.append(0)
@@ -228,9 +187,6 @@ class TestPrimVector(unittest.TestCase):
 			return (abs(v_a - v_b) < 0.001)
 
 		for i in xrange(100):
-			sys.stdout.write('.')
-			sys.stdout.flush()
-
 			for tc, i_min, i_max in i_limits:
 				for n_min in [0, 1000, 10000, 10000]:
 					n = random.randint(0, n_min)
@@ -271,9 +227,6 @@ class TestPrimVector(unittest.TestCase):
 
 		# run some number of iterations
 		for i in xrange(10):
-			sys.stdout.write('.')
-			sys.stdout.flush()
-
 			# generate projection with indices in the range [i_min, i_max[
 			i_min = random.randint(0, 1000)
 			i_max = random.randint(i_min, i_min + 60000)
@@ -294,24 +247,15 @@ class TestPrimVector(unittest.TestCase):
 			if i_max < 2**7:
 				tc.append('i8')
 
-			sys.stdout.write('.')
-			sys.stdout.flush()
-
 			# create an equivalent primary vector projection, using any of the possible primitive range types
 			# since it is important to test them all
 			tc = random.choice(tc)
 			pp_proj = pointless.PointlessPrimVector(tc, sequence = py_proj)
 
-			sys.stdout.write('.')
-			sys.stdout.flush()
-
 			# create 1 to 16 value vectors
 			n_attributes = random.randint(1, 16)
 			pp_vv = [RandomPrimVector(i_max, None) for i in xrange(n_attributes)]
 			py_vv = [list(pp_vv[i]) for i in xrange(n_attributes)]
-
-			sys.stdout.write('.')
-			sys.stdout.flush()
 
 			# run both python and pointless projection sorts
 			my_proj_sort(py_proj, py_vv)
@@ -340,9 +284,6 @@ class TestPrimVector(unittest.TestCase):
 
 			for i in xrange(100):
 				n_random.append(random.randint(101, 10000))
-
-			sys.stdout.write('.')
-			sys.stdout.flush()
 
 			for n in n_random:
 				v_in = RandomPrimVector(n, tc)
@@ -374,7 +315,7 @@ class TestPrimVector(unittest.TestCase):
 				return False
 
 			for a, b in itertools.izip(v_a, v_b):
-				if isinstance(a, types.FloatType) and isinstance(b, types.FloatType):
+				if isinstance(a, float) and isinstance(b, float):
 					if not (abs(a - b) < 0.001):
 						return False
 				elif a != b:
@@ -384,9 +325,6 @@ class TestPrimVector(unittest.TestCase):
 
 		# we do multiple iterations
 		for i in xrange(100):
-			sys.stdout.write('.')
-			sys.stdout.flush()
-
 			# select type and range
 			v_type, v_min, v_max = random.choice(v_info)
 
@@ -404,7 +342,7 @@ class TestPrimVector(unittest.TestCase):
 				v_a.append(v)
 				v_b.append(v)
 
-			for j in xrange(1000):
+			for j in xrange(100):
 				i_min = random.randint(-1000, 1000)
 				i_max = random.randint( 1000, 1000)
 

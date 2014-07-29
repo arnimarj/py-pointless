@@ -8,4 +8,4 @@ install:
   - "pip install -r test-requirements.txt"
 
 script:
-  - "nosetests"
+  - "trial test.python_api"

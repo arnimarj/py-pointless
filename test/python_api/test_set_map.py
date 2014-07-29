@@ -1,9 +1,8 @@
 #!/usr/bin/python
 
-from twisted.trial import unittest
-import types
+import pointless, types
 
-from common import pointless
+from twisted.trial import unittest
 
 class TestSetMap(unittest.TestCase):
 	def testMapUnicode(self):

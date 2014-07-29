@@ -1,58 +1,29 @@
 #!/usr/bin/python
 
-import itertools, sys
+import itertools, pointless, os
+
 from twisted.trial import unittest
 
-from test_serialize import AllBitvectorTestCases
-from common import pointless, VectorSlices
+from .test_serialize import AllBitvectorTestCases
+from .common import VectorSlices
 
 def sign(i):
 	return min(max(-1, i), +1)
 
+def serialize_and_get(value):
+	pointless.serialize(value, 'deleteme.map')
+
+	try:
+		return pointless.Pointless('deleteme.map').GetRoot()
+	finally:
+		os.unlink('deleteme.map')
+
 class TestCmp(unittest.TestCase):
-	def setUp(self):
-		self.fname_a = 'pointless_cmp_a.map'
-		self.fname_b = 'pointless_cmp_b.map'
-		self.fname_c = 'pointless_cmp_c.map'
-
-	def _cmp_prog_header(self, n, N):
-		if N > 10 ** 6:
-			sys.stdout.write('[%i -> %.2fM]' % (n, float(N) / 1000000))
-		elif N > 10 ** 3:
-			sys.stdout.write('[%i -> %.2fK]' % (n, float(N) / 1000))
-		else:
-			sys.stdout.write('[%i -> %i]' % (n, N))
-
-		sys.stdout.flush()
-
-	def _cmp_prog(self, i):
-		if i > 0 and i % 100 == 0:
-			sys.stdout.write('.')
-
-			if i % 1000 == 0:
-				sys.stdout.write('%iK' % (i // 1000,))
-
-			sys.stdout.flush()
-
-	def _prog_prog_footer(self):
-		sys.stdout.write(' ')
-		sys.stdout.flush()
-
 	def _testPythonCmp(self, values):
-		n = len(values)
-		N = n ** 2
-
-		self._cmp_prog_header(n, N)
-
 		for i, (v_a, v_b) in enumerate(itertools.product(values, values)):
-
-			self._cmp_prog(i)
-
-			pointless.serialize(v_a, self.fname_a)
-			pointless.serialize(v_b, self.fname_b)
-
-			p_a = pointless.Pointless(self.fname_a).GetRoot()
-			p_b = pointless.Pointless(self.fname_b).GetRoot()
+			print 'cmp', i, len(values) ** 2
+			p_a = serialize_and_get(v_a)
+			p_b = serialize_and_get(v_b)
 
 			p_cmp_a = sign(pointless.pointless_cmp(p_a, p_b))
 			p_cmp_b = sign(pointless.pointless_cmp(p_a, v_b))
@@ -72,28 +43,14 @@ class TestCmp(unittest.TestCase):
 			del p_a
 			del p_b
 
-		self._prog_prog_footer()
-
 	def _testTotalOrder(self, values):
-		n = len(values)
-		N = n ** 3
-
-		self._cmp_prog_header(n, N)
-
 		# we're testing, for each 3-combination of values
 		for i, (v_a, v_b, v_c) in enumerate(itertools.product(values, values, values)):
-
-			self._cmp_prog(i)
-
+			print 'total order', i, len(values) ** 3
 			# write the values out
-			pointless.serialize(v_a, self.fname_a)
-			pointless.serialize(v_b, self.fname_b)
-			pointless.serialize(v_c, self.fname_c)
-
-			# load them
-			p_a = pointless.Pointless(self.fname_a).GetRoot()
-			p_b = pointless.Pointless(self.fname_b).GetRoot()
-			p_c = pointless.Pointless(self.fname_c).GetRoot()
+			p_a = serialize_and_get(v_a)
+			p_b = serialize_and_get(v_b)
+			p_c = serialize_and_get(v_c)
 
 			# test (a > b) <=> (a < b)
 			cmp_ab = sign(pointless.pointless_cmp(p_a, p_b))
@@ -121,13 +78,11 @@ class TestCmp(unittest.TestCase):
 			del p_b
 			del p_c
 
-		self._prog_prog_footer()
-
 	NUMBERS        = [-1000, -100, 0, 100, 1.0, -1.0, 0.0, False, True]
 	NONE           = [None]
 	STRINGS        = ['hello world', u'Hello world', u'Hello world', '', u'']
 	VECTORS        = [[0, 1, 2], [], [[]], ['asdf', None, True, False, [0, 1, 2, ['asdf']]], ['a', ['a']]]
-	SLICED_VECTORS = [v_py for (v_py, v_po) in VectorSlices('slice.map')]
+	SLICED_VECTORS = [v_py for (v_py, v_po) in VectorSlices('slice.map', range(1000))]
 	BITVECTORS     = AllBitvectorTestCases()
 
 	def testNumbers(self):
@@ -146,14 +101,17 @@ class TestCmp(unittest.TestCase):
 		self._testPythonCmp(self.VECTORS)
 		self._testTotalOrder(self.VECTORS)
 
-	def testSlicedVectors(self):
-		self._testPythonCmp(self.SLICED_VECTORS)
-		self._testTotalOrder(self.SLICED_VECTORS)
-
 	def testBitVectors(self):
 		self._testTotalOrder(self.BITVECTORS)
 
-	def testAllCombinations(self):
-		# all in one soup, just to test total-order
-		values = self.NUMBERS + self.NONE + self.STRINGS + self.VECTORS + self.SLICED_VECTORS + self.BITVECTORS
-		self._testTotalOrder(values)
+
+#	# slooow
+#	def testSlicedVectors(self):
+#		self._testPythonCmp(self.SLICED_VECTORS)
+#		self._testTotalOrder(self.SLICED_VECTORS)
+#
+#	def testAllCombinations(self):
+#		# all in one soup, just to test total-order
+#		values = self.NUMBERS + self.NONE + self.STRINGS + self.VECTORS + self.SLICED_VECTORS + self.BITVECTORS
+#		random.shuffle(values)
+#		self._testTotalOrder(values)

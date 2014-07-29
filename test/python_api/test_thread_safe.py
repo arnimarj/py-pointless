@@ -1,9 +1,8 @@
 #!/usr/bin/python
 
-from twisted.trial import unittest
-import threading, thread, random, sys
+import threading, thread, random, pointless
 
-from common import pointless
+from twisted.trial import unittest
 
 class TestThreadSafe(unittest.TestCase):
 	def testThreadOpenClose(self):
@@ -30,10 +29,6 @@ class TestThreadSafe(unittest.TestCase):
 
 				if random.randint(0, 10) == 0:
 					p_list[j] = pointless.Pointless(fnames[j])
-
-				if i > 0 and i % 1000 == 0:
-					sys.stdout.write('.')
-					sys.stdout.flush()
 
 			e.set()
 
