@@ -21,6 +21,7 @@ def build_judy():
 build_judy()
 
 extra_compile_args = [
+	'-I./include',
 	'-I./judy-1.0.5/src',
 	'-Wall',
 	'-Wno-strict-prototypes',

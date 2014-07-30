@@ -21,7 +21,7 @@ def serialize_and_get(value):
 class TestCmp(unittest.TestCase):
 	def _testPythonCmp(self, values):
 		for i, (v_a, v_b) in enumerate(itertools.product(values, values)):
-			print 'cmp', i, len(values) ** 2
+			# print 'cmp', i, len(values) ** 2
 			p_a = serialize_and_get(v_a)
 			p_b = serialize_and_get(v_b)
 
@@ -46,7 +46,7 @@ class TestCmp(unittest.TestCase):
 	def _testTotalOrder(self, values):
 		# we're testing, for each 3-combination of values
 		for i, (v_a, v_b, v_c) in enumerate(itertools.product(values, values, values)):
-			print 'total order', i, len(values) ** 3
+			# print 'total order', i, len(values) ** 3
 			# write the values out
 			p_a = serialize_and_get(v_a)
 			p_b = serialize_and_get(v_b)

@@ -247,7 +247,6 @@ static _var_string_t pypointless_cmp_extract_string(pypointless_cmp_value_t* v, 
 {
 	_var_string_t s;
 
-/*
 	if (v->is_pointless) {
 		pointless_value_t v_ = pointless_value_from_complete(&v->value.pointless.v);
 
@@ -273,7 +272,8 @@ static _var_string_t pypointless_cmp_extract_string(pypointless_cmp_value_t* v, 
 			s.string.string_16 = (uint16_t*)PyUnicode_AS_UNICODE(v->value.py_object);
 #endif
 		}
-*/
+	}
+
 	return s;
 }
 
