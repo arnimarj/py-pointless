@@ -4,9 +4,10 @@ python:
   - "2.7"
 
 install:
+  - which sh
   - export COPT="-DJU_64BIT -O2 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations"
   - cd judy-1.0.5/src
-  - ./sh_build
+  - /bin/sh ./sh_build
   - cd ../..
   - "pip install ."
   - "pip install -r test-requirements.txt"
