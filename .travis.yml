@@ -4,9 +4,12 @@ python:
   - "2.7"
 
 install:
+  - export COPT="-DJU_64BIT -O2 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations"
+  - cd judy-1.0.5/src
+  - ./sh_build
+  - cd ../..
   - "pip install ."
   - "pip install -r test-requirements.txt"
-  - "(cd judy-1.0.5/src; COPT='-DJU_64BIT -O2 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations' sh ./sh_build)'
 
 script:
   - "trial test.python_api"
