@@ -2,11 +2,12 @@
 
 static const char* parse_number(const char* s, uint64_t* n)
 {
+	assert('0' <= *s && *s <= '9');
 	char* endptr = 0;
 	errno = 0;
 	unsigned long long int n_ = strtoull(s, &endptr, 10);
 
-	if ((n_ == ULLONG_MAX && errno != 0) || *endptr != 0)
+	if (n_ == ULLONG_MAX && errno == ERANGE)
 		return 0;
 
 	*n = (uint64_t)n_;
@@ -75,8 +76,10 @@ static const char* pointless_eval_get_single(pointless_t* p, pointless_value_t* 
 		case '7':
 		case '8':
 		case '9':
-			if (!parse_number(e, &v_u))
-				is_unsigned = 1;
+			e = parse_number(e, &v_u);
+
+			if (e == 0)
+				return 0;
 
 			// negative it, if necessary
 			if (is_neg) {
@@ -86,6 +89,8 @@ static const char* pointless_eval_get_single(pointless_t* p, pointless_value_t* 
 
 				v_i = -((int64_t)v_u);
 				is_unsigned = 0;
+			} else {
+				is_unsigned = 1;
 			}
 
 			break;
@@ -202,7 +207,7 @@ static int pointless_eval_get_(pointless_t* p, pointless_value_t* root, pointles
 	while (e && *e)
 		e = pointless_eval_get_single(p, v, e, ap);
 
-	return (e != 0);
+	return (e && *e == 0);
 }
 
 int pointless_eval_get(pointless_t* p, pointless_value_t* root, pointless_value_t* v, const char* e, ...)
@@ -255,6 +260,24 @@ int pointless_eval_get_as_map(pointless_t* p, pointless_value_t* root, pointless
 
 	return (i && v->type == POINTLESS_MAP_VALUE_VALUE);
 }
+
+int pointless_eval_get_as_vector_u8(pointless_t* p, pointless_value_t* root, uint8_t** v, uint32_t* n, const char* e, ...)
+{
+	pointless_value_t v_;
+	va_list ap;
+	va_start(ap, e);
+	int i = pointless_eval_get_(p, root, &v_, e, ap);
+	va_end(ap);
+
+	if (i && v_.type == POINTLESS_VECTOR_U8) {
+		*n = pointless_reader_vector_n_items(p, &v_);
+		*v = pointless_reader_vector_u8(p, &v_);
+		return 1;
+	}
+
+	return 0;
+}
+
 
 int pointless_eval_get_as_vector_u16(pointless_t* p, pointless_value_t* root, uint16_t** v, uint32_t* n, const char* e, ...)
 {
