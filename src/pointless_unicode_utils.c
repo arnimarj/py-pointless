@@ -33,7 +33,7 @@ uint16_t* pointless_ucs4_to_ucs2(uint32_t* ucs4)
 {
 	assert(pointless_is_ucs4_ucs2(ucs4));
 	size_t n = pointless_ucs4_len(ucs4);
-	uint16_t* ucs2_ = pointless_malloc(sizeof(uint16_t) * (n + 1));
+	uint16_t* ucs2_ = (uint16_t*)pointless_malloc(sizeof(uint16_t) * (n + 1));
 
 	if (ucs2_ == 0)
 		return 0;
@@ -51,7 +51,7 @@ uint8_t* pointless_ucs4_to_ascii(uint32_t* ucs4)
 {
 	assert(pointless_is_ucs4_ascii(ucs4));
 	size_t n = pointless_ucs4_len(ucs4);
-	uint8_t* ascii_ = pointless_malloc(sizeof(uint8_t) * (n + 1));
+	uint8_t* ascii_ = (uint8_t*)pointless_malloc(sizeof(uint8_t) * (n + 1));
 
 	if (ascii_ == 0)
 		return 0;
@@ -93,7 +93,7 @@ uint8_t* pointless_ucs2_to_ascii(uint16_t* ucs2)
 {
 	assert(pointless_is_ucs2_ascii(ucs2));
 	size_t n = pointless_ucs2_len(ucs2);
-	uint8_t* ascii_ = pointless_malloc(sizeof(uint8_t) * (n + 1));
+	uint8_t* ascii_ = (uint8_t*)pointless_malloc(sizeof(uint8_t) * (n + 1));
 
 	if (ascii_ == 0)
 		return 0;

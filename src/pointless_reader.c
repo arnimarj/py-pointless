@@ -611,7 +611,7 @@ void pointless_reader_map_lookup(pointless_t* p, pointless_value_t* m, pointless
 		*vv = 0;
 	} else {
 		*kk = &key_vector[probe];
-		*kk = &value_vector[probe];
+		*vv = &value_vector[probe];
 	}
 }
 
