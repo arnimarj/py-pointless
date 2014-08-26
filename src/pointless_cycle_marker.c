@@ -83,8 +83,7 @@ static void process_child(pointless_cycle_marker_state_t* state, uint32_t v_id, 
 	uint32_t w_id = pointless_container_id(state->p, w);
 	//print_depth(depth); printf("process_child(w = %u, count = %llu)\n", w_id, (unsigned long long)count);
 
-	Word_t* PValue = 0;
-	JLG(PValue, state->visited_judy, (Word_t)w_id);
+	Pvoid_t PValue = (Pvoid_t)JudyLGet(state->visited_judy, (Word_t)w_id, 0);
 
 	if (PValue == 0) {
 		//print_depth(depth); printf(" w is not in visited\n");
@@ -99,18 +98,15 @@ static void process_child(pointless_cycle_marker_state_t* state, uint32_t v_id, 
 	}
 
 	// if w not in component:
-	PValue = 0;
-	JLG(PValue, state->component_judy, (Word_t)w_id);
+	PValue = (Pvoid_t)JudyLGet(state->component_judy, (Word_t)w_id, 0);
 
 	if (PValue == 0) {
 		//print_depth(depth); printf(" w is not in component");
-		Word_t* root_v = 0;
-		Word_t* root_w = 0;
 
 		// root[v]
-		JLG(root_v, state->root_judy, (Word_t)v_id);
+		Pvoid_t root_v = (Pvoid_t)JudyLGet(state->root_judy, (Word_t)v_id, 0);
 		// root[w]
-		JLG(root_w, state->root_judy, (Word_t)w_id);
+		Pvoid_t root_w = (Pvoid_t)JudyLGet(state->root_judy, (Word_t)w_id, 0);
 
 		if (root_v == 0 || root_w == 0) {
 			state->error = "internal error, root[v]/root[w] missing";
@@ -118,16 +114,16 @@ static void process_child(pointless_cycle_marker_state_t* state, uint32_t v_id, 
 		}
 
 		// root[v] = min(root[v], root[w])
-		if (*root_w < *root_v) {
+		if (*((Word_t*)(root_w)) < *((Word_t*)root_v)) {
 			//print_depth(depth); printf("root[v] = min(%u, %u)\n", *root_v, *root_w);
-			PValue = 0;
-			JLI(PValue, state->root_judy, (Word_t)v_id);
+			PValue = JudyLIns(&state->root_judy, (Word_t)v_id, 0);
+
 			if (PValue == 0) {
 				state->error = "out of memory Q";
 				return;
 			}
 
-			*PValue = (Word_t)(*root_w);
+			*((Word_t*)PValue) = *((Word_t*)root_w);
 		}
 	} else {
 		//print_depth(depth); printf(" w is in component\n");
@@ -155,28 +151,26 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 	uint32_t v_id = pointless_container_id(state->p, v);
 
 	// root[v] = count
-	Word_t* PValue = 0;
-	JLI(PValue, state->root_judy, (Word_t)v_id);
+	Pvoid_t PValue = (Pvoid_t)JudyLIns(&state->root_judy, (Word_t)v_id, 0);
 
 	if (PValue == 0) {
 		state->error = "out of memory R";
 		return;
 	}
 
-	*PValue = count;
+	*((Word_t*)PValue) = count;
 
 	//print_depth(depth); printf(" root[%u] = %llu\n", v_id, (unsigned long long)count);
 
 	// visited[v] = count
-	PValue = 0;
-	JLI(PValue, state->visited_judy, (Word_t)v_id);
+	PValue = JudyLIns(&state->visited_judy, (Word_t)v_id, 0);
 
 	if (PValue == 0) {
 		state->error = "out of memory S";
 		return;
 	}
 
-	*PValue = count;
+	*((Word_t*)PValue) = count;
 
 	//print_depth(depth); printf(" visited[%u] = %llu\n", v_id, (unsigned long long)count);
 
@@ -255,11 +249,8 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 	}
 
 	// if root[v] == visited[v]
-	Word_t* root_v = 0;
-	Word_t* visited_v;
-
-	JLG(root_v, state->root_judy, (Word_t)v_id);
-	JLG(visited_v, state->visited_judy, (Word_t)v_id);
+	Pvoid_t root_v = (Pvoid_t)JudyLGet(state->root_judy, (Word_t)v_id, 0);
+	Pvoid_t visited_v = (Pvoid_t)JudyLGet(state->visited_judy, (Word_t)v_id, 0);
 
 	if (root_v == 0 || visited_v == 0) {
 		state->error = "internal error: root[v]/visited[v] missing";
@@ -268,17 +259,16 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 
 	//print_depth(depth); printf(" if root[%u] (%u) == visited[%u] (%u)\n", v_id, *root_v, v_id, *visited_v);
 
-	if (*root_v == *visited_v) {
+	if (*((Word_t*)root_v) == *((Word_t*)visited_v)) {
 		// component[v] = root[v]
-		Word_t* PValue = 0;
-		JLI(PValue, state->component_judy, (Word_t)v_id);
+		Pvoid_t PValue = (Pvoid_t)JudyLIns(&state->component_judy, (Word_t)v_id, 0);
 
 		if (PValue == 0) {
 			state->error = "out of memory W";
 			return;
 		}
 
-		*PValue = (Word_t)(*root_v);
+		*((Word_t*)PValue) = *((Word_t*)root_v);
 
 		//print_depth(depth); printf("  component[%u] = root[%u] (%u)\n", v_id, v_id, *root_v);
 		//print_depth(depth); printf("  while stack[-1] != %u\n", v_id);
@@ -298,16 +288,14 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 			bm_set_(state->cycle_marker, w_id);
 
 			// component[w] = root[v]
-			Word_t* PValue = 0;
-
-			JLI(PValue, state->component_judy, (Word_t)w_id);
+			Pvoid_t PValue = (Pvoid_t)JudyLIns(&state->component_judy, (Word_t)w_id, 0);
 
 			if (PValue == 0) {
 				state->error = "out of memory WW";
 				return;
 			}
 
-			*PValue = (Word_t)(*root_v);
+			*((Word_t*)PValue) = *((Word_t*)root_v);
 
 			//print_depth(depth); printf("  component[%u] = root[%u] (%u)\n", w_id, v_id, *root_v);
 		}
@@ -323,6 +311,7 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 void* pointless_cycle_marker(pointless_t* p, const char** error)
 {
 	Word_t Rc_word = 0;
+	pointless_value_t* root = 0;
 
 	pointless_cycle_marker_state_t state;
 	state.p = p;
@@ -338,7 +327,7 @@ void* pointless_cycle_marker(pointless_t* p, const char** error)
 		goto error;
 	}
 
-	pointless_value_t* root = pointless_root(p);
+	root = pointless_root(p);
 
 	pointless_cycle_marker_visit(&state, root, 0, 0);
 
