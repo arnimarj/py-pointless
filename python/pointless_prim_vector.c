@@ -1693,7 +1693,7 @@ static PyObject* PyPointlessPrimVector_from_remap(PyTypeObject* type, PyObject* 
 	if (!PyArg_ParseTuple(args, "O!O", &PyPointlessPrimVectorType, &r_, &v_))
 		return 0;
 
-	if (!PyPointlessPrimVector_Check(r_) && !PyPointlessVector_Check(r_)) {
+	if (!PyPointlessPrimVector_Check(v_) && !PyPointlessVector_Check(v_)) {
 		PyErr_SetString(PyExc_ValueError, "index vector must be PointlessPrimVector or PointlessVector");
 		return 0;
 	}
