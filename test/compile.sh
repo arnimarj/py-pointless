@@ -6,5 +6,4 @@ LDFLAGS="-lpthread -ldl"
 #FLAGS="-pg -g -fno-omit-frame-pointer -O2 -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -fno-inline"
 #-liconv"
 
-#g++ -std=c++11 -Wsign-compare $FLAGS $INCLUDE $SOURCE $LDFLAGS
-gcc $FLAGS $INCLUDE $SOURCE $LDFLAGS
+g++ -std=c++11 $FLAGS $INCLUDE $SOURCE $LDFLAGS

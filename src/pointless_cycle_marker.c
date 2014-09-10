@@ -310,7 +310,6 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 
 void* pointless_cycle_marker(pointless_t* p, const char** error)
 {
-	Word_t Rc_word = 0;
 	pointless_value_t* root = 0;
 
 	pointless_cycle_marker_state_t state;
@@ -347,13 +346,13 @@ error:
 
 cleanup:
 
-	JLFA(Rc_word, state.visited_judy);
+	JudyLFreeArray(&state.visited_judy, 0);
 	state.visited_judy = 0;
 
-	JLFA(Rc_word, state.component_judy);
+	JudyLFreeArray(&state.component_judy, 0);
 	state.component_judy = 0;
 
-	JLFA(Rc_word, state.root_judy);
+	JudyLFreeArray(&state.root_judy, 0);
 	state.root_judy = 0;
 
 	pointless_dynarray_destroy(&state.stack);
