@@ -289,10 +289,8 @@ void pointless_create_end(pointless_create_t* c)
 	pointless_dynarray_destroy(&c->string_unicode_values);
 	pointless_dynarray_destroy(&c->bitvector_values);
 
-	Word_t Rc_word = 0;
-
-	JHSFA(Rc_word, c->string_unicode_map_judy);
-	JHSFA(Rc_word, c->bitvector_map_judy);
+	JudyHSFreeArray(&c->string_unicode_map_judy, 0);
+	JudyHSFreeArray(&c->bitvector_map_judy, 0);
 
 	c->string_unicode_map_judy = 0;
 	c->bitvector_map_judy = 0;

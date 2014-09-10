@@ -7,9 +7,9 @@ def build_judy():
 	# adding last two flags because of compiler and/or code bugs
 	# see http://sourceforge.net/p/judy/mailman/message/32417284/
 	if sys.maxint == 2**63-1:
-		CFLAGS = '-DJU_64BIT -O2 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
+		CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
 	elif sys.maxint == 2**31-1:
-		CFLAGS = '           -O2 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
+		CFLAGS = '           -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
 	else:
 		sys.exit('bad sys.maxint')
 

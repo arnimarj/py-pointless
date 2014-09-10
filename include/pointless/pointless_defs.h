@@ -5,7 +5,15 @@
 #include <stdint.h>
 #include <sys/stat.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <Judy.h>
+
+#ifdef __cplusplus
+}
+#endif
 
 #include <pointless/pointless_dynarray.h>
 #include <pointless/pointless_create_cache.h>
