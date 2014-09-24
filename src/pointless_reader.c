@@ -75,8 +75,8 @@ int pointless_open_f(pointless_t* p, const char* fname, int force_ucs2, const ch
 	p->fd_len = 0;
 	p->fd_ptr = 0;
 
-	// p->buf = 0;
-	// p->buflen = 0;
+	p->buf = 0;
+	p->buflen = 0;
 
 	p->fd = fopen(fname, "rb");
 
@@ -138,7 +138,31 @@ void pointless_close(pointless_t* p)
 	if (p->fd)
 		fclose(p->fd);
 
-	// pointless_free(p->buf);
+	pointless_free(p->buf);
+}
+
+int pointless_open_b(pointless_t* p, const void* buffer, size_t n_buffer, int force_ucs2, const char** error)
+{
+	p->fd = 0;
+	p->fd_len = 0;
+	p->fd_ptr = 0;
+
+	p->buf = pointless_malloc(n_buffer);
+	p->buflen = n_buffer;
+
+	if (p->buf == 0) {
+		*error = "out of memory";
+		return 0;
+	}
+
+	memcpy(p->buf, buffer, n_buffer);
+
+	if (!pointless_init(p, p->buf, p->buflen, force_ucs2, error)) {
+		pointless_close(p);
+		return 0;
+	}
+
+	return 1;
 }
 
 pointless_value_t* pointless_root(pointless_t* p)

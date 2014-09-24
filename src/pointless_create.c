@@ -1301,6 +1301,10 @@ static int file_align_4(void* user, const char** error)
 		*error = "fwrite() failure A";
 		return 0;
 	}
+	size_t i = 0;
+	for (i = 0; i < n; i++) {
+		//printf(" ...aligning B\n");
+	}
 
 	return 1;
 }
@@ -1308,6 +1312,8 @@ static int file_align_4(void* user, const char** error)
 static int file_write(void* buf, size_t buflen, void* user, const char** error)
 {
 	FILE* f = (FILE*)user;
+
+	//printf("writing %i bytes to file\n", (int)buflen);
 
 	if (fwrite(buf, buflen, 1, f) != 1) {
 		*error = "fwrite() failure B";
@@ -1428,14 +1434,11 @@ static int dynarray_write(void* buf, size_t buflen, void* user, const char** err
 	unsigned char* cbuf = (unsigned char*)buf;
 	pointless_dynarray_t* a = (pointless_dynarray_t*)user;
 
-	while (buflen > 0) {
-		if (!pointless_dynarray_push(a, cbuf)) {
-			*error = "out of memory";
-			return 0;
-		}
+	//printf("writing %i bytes to buffer\n", (int)buflen);
 
-		buflen -= 1;
-		cbuf += 1;
+	if (!pointless_dynarray_push_bulk(a, cbuf, buflen)) {
+		*error = "out of memory";
+		return 0;
 	}
 
 	return 1;
@@ -1445,9 +1448,11 @@ static int dynarray_align_4(void* user, const char** error)
 {
 	pointless_dynarray_t* a = (pointless_dynarray_t*)user;
 	uint8_t zero = 0;
-	size_t i, n = align_next_4_size_t(pointless_dynarray_n_items(a));
+	size_t i, n = pointless_dynarray_n_items(a);
+	size_t n_next = align_next_4_size_t(n);
 
-	for (i = 0; i < n; i++) {
+	for (i = n; i < n_next; i++) {
+		//printf(" ...aligning X\n");
 		if (!pointless_dynarray_push(a, &zero)) {
 			*error = "out of memory";
 			return 0;
@@ -1474,6 +1479,8 @@ int pointless_create_output_and_end_b(pointless_create_t* c, void** buf, size_t*
 
 	*buf = pointless_dynarray_buffer(&a);
 	*buflen = pointless_dynarray_n_items(&a);
+
+	pointless_create_end(c);
 
 	return 1;
 }
@@ -1999,9 +2006,9 @@ static uint32_t pointless_create_bitvector_(pointless_create_t* c, void* v, uint
 			goto cleanup;
 
 		*((Word_t*)PValue) = (Word_t)(pointless_dynarray_n_items(&c->values) - 1);
-
-		c->bitvector_map_judy_count += 1;
 	}
+
+	c->bitvector_map_judy_count += 1;
 
 	// we're done
 	return (pointless_dynarray_n_items(&c->values) - 1);

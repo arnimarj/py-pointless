@@ -33,6 +33,9 @@ static PyPointless_CAPI CAPI = {
 PyObject* pointless_write_object(PyObject* self, PyObject* args, PyObject* kwds);
 extern const char pointless_write_object_doc[];
 
+PyObject* pointless_write_object_to_buffer(PyObject* self, PyObject* args, PyObject* kwds);
+extern const char pointless_write_object_to_buffer_doc[];
+
 PyObject* pointless_pyobject_hash_32(PyObject* self, PyObject* args);
 extern const char pointless_pyobject_hash_32_doc[];
 
@@ -44,11 +47,12 @@ extern const char pointless_is_eq_doc[];
 
 static PyMethodDef pointless_methods[] =
 {
-	{"serialize",        (PyCFunction)pointless_write_object,     METH_VARARGS | METH_KEYWORDS, pointless_write_object_doc     },
-	{"pyobject_hash",    (PyCFunction)pointless_pyobject_hash_32, METH_VARARGS,                 pointless_pyobject_hash_32_doc },
-	{"pyobject_hash_32", (PyCFunction)pointless_pyobject_hash_32, METH_VARARGS,                 pointless_pyobject_hash_32_doc },
-	{"pointless_cmp",    (PyCFunction)pointless_cmp,              METH_VARARGS,                 pointless_cmp_doc              },
-	{"pointless_is_eq",  (PyCFunction)pointless_is_eq,            METH_VARARGS,                 pointless_is_eq_doc            },
+	{"serialize",           (PyCFunction)pointless_write_object,           METH_VARARGS | METH_KEYWORDS, pointless_write_object_doc               },
+	{"serialize_to_buffer", (PyCFunction)pointless_write_object_to_buffer, METH_VARARGS | METH_KEYWORDS, pointless_write_object_to_buffer_doc     },
+	{"pyobject_hash",       (PyCFunction)pointless_pyobject_hash_32,       METH_VARARGS,                 pointless_pyobject_hash_32_doc           },
+	{"pyobject_hash_32",    (PyCFunction)pointless_pyobject_hash_32,       METH_VARARGS,                 pointless_pyobject_hash_32_doc           },
+	{"pointless_cmp",       (PyCFunction)pointless_cmp,                    METH_VARARGS,                 pointless_cmp_doc                        },
+	{"pointless_is_eq",     (PyCFunction)pointless_is_eq,                  METH_VARARGS,                 pointless_is_eq_doc                      },
 	{NULL, NULL},
 };
 

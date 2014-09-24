@@ -542,7 +542,7 @@ static void pointless_export_py(pointless_export_state_t* state, PyObject* py_ob
 
 const char pointless_write_object_doc[] =
 "0\n"
-"pointless.serialize(object, fname)\n"
+"pointless.serialize_to_file(object, fname)\n"
 "\n"
 "Serializes the object to a file.\n"
 "\n"
@@ -600,5 +600,69 @@ cleanup:
 	JLFA(n_bytes_freed, state.objects_used);
 
 	Py_XINCREF(retval);
+	return retval;
+}
+
+
+const char pointless_write_object_to_buffer_doc[] =
+"0\n"
+"pointless.serialize_to_buffer(object)\n"
+"\n"
+"Serializes the object to a buffer.\n"
+"\n"
+"  object: the object\n"
+;
+PyObject* pointless_write_object_to_buffer(PyObject* self, PyObject* args, PyObject* kwds)
+{
+	PyObject* object = 0;
+	PyObject* retval = 0;
+	PyObject* normalize_bitvector = Py_True;
+	PyObject* unwiden_strings = Py_False;
+	int create_end = 0;
+
+	void* buf = 0;
+	size_t buflen = 0;
+
+	const char* error = 0;
+
+	pointless_export_state_t state;
+	state.objects_used = 0;
+	state.is_error = 0;
+	state.error_line = -1;
+	state.unwiden_strings = 0;
+	state.normalize_bitvector = 1;
+
+	static char* kwargs[] = {"object", "unwiden_strings", "normalize_bitvector", 0};
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O!O!:serialize", kwargs, &object, &PyBool_Type, &unwiden_strings, &PyBool_Type, &normalize_bitvector))
+		return 0;
+
+	state.unwiden_strings = (unwiden_strings == Py_True);
+	state.normalize_bitvector = (normalize_bitvector == Py_True);
+
+	pointless_create_begin_64(&state.c);
+
+	pointless_export_py(&state, object);
+
+	if (state.is_error)
+		goto cleanup;
+
+	create_end = 0;
+
+	if (!pointless_create_output_and_end_b(&state.c, &buf, &buflen, &error)) {
+		PyErr_Format(PyExc_IOError, "pointless_create_output: %s", error);
+		goto cleanup;
+	}
+
+	retval = (PyObject*)PyPointlessPrimVector_from_buffer(buf, buflen);
+
+cleanup:
+
+	if (create_end)
+		pointless_create_end(&state.c);
+
+	Word_t n_bytes_freed = 0;
+	JLFA(n_bytes_freed, state.objects_used);
+
 	return retval;
 }

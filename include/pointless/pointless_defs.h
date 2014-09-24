@@ -42,7 +42,7 @@ extern "C" {
 #endif
 
 // POINTLESS_WCHAR_T_IS_4_BYTES
-#if 2147483647 <= WCHAR_MAX && WCHAR_MAX <= 4294967296
+#if 2147483647 <= WCHAR_MAX && WCHAR_MAX <= 4294967295
 #define POINTLESS_WCHAR_T_IS_4_BYTES
 #endif
 
@@ -211,14 +211,14 @@ typedef struct {
 } __attribute__ ((aligned (4))) pointless_header_t;
 
 typedef struct {
-	// mmap
+	// mmap, library owned
 	FILE* fd;
 	uint64_t fd_len;
 	void* fd_ptr;
 
-	// regular memory
-	//void* buf;
-	//uint32_t buflen;
+	// regular memory, library owned
+	void* buf;
+	size_t buflen;
 
 	// header
 	pointless_header_t* header;
@@ -260,11 +260,11 @@ typedef struct {
 } __attribute__ ((aligned (4))) pointless_map_header_t;
 
 STATIC_ASSERT(sizeof(pointless_value_data_t)            == 4,  "pointless_value_data_t must be 4 bytes");
-STATIC_ASSERT(sizeof(pointless_complete_value_data_t)   == 8,  "pointless_complete_value_data_t must be 6 bytes");
+STATIC_ASSERT(sizeof(pointless_complete_value_data_t)   == 8,  "pointless_complete_value_data_t must be 8 bytes");
 STATIC_ASSERT(sizeof(pointless_value_t)                 == 8,  "pointless_value_t must be 8 bytes");
-STATIC_ASSERT(sizeof(pointless_complete_value_t)        == 12, "pointless_complete_value_t must be 10 bytes");
+STATIC_ASSERT(sizeof(pointless_complete_value_t)        == 12, "pointless_complete_value_t must be 12 bytes");
 STATIC_ASSERT(sizeof(pointless_create_value_t)          == 8,  "pointless_create_value_t must be 8 bytes");
-STATIC_ASSERT(sizeof(pointless_complete_create_value_t) == 12, "pointless_complete_create_value_t must be 10 bytes");
+STATIC_ASSERT(sizeof(pointless_complete_create_value_t) == 12, "pointless_complete_create_value_t must be 12 bytes");
 STATIC_ASSERT(sizeof(pointless_header_t)                == 32, "pointless_header_t must be 32 bytes");
 STATIC_ASSERT(sizeof(pointless_set_header_t)            == 24, "pointless_set_header_t must be 24 bytes");
 STATIC_ASSERT(sizeof(pointless_map_header_t)            == 32, "pointless_map_header_t must be 32 bytes");

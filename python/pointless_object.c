@@ -58,6 +58,11 @@ static PyObject* PyPointless_GetRoot(PyPointless* self)
 
 static PyObject* PyPointless_GetINode(PyPointless* self)
 {
+	if (self->p.fd == 0) {
+		PyErr_Format(PyExc_ValueError, "pointless object is buffer-based");
+		return 0;
+	}
+
 	int f = fileno(self->p.fd);
 	struct stat buf;
 
@@ -85,20 +90,28 @@ static PyObject* PyPointless_GetRefs(PyPointless* self)
 
 static PyObject* PyPointless_sizeof(PyPointless* self)
 {
-	return PyLong_FromUnsignedLongLong(sizeof(PyPointless) + self->p.fd_len);
+	if (self->p.fd == 0)
+		return PyLong_FromUnsignedLongLong(sizeof(PyPointless) + self->p.buflen);
+	else
+		return PyLong_FromUnsignedLongLong(sizeof(PyPointless) + self->p.fd_len);
 }
 
 static PyMethodDef PyPointless_methods[] = {
-	{"__sizeof__", (PyCFunction)PyPointless_sizeof,  METH_NOARGS, "get size in bytes of backing file or buffer"},
-	{"GetRoot",    (PyCFunction)PyPointless_GetRoot, METH_NOARGS, "get pointless root object" },
+	{"__sizeof__", (PyCFunction)PyPointless_sizeof,   METH_NOARGS, "get size in bytes of backing file or buffer"},
+	{"GetRoot",    (PyCFunction)PyPointless_GetRoot,  METH_NOARGS, "get pointless root object" },
 	{"GetINode",   (PyCFunction)PyPointless_GetINode, METH_NOARGS, "get inode of file descriptor" },
-	{"GetRefs",    (PyCFunction)PyPointless_GetRefs, METH_NOARGS, "get inside-reference count to base object" },
+	{"GetRefs",    (PyCFunction)PyPointless_GetRefs,  METH_NOARGS, "get inside-reference count to base object" },
 	{NULL}
 };
 
 static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 {
-	const char* fname = 0;
+	PyObject* fname_or_buffer = 0;
+	PyObject* string_of_unicode = 0;
+	PyPointlessPrimVector* vector = 0;
+	void* buf = 0;
+	size_t buflen = 0;
+	const char* fname_ = 0;
 	const char* error = 0;
 	int i = 0;
 
@@ -130,9 +143,9 @@ static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 	self->n_set_refs = 0;
 
 	PyObject* allow_print = Py_True;
-	static char* kwargs[] = {"filename", "allow_print", 0};
+	static char* kwargs[] = {"filename_or_buffer", "allow_print", 0};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|O!", kwargs, &fname, &PyBool_Type, &allow_print))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O!", kwargs, &fname_or_buffer, &PyBool_Type, &allow_print))
 		return -1;
 
 	if (allow_print == Py_False)
@@ -144,14 +157,52 @@ static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 	int force_ucs2 = 1;
 #endif
 
+	if (PyUnicode_Check(fname_or_buffer)) {
+		string_of_unicode = PyUnicode_AsASCIIString(fname_or_buffer);
+
+		if (string_of_unicode == 0)
+			return -1;
+
+		fname_ = PyString_AS_STRING(string_of_unicode);
+	} else if (PyString_Check(fname_or_buffer)) {
+		fname_ = PyString_AS_STRING(fname_or_buffer);
+	} else if (PyPointlessPrimVector_Check(fname_or_buffer)) {
+		vector = (PyPointlessPrimVector*)fname_or_buffer;
+
+		if (vector->type != POINTLESS_PRIM_VECTOR_TYPE_U8) {
+			PyErr_SetString(PyExc_ValueError, "buffer must be primvector with uint8");
+			return -1;
+		}
+
+		buf = pointless_dynarray_buffer(&vector->array);
+		buflen = pointless_dynarray_n_items(&vector->array);
+
+	} else {
+		PyErr_SetString(PyExc_ValueError, "filename_or_buffer must be string/unicode/primvector-with-uint-8");
+		return -1;
+	}
+
 	Py_BEGIN_ALLOW_THREADS
-	i = pointless_open_f(&self->p, fname, force_ucs2, &error);
+
+	if (fname_)
+		i = pointless_open_f(&self->p, fname_, force_ucs2, &error);
+	else
+		i = pointless_open_b(&self->p, buf, buflen, force_ucs2, &error);
+
 	Py_END_ALLOW_THREADS
 
 	if (!i) {
-		PyErr_Format(PyExc_IOError, "error opening [%s]: %s", fname, error);
+		if (fname_)
+			PyErr_Format(PyExc_IOError, "error opening [%s]: %s", fname_, error);
+		else
+			PyErr_Format(PyExc_IOError, "error parsing file from buffer: %s", error);
+
+		Py_XDECREF(string_of_unicode);
+
 		return -1;
 	}
+
+	Py_XDECREF(string_of_unicode);
 
 	self->is_open = 1;
 	return 0;
