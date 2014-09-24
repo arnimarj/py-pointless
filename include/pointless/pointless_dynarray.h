@@ -22,6 +22,7 @@ size_t pointless_dynarray_n_items(pointless_dynarray_t* a);
 size_t pointless_dynarray_n_heap_bytes(pointless_dynarray_t* a);
 void pointless_dynarray_pop(pointless_dynarray_t* a);
 int pointless_dynarray_push(pointless_dynarray_t* a, void* i);
+int pointless_dynarray_push_bulk(pointless_dynarray_t* a, void* i, size_t n_items);
 void pointless_dynarray_clear(pointless_dynarray_t* a);
 void pointless_dynarray_destroy(pointless_dynarray_t* a);
 void* pointless_dynarray_item_at(pointless_dynarray_t* a, size_t i);

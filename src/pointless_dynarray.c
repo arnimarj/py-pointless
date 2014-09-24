@@ -35,29 +35,41 @@ static intop_sizet_t next_size(size_t n_alloc)
 	return intop_sizet_add(intop_sizet_add(intop_sizet_init(a), intop_sizet_init(b)), intop_sizet_init(c));
 }
 
+static int pointless_dynarray_grow(pointless_dynarray_t* a)
+{
+	// get next allocation size, in terms of items and bytes, with overflow check
+	intop_sizet_t next_n_alloc = next_size(a->n_alloc);
+	intop_sizet_t next_n_bytes = intop_sizet_mult(next_n_alloc, intop_sizet_init(a->item_size));
+
+	if (next_n_bytes.is_overflow)
+		return 0;
+
+	// we're good
+	void* next_data = pointless_realloc(a->_data, next_n_bytes.value);
+
+	if (next_data == 0)
+		return 0;
+
+	a->_data = next_data;
+	a->n_alloc = next_n_alloc.value;
+
+	return 1;
+}
+
 int pointless_dynarray_push(pointless_dynarray_t* a, void* i)
 {
-	if (a->n_items == a->n_alloc) {
-		// get next allocation size, in terms of items and bytes, with overflow check
-		intop_sizet_t next_n_alloc = next_size(a->n_alloc);
-		intop_sizet_t next_n_bytes = intop_sizet_mult(next_n_alloc, intop_sizet_init(a->item_size));
+	return pointless_dynarray_push_bulk(a, i, 1);
+}
 
-		if (next_n_bytes.is_overflow)
+int pointless_dynarray_push_bulk(pointless_dynarray_t* a, void* i, size_t n_items)
+{
+	while (a->n_items + n_items > a->n_alloc) {
+		if (!pointless_dynarray_grow(a))
 			return 0;
-
-		// we're good
-		void* next_data = pointless_realloc(a->_data, next_n_bytes.value);
-
-		if (next_data == 0)
-			return 0;
-
-		a->_data = next_data;
-		a->n_alloc = next_n_alloc.value;
 	}
 
-	memcpy((char*)a->_data + a->item_size * a->n_items, i, a->item_size);
-	a->n_items += 1;
-
+	memcpy((char*)a->_data + a->item_size * a->n_items, i, a->item_size * n_items);
+	a->n_items += n_items;
 	return 1;
 }
 
