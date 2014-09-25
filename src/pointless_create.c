@@ -1630,7 +1630,8 @@ uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v)
 
 	// create buffer to hold [uint32 + v]
 	size_t unicode_len = pointless_ucs4_len(v);
-	void* unicode_buffer = pointless_malloc(sizeof(uint32_t) + sizeof(pointless_unicode_char_t) * (unicode_len + 1));
+	size_t buffer_len = sizeof(uint32_t) + sizeof(pointless_unicode_char_t) * (unicode_len + 1);
+	void* unicode_buffer = pointless_malloc(buffer_len);
 
 	if (unicode_buffer == 0)
 		goto cleanup;
@@ -1641,7 +1642,7 @@ uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v)
 	pointless_ucs4_cpy(vv, v);
 
 	// see if it already exists
-	prev_ref = (Pvoid_t)JudyHSGet(c->string_unicode_map_judy, unicode_buffer, sizeof(uint32_t) + (unicode_len + 1) * sizeof(pointless_unicode_char_t));
+	prev_ref = (Pvoid_t)JudyHSGet(c->string_unicode_map_judy, unicode_buffer, buffer_len);
 
 	if (prev_ref) {
 		pointless_free(unicode_buffer);
@@ -1668,12 +1669,11 @@ uint32_t pointless_create_unicode_ucs4(pointless_create_t* c, uint32_t* v)
 	pop_unicode = 1;
 
 	// add to mapping
-	PValue = (Pvoid_t)JudyHSIns(&c->string_unicode_map_judy, unicode_buffer, sizeof(uint32_t) + (unicode_len + 1) * sizeof(pointless_unicode_char_t), 0);
+	PValue = (Pvoid_t)JudyHSIns(&c->string_unicode_map_judy, unicode_buffer, buffer_len, 0);
 
 	if (PValue == 0)
 		goto cleanup;
 
-	// /*PValue;
 	*((Word_t*)PValue) = (Word_t)(pointless_dynarray_n_items(&c->values) - 1);
 
 	c->string_unicode_map_judy_count += 1;
@@ -1710,7 +1710,8 @@ uint32_t pointless_create_string_ascii(pointless_create_t* c, uint8_t* v)
 
 	// create buffer to hold [uint32 + v]
 	size_t string_len = pointless_ascii_len(v);
-	void* string_buffer = pointless_malloc(sizeof(uint32_t) + sizeof(uint8_t) * (string_len + 1));
+	size_t buffer_len = sizeof(uint32_t) + sizeof(uint8_t) * (string_len + 1);
+	void* string_buffer = pointless_malloc(buffer_len);
 
 	if (string_buffer == 0)
 		goto cleanup;
@@ -1721,11 +1722,11 @@ uint32_t pointless_create_string_ascii(pointless_create_t* c, uint8_t* v)
 	pointless_ascii_cpy(vv, v);
 
 	// see if it already exists
-	prev_ref = JudyHSGet(c->string_unicode_map_judy, string_buffer, sizeof(uint32_t) + (string_len + 1) * sizeof(uint8_t));
+	prev_ref = JudyHSGet(c->string_unicode_map_judy, string_buffer, buffer_len);
 
 	if (prev_ref) {
 		pointless_free(string_buffer);
-		return (uint32_t)(**((Word_t**)prev_ref));
+		return (uint32_t)(*((Word_t*)prev_ref));
 	}
 
 	// create an appropriate value
@@ -1748,7 +1749,7 @@ uint32_t pointless_create_string_ascii(pointless_create_t* c, uint8_t* v)
 	pop_string = 1;
 
 	// add to mapping
-	PValue = JudyHSIns(&c->string_unicode_map_judy, string_buffer, sizeof(uint32_t) + (string_len + 1) * sizeof(uint8_t), 0);
+	PValue = JudyHSIns(&c->string_unicode_map_judy, string_buffer, buffer_len, PJE0);
 
 	if (PValue == 0)
 		goto cleanup;
@@ -1966,7 +1967,8 @@ static uint32_t pointless_create_bitvector_(pointless_create_t* c, void* v, uint
 	int pop_bitvector = 0;
 
 	// create buffer to hold [uint32 + v]
-	buffer = pointless_malloc(sizeof(uint32_t) + ICEIL(n_bits, 8));
+	size_t buffer_len = sizeof(uint32_t) + ICEIL(n_bits, 8);
+	buffer = pointless_malloc(buffer_len);
 
 	if (buffer == 0)
 		goto cleanup;
@@ -1976,7 +1978,7 @@ static uint32_t pointless_create_bitvector_(pointless_create_t* c, void* v, uint
 
 	// try to find if we already have it
 	if (normalize) {
-		Pvoid_t prev_ref = (Pvoid_t)JudyHSGet(c->bitvector_map_judy, buffer, sizeof(uint32_t) + ICEIL(n_bits, 8));
+		Pvoid_t = prev_ref = (Pvoid_t)JudyHSGet(c->bitvector_map_judy, buffer, buffer_len);
 
 		if (prev_ref) {
 			pointless_free(buffer);
@@ -2000,7 +2002,7 @@ static uint32_t pointless_create_bitvector_(pointless_create_t* c, void* v, uint
 
 	// add to mapping
 	if (normalize) {
-		Pvoid_t PValue = (Pvoid_t)JudyHSIns(&c->bitvector_map_judy, buffer, sizeof(uint32_t) + ICEIL(n_bits, 8), 0);
+		Pvoid_t PValue = (Pvoid_t)JudyHSIns(&c->bitvector_map_judy, buffer, buffer_len, 0);
 
 		if (PValue == 0)
 			goto cleanup;
