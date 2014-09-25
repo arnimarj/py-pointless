@@ -1978,7 +1978,7 @@ static uint32_t pointless_create_bitvector_(pointless_create_t* c, void* v, uint
 
 	// try to find if we already have it
 	if (normalize) {
-		Pvoid_t = prev_ref = (Pvoid_t)JudyHSGet(c->bitvector_map_judy, buffer, buffer_len);
+		Pvoid_t prev_ref = (Pvoid_t)JudyHSGet(c->bitvector_map_judy, buffer, buffer_len);
 
 		if (prev_ref) {
 			pointless_free(buffer);
