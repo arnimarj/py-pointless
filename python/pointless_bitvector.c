@@ -254,18 +254,20 @@ static int PyPointlessBitvector_check_index(PyPointlessBitvector* self, PyObject
 
 uint32_t PyPointlessBitvector_is_set(PyPointlessBitvector* self, uint32_t i)
 {
-	if (self->is_pointless)
-		return pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, i);
+	if (self->is_pointless)																																																																																																																																																																																																																																																																																																																																																																																																																																							
+		i = pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, i);																																								
+	else
+		i = (bm_is_set_(self->primitive_bits, i) != 0);
 
-	return (bm_is_set_(self->primitive_bits, i) != 0);
+	return i;																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																				
 }
-
+																																																																																																																																															
 static int PyPointlessBitvector_ass_subscript(PyPointlessBitvector* self, PyObject* item, PyObject* value)
-{
+{																																																																																																																														
 	if (self->is_pointless) {
 		PyErr_SetString(PyExc_ValueError, "this PyPointlessBitvector is read-only");
 		return -1;
-	}
+	}																											
 
 	// get the index
 	Py_ssize_t i;
@@ -276,7 +278,7 @@ static int PyPointlessBitvector_ass_subscript(PyPointlessBitvector* self, PyObje
 	// true iff: the value was set
 	uint32_t was_set = PyPointlessBitvector_is_set(self, i);
 
-	// we only want 0|1|True|False
+	// we only want 0|1|True|PyPointlessBitvector_extend_false
 	if (PyBool_Check(value)) {
 		if (value == Py_True) {
 			bm_set_(self->primitive_bits, i);
@@ -683,6 +685,62 @@ static PyObject* PyPointlessBitvector_pop(PyPointlessBitvector* self)
 	}
 }
 
+static PyObject* PyPointlessBitvector_copy(PyPointlessBitvector* self)
+{
+	void* bits = 0;
+	uint32_t n_bits = 0, i;
+	size_t n_bytes = 0;
+
+	if (self->is_pointless)
+		n_bits = pointless_reader_bitvector_n_bits(&self->pointless_pp->p, self->pointless_v);
+	else
+		n_bits = self->primitive_n_bits;
+
+	n_bytes = ICEIL(n_bits, 8);
+	bits = pointless_calloc(n_bytes, 1);
+
+	if (bits == 0) {
+		PyErr_NoMemory();
+		return 0;
+	}
+
+	if (self->is_pointless) {
+		if (self->pointless_v->type == POINTLESS_BITVECTOR) {
+			void* source_bits = (void*)((uint32_t*)pointless_reader_bitvector_buffer(&self->pointless_pp->p, self->pointless_v) + 1);
+			memcpy(bits, source_bits, n_bytes);
+		} else {
+			for (i = 0; i < n_bits; i++) {
+				if (pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, i))
+					bm_set_(bits, i);
+			}
+		}
+	} else {
+		memcpy(bits, self->primitive_bits, n_bytes);
+	}
+
+	PyPointlessBitvector* pv = PyObject_New(PyPointlessBitvector, &PyPointlessBitvectorType);
+
+	if (pv == 0) {
+		pointless_free(bits);
+		return 0;
+	}
+
+	pv->is_pointless = 0;
+	pv->pointless_pp = 0;
+	pv->pointless_v = 0;
+	pv->primitive_n_bytes_alloc = n_bytes;
+	pv->primitive_n_bits = n_bits;
+	pv->primitive_bits = bits;
+	pv->primitive_n_one = 0;
+
+	for (i = 0; i < n_bits; i++) {
+		if (bm_is_set_(bits, i))
+			pv->primitive_n_one += 1;
+	}
+
+	return (PyObject*)pv;
+}
+
 static PyObject* PyPointlessBitvector_sizeof(PyPointlessBitvector* self)
 {
 	size_t s = sizeof(PyPointlessBitvector);
@@ -694,16 +752,17 @@ static PyObject* PyPointlessBitvector_sizeof(PyPointlessBitvector* self)
 }
 
 static PyMethodDef PyPointlessBitvector_methods[] = {
-	{"NumZeroPrefix", (PyCFunction)PyPointlessBitvector_n_zero_prefix,  METH_NOARGS, ""},
-	{"NumZeroPostfix",(PyCFunction)PyPointlessBitvector_n_zero_postfix, METH_NOARGS, ""},
-	{"NumOnePrefix",  (PyCFunction)PyPointlessBitvector_n_one_prefix,   METH_NOARGS, ""},
-	{"NumOnePostfix", (PyCFunction)PyPointlessBitvector_n_one_postfix,  METH_NOARGS, ""},
-	{"IsAnySet",      (PyCFunction)PyPointlessBitvector_is_any_set,     METH_NOARGS, ""},
+	{"NumZeroPrefix", (PyCFunction)PyPointlessBitvector_n_zero_prefix,  METH_NOARGS,  ""},
+	{"NumZeroPostfix",(PyCFunction)PyPointlessBitvector_n_zero_postfix, METH_NOARGS,  ""},
+	{"NumOnePrefix",  (PyCFunction)PyPointlessBitvector_n_one_prefix,   METH_NOARGS,  ""},
+	{"NumOnePostfix", (PyCFunction)PyPointlessBitvector_n_one_postfix,  METH_NOARGS,  ""},
+	{"IsAnySet",      (PyCFunction)PyPointlessBitvector_is_any_set,     METH_NOARGS,  ""},
 	{"append",        (PyCFunction)PyPointlessBitvector_append,         METH_VARARGS, ""},
 	{"extend_false",  (PyCFunction)PyPointlessBitvector_extend_false,   METH_VARARGS, ""},
 	{"extend_true",   (PyCFunction)PyPointlessBitvector_extend_true,    METH_VARARGS, ""},
-	{"pop",           (PyCFunction)PyPointlessBitvector_pop,            METH_NOARGS, ""},
-	{"__sizeof__",    (PyCFunction)PyPointlessBitvector_sizeof,         METH_NOARGS,  ""},
+	{"pop",           (PyCFunction)PyPointlessBitvector_pop,            METH_NOARGS,  ""},
+	{"copy",          (PyCFunction)PyPointlessBitvector_copy,           METH_NOARGS,  ""},
+	{"__sizeof__",    (PyCFunction)PyPointlessBitvector_sizeof,         METH_NOARGS,   ""},
 	{NULL, NULL}
 };
 
