@@ -2,8 +2,15 @@
 #define __POINTLESS__TYPE__H__
 
 #include <stdlib.h>
-#include <stdint.h>
 #include <assert.h>
+
+#ifndef __cplusplus
+#include <limits.h>
+#include <stdint.h>
+#else
+#include <climits>
+#include <cstdint>
+#endif
 
 #include <pointless/pointless_defs.h>
 

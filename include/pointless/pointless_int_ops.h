@@ -2,11 +2,17 @@
 #define __POINTLESS__INT__OPS__H__
 
 #include <stdlib.h>
-#include <stdint.h>
-#include <limits.h>
 #include <errno.h>
 #include <ctype.h>
 #include <assert.h>
+
+#ifndef __cplusplus
+#include <limits.h>
+#include <stdint.h>
+#else
+#include <climits>
+#include <cstdint>
+#endif
 
 // values
 typedef struct {

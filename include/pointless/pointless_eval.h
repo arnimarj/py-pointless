@@ -5,12 +5,18 @@
 #include <pointless/pointless_reader_utils.h>
 #include <pointless/pointless_reader_helpers.h>
 
-#include <stdint.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <limits.h>
 #include <ctype.h>
+
+#ifndef __cplusplus
+#include <limits.h>
+#include <stdint.h>
+#else
+#include <climits>
+#include <cstdint>
+#endif
 
 // a simple utility to evaluate simple expressions on arbitrary pointless-values
 //
