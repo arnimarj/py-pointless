@@ -82,16 +82,22 @@ int pointless_open_f(pointless_t* p, const char* fname, int force_ucs2, const ch
 
 	if (p->fd == 0) {
 		switch (errno) {
-			case EINVAL:       *error = "fopen(): EINVAL";       break;
 			case EACCES:       *error = "fopen(): EACCES";       break;
-			case EEXIST:       *error = "fopen(): EEXIST";       break;
+			case EINTR:        *error = "fopen(): EINTR";        break;
+			case EINVAL:       *error = "fopen(): EINVAL";       break;
+			case EISDIR:       *error = "fopen(): EISDIR";       break;
+			case ELOOP:        *error = "fopen(): ELOOP";        break;
 			case EMFILE:       *error = "fopen(): EMFILE";       break;
 			case ENAMETOOLONG: *error = "fopen(): ENAMETOOLONG"; break;
 			case ENFILE:       *error = "fopen(): ENFILE";       break;
-			case ENODEV:       *error = "fopen(): ENODEV";       break;
+			case ENOENT:       *error = "fopen(): ENOENT";       break;
 			case ENOMEM:       *error = "fopen(): ENOMEM";       break;
+			case ENOSPC:       *error = "fopen(): ENOSPC";       break;
+			case ENOTDIR:      *error = "fopen(): ENOTDIR";      break;
+			case ENXIO:        *error = "fopen(): ENXIO";        break;
 			case EOVERFLOW:    *error = "fopen(): EOVERFLOW";    break;
-			case EFBIG:        *error = "fopen(): EFBIG";        break;
+			case EROFS:        *error = "fopen(): EROFS";        break;
+			case ETXTBSY:      *error = "fopen(): ETXTBSY";      break;
 			default:           *error = "fopen(): error";        break;
 		}
 
