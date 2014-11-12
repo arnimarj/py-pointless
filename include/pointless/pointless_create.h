@@ -3,7 +3,14 @@
 
 #include <unistd.h>
 #include <assert.h>
-#include <stdint.h>
+
+#ifndef __cplusplus
+	#include <limits.h>
+	#include <stdint.h>
+#else
+	#include <climits>
+	#include <cstdint>
+#endif
 
 #include <pointless/pointless_defs.h>
 #include <pointless/pointless_malloc.h>

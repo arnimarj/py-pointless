@@ -1,7 +1,13 @@
 #ifndef __POINTLESS__CREATE__CACHE__H__
 #define __POINTLESS__CREATE__CACHE__H__
 
+#ifndef __cplusplus
+#include <limits.h>
 #include <stdint.h>
+#else
+#include <climits>
+#include <cstdint>
+#endif
 
 #define POINTLESS_CREATE_CACHE_N_U32 (10000)
 

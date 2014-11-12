@@ -3,8 +3,15 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <assert.h>
+
+#ifndef __cplusplus
+#include <limits.h>
+#include <stdint.h>
+#else
+#include <climits>
+#include <cstdint>
+#endif
 
 #include <pointless/bitutils.h>
 #include <pointless/custom_sort.h>

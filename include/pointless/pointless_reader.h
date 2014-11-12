@@ -3,8 +3,15 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <errno.h>
+
+#ifndef __cplusplus
+#include <limits.h>
+#include <stdint.h>
+#else
+#include <climits>
+#include <cstdint>
+#endif
 
 #include <sys/mman.h>
 #include <sys/stat.h>

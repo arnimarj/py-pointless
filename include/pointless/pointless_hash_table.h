@@ -1,7 +1,13 @@
 #ifndef __POINTLESS__HASH__TABLE__H__
 #define __POINTLESS__HASH__TABLE__H__
 
+#ifndef __cplusplus
+#include <limits.h>
 #include <stdint.h>
+#else
+#include <climits>
+#include <cstdint>
+#endif
 
 #include <pointless/pointless_defs.h>
 #include <pointless/pointless_value.h>

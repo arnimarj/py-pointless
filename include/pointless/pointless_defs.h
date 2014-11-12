@@ -2,8 +2,15 @@
 #define __POINTLESS__DEFS__H__
 
 #include <stdio.h>
-#include <stdint.h>
 #include <sys/stat.h>
+
+#ifndef __cplusplus
+#include <limits.h>
+#include <stdint.h>
+#else
+#include <climits>
+#include <cstdint>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

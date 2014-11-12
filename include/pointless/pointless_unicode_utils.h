@@ -1,7 +1,14 @@
 #ifndef __POINTLESS__UNICODE__UTILS__H__
 #define __POINTLESS__UNICODE__UTILS__H__
 
+#ifndef __cplusplus
+#include <limits.h>
 #include <stdint.h>
+#else
+#include <climits>
+#include <cstdint>
+#endif
+
 #include <assert.h>
 
 #include <pointless/pointless_defs.h>
