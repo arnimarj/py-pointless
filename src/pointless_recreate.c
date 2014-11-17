@@ -96,6 +96,7 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 	pointless_value_t* key = 0;
 	pointless_value_t* value = 0;
 	void* bits = 0;
+	void* source_bits = 0;
 
 	if (pointless_is_vector_type(v->type))
 		n_items = pointless_reader_vector_n_items(state->p, v);
@@ -179,12 +180,17 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 			if (handle == POINTLESS_CREATE_VALUE_FAIL)
 				*state->error = "out of memory";
 			return handle;
-		case POINTLESS_BITVECTOR:
 		case POINTLESS_BITVECTOR_0:
 		case POINTLESS_BITVECTOR_1:
 		case POINTLESS_BITVECTOR_01:
 		case POINTLESS_BITVECTOR_10:
 		case POINTLESS_BITVECTOR_PACKED:
+			handle = pointless_create_bitvector_compressed(state->c, v);
+			if (handle == POINTLESS_CREATE_VALUE_FAIL)
+				*state->error = "out of memory";
+			return handle;
+	
+		case POINTLESS_BITVECTOR:
 			n_bits = pointless_reader_bitvector_n_bits(state->p, v);
 			bits = pointless_calloc(ICEIL(n_bits, 8), 1);
 
@@ -193,16 +199,8 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 				return POINTLESS_CREATE_VALUE_FAIL;
 			}
 
-			// if this is a buffer based bitvector, just copy the bits across
-			if (v->type == POINTLESS_BITVECTOR) {
-				void* source_bits = (void*)((uint32_t*)pointless_reader_bitvector_buffer(state->p, v) + 1);
-				memcpy(bits, source_bits, ICEIL(n_bits, 8));
-			} else {
-				for (i = 0; i < n_bits; i++) {
-					if (pointless_reader_bitvector_is_set(state->p, v, i))
-						bm_set_(bits, i);
-				}
-			}
+			source_bits = (void*)((uint32_t*)pointless_reader_bitvector_buffer(state->p, v) + 1);
+			memcpy(bits, source_bits, ICEIL(n_bits, 8));
 
 			if (state->normalize_bitvector)
 				handle = pointless_create_bitvector(state->c, bits, n_bits);
@@ -217,8 +215,7 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 				return POINTLESS_CREATE_VALUE_FAIL;
 			}
 
-			if (v->type == POINTLESS_BITVECTOR)
-				state->bitvector_r_c_mapping[v->data.data_u32] = handle;
+			state->bitvector_r_c_mapping[v->data.data_u32] = handle;
 
 			return handle;
 		case POINTLESS_SET_VALUE:
@@ -346,8 +343,6 @@ static int pointless_recreate_(const char* fname_in, const char* fname_out, cons
 	if (!pointless_open_f(&p, fname_in, 0, error))
 		return 0;
 
-	ProfilerStart("pointless.prof");
-
 	// create destination
 	pointless_create_t c;
 
@@ -371,8 +366,6 @@ static int pointless_recreate_(const char* fname_in, const char* fname_out, cons
 		pointless_create_end(&c);
 		return 0;
 	}
-
-	ProfilerStop();
 
 	pointless_close(&p);
 	return 1;

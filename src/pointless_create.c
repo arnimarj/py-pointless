@@ -1905,6 +1905,30 @@ static int pointless_bitvector_is_10(void* v, uint32_t n_bits, uint32_t* n_bits_
 	return 1;
 }
 
+uint32_t pointless_create_bitvector_compressed(pointless_create_t* c, pointless_value_t* v)
+{
+	// first, check for compression options
+	assert(
+		v->type == POINTLESS_BITVECTOR_0 ||
+		v->type == POINTLESS_BITVECTOR_1 ||
+		v->type == POINTLESS_BITVECTOR_PACKED ||
+		v->type == POINTLESS_BITVECTOR_01 ||
+		v->type == POINTLESS_BITVECTOR_10
+	);
+
+	pointless_create_value_t value;
+	value.header.type_29 = v->type;
+	value.header.is_outside_vector = 0;
+	value.header.is_compressed_vector = 0;
+	value.header.is_set_map_vector = 0;
+	value.data = v->data;
+
+	if (!pointless_dynarray_push(&c->values, &value))
+		return POINTLESS_CREATE_VALUE_FAIL;
+
+	return (pointless_dynarray_n_items(&c->values) - 1);
+}
+
 static uint32_t pointless_create_bitvector_(pointless_create_t* c, void* v, uint32_t n_bits, int normalize)
 {
 	// first, check for compression options

@@ -56,6 +56,7 @@ uint32_t pointless_create_string_ascii(pointless_create_t* c, uint8_t* s);
 // bitvectors
 uint32_t pointless_create_bitvector(pointless_create_t* c, void* v, uint32_t n_bits);
 uint32_t pointless_create_bitvector_no_normalize(pointless_create_t* c, void* v, uint32_t n_bits);
+uint32_t pointless_create_bitvector_compressed(pointless_create_t* c, pointless_value_t* v);
 
 // vectors, buffer owned by library
 uint32_t pointless_create_vector_value(pointless_create_t* c);
