@@ -1,4 +1,5 @@
 #include <pointless/pointless_recreate.h>
+#include <gperftools/profiler.h>
 
 typedef struct {
 	// *_read_handle -> *_create_handle
@@ -192,9 +193,15 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 				return POINTLESS_CREATE_VALUE_FAIL;
 			}
 
-			for (i = 0; i < n_bits; i++) {
-				if (pointless_reader_bitvector_is_set(state->p, v, i))
-					bm_set_(bits, i);
+			// if this is a buffer based bitvector, just copy the bits across
+			if (v->type == POINTLESS_BITVECTOR) {
+				void* source_bits = (void*)((uint32_t*)pointless_reader_bitvector_buffer(state->p, v) + 1);
+				memcpy(bits, source_bits, ICEIL(n_bits, 8));
+			} else {
+				for (i = 0; i < n_bits; i++) {
+					if (pointless_reader_bitvector_is_set(state->p, v, i))
+						bm_set_(bits, i);
+				}
 			}
 
 			if (state->normalize_bitvector)
@@ -339,6 +346,8 @@ static int pointless_recreate_(const char* fname_in, const char* fname_out, cons
 	if (!pointless_open_f(&p, fname_in, 0, error))
 		return 0;
 
+	ProfilerStart("pointless.prof");
+
 	// create destination
 	pointless_create_t c;
 
@@ -362,6 +371,8 @@ static int pointless_recreate_(const char* fname_in, const char* fname_out, cons
 		pointless_create_end(&c);
 		return 0;
 	}
+
+	ProfilerStop();
 
 	pointless_close(&p);
 	return 1;
