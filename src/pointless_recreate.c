@@ -1,5 +1,4 @@
 #include <pointless/pointless_recreate.h>
-#include <gperftools/profiler.h>
 
 typedef struct {
 	// *_read_handle -> *_create_handle
