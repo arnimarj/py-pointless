@@ -165,7 +165,8 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 			return handle;
 		case POINTLESS_VECTOR_EMPTY:
 			POINTLESS_RECREATE_FUNC_1(pointless_create_vector_value, state->c);
-			state->vector_r_c_mapping[v->data.data_u32] = handle;
+			// note: empty vectors don't have any data on the heap, so there is no
+			//       need to mark vector_r_c_mapping
 			return handle;
 		case POINTLESS_UNICODE_:
 			POINTLESS_RECREATE_FUNC_2(pointless_create_unicode_ucs4, state->c, pointless_reader_unicode_value_ucs4(state->p, v));
@@ -298,18 +299,12 @@ uint32_t pointless_recreate_value(pointless_t* p_in, pointless_value_t* v_in, po
 
 	state.error = error;
 
-	state.string_unicode_r_c_mapping = 0;
-	state.vector_r_c_mapping = 0;
-	state.bitvector_r_c_mapping = 0;
-	state.set_r_c_mapping = 0;
-	state.map_r_c_mapping = 0;
-	state.normalize_bitvector = 1;
-
 	state.string_unicode_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_string_unicode, UINT32_MAX);
 	state.vector_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_vector, UINT32_MAX);
 	state.bitvector_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_bitvector, UINT32_MAX);
 	state.set_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_set, UINT32_MAX);
 	state.map_r_c_mapping = pointless_malloc_uint32_init(p_in->header->n_map, UINT32_MAX);
+	state.normalize_bitvector = 1;
 
 	if (state.string_unicode_r_c_mapping == 0 || state.vector_r_c_mapping == 0 || state.bitvector_r_c_mapping == 0) {
 		*error = "out of memory";
