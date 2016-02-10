@@ -183,7 +183,7 @@ static void PyPointlessPrimVector_dealloc(PyPointlessPrimVector* self)
 
 static void PyPointlessPrimVectorIter_dealloc(PyPointlessPrimVectorIter* self)
 {
-	_PyObject_GC_UNTRACK(self);
+	PyObject_GC_UnTrack(self);
 	Py_XDECREF(self->vector);
 	self->vector = 0;
 	self->iter_state = 0;
@@ -608,7 +608,7 @@ static PyObject* PyPointlessPrimVector_iter(PyObject* vector)
 	Py_INCREF(vector);
 	iter->vector = (PyPointlessPrimVector*)vector;
 	iter->iter_state = 0;
-	_PyObject_GC_TRACK(iter);
+	PyObject_GC_Track(iter);
 
 	return (PyObject*)iter;
 }
@@ -1061,7 +1061,7 @@ static PyObject* PyPointlessPrimVector_serialize(PyPointlessPrimVector* self)
 	void* buffer = pointless_malloc((size_t)n_buffer);
 
 	if (buffer == 0)
-		return 0;
+		return PyErr_NoMemory();
 
 	// serialize it
 	((uint32_t*)buffer)[0] = self->type;
