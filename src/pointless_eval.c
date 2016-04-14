@@ -269,6 +269,11 @@ int pointless_eval_get_as_vector_u8(pointless_t* p, pointless_value_t* root, uin
 	int i = pointless_eval_get_(p, root, &v_, e, ap);
 	va_end(ap);
 
+	if (i && v_.type == POINTLESS_VECTOR_EMPTY) {
+		*n = 0;
+		return 1;
+	}
+
 	if (i && v_.type == POINTLESS_VECTOR_U8) {
 		*n = pointless_reader_vector_n_items(p, &v_);
 		*v = pointless_reader_vector_u8(p, &v_);
@@ -287,6 +292,11 @@ int pointless_eval_get_as_vector_u16(pointless_t* p, pointless_value_t* root, ui
 	int i = pointless_eval_get_(p, root, &v_, e, ap);
 	va_end(ap);
 
+	if (i && v_.type == POINTLESS_VECTOR_EMPTY) {
+		*n = 0;
+		return 1;
+	}
+
 	if (i && v_.type == POINTLESS_VECTOR_U16) {
 		*n = pointless_reader_vector_n_items(p, &v_);
 		*v = pointless_reader_vector_u16(p, &v_);
@@ -303,6 +313,11 @@ int pointless_eval_get_as_vector_u32(pointless_t* p, pointless_value_t* root, ui
 	va_start(ap, e);
 	int i = pointless_eval_get_(p, root, &v_, e, ap);
 	va_end(ap);
+
+	if (i && v_.type == POINTLESS_VECTOR_EMPTY) {
+		*n = 0;
+		return 1;
+	}
 
 	if (i && v_.type == POINTLESS_VECTOR_U32) {
 		*n = pointless_reader_vector_n_items(p, &v_);
@@ -321,6 +336,11 @@ int pointless_eval_get_as_vector_u64(pointless_t* p, pointless_value_t* root, ui
 	int i = pointless_eval_get_(p, root, &v_, e, ap);
 	va_end(ap);
 
+	if (i && v_.type == POINTLESS_VECTOR_EMPTY) {
+		*n = 0;
+		return 1;
+	}
+
 	if (i && v_.type == POINTLESS_VECTOR_U64) {
 		*n = pointless_reader_vector_n_items(p, &v_);
 		*v = pointless_reader_vector_u64(p, &v_);
@@ -338,6 +358,11 @@ int pointless_eval_get_as_vector_f(pointless_t* p, pointless_value_t* root, floa
 	int i = pointless_eval_get_(p, root, &v_, e, ap);
 	va_end(ap);
 
+	if (i && v_.type == POINTLESS_VECTOR_EMPTY) {
+		*n = 0;
+		return 1;
+	}
+
 	if (i && v_.type == POINTLESS_VECTOR_FLOAT) {
 		*n = pointless_reader_vector_n_items(p, &v_);
 		*v = pointless_reader_vector_float(p, &v_);
@@ -354,6 +379,11 @@ int pointless_eval_get_as_vector_value(pointless_t* p, pointless_value_t* root, 
 	va_start(ap, e);
 	int i = pointless_eval_get_(p, root, &v_, e, ap);
 	va_end(ap);
+
+	if (i && v_.type == POINTLESS_VECTOR_EMPTY) {
+		*n = 0;
+		return 1;
+	}
 
 	if (i && (v_.type == POINTLESS_VECTOR_VALUE || v_.type == POINTLESS_VECTOR_VALUE_HASHABLE)) {
 		*n = pointless_reader_vector_n_items(p, &v_);
