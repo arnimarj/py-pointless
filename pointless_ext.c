@@ -27,7 +27,8 @@ static PyPointless_CAPI CAPI = {
 	&PyPointlessMapType,
 	&PyPointlessPrimVectorType,
 	PyPointlessBitvector_is_set,
-	PyPointlessBitvector_n_items
+	PyPointlessBitvector_n_items,
+	pypointless_value
 };
 
 PyObject* pointless_write_object(PyObject* self, PyObject* args, PyObject* kwds);

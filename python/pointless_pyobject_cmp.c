@@ -195,7 +195,7 @@ static pypointless_cmp_cb pypointless_cmp_func(pypointless_cmp_value_t* v, uint3
 			return pypointless_cmp_string_unicode;
 		}
 
-		if (PyAnySet_Check(py_object)) {
+		if (PySet_Check(py_object) || PyFrozenSet_Check(py_object)) {
 			*type = POINTLESS_SET_VALUE;
 			return 0;
 		}

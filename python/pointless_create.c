@@ -248,7 +248,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			return POINTLESS_CREATE_VALUE_FAIL;
 		}
 
-		handle = pointless_create_vector_u8_owner(&state->c, (uint8_t*)PyByteArray_AS_STRING(py_object), (uint32_t)n_items);
+		handle = pointless_create_vector_u8_owner(&state->c, (uint8_t*)PyByteArray_AsString(py_object), (uint32_t)n_items);
 		RETURN_OOM_IF_FAIL(handle, state);
 
 		if (!pointless_export_set_seen(state, py_object, handle)) {
@@ -402,7 +402,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		}
 
 	// set object
-	} else if (PyAnySet_Check(py_object)) {
+	} else if (PySet_Check(py_object) || PyFrozenSet_Check(py_object)) {
 		PyObject* iterator = PyObject_GetIter(py_object);
 		PyObject* item = 0;
 
