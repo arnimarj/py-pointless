@@ -13,7 +13,7 @@ extra_link_args = ['-Bstatic', '-lJudy']
 
 setup(
 	name = 'pointless',
-	version = '0.2.5',
+        use_scm_version = True,
 	maintainer = 'Arni Mar Jonsson',
 	maintainer_email = 'arnimarj@gmail.com',
 	url = 'http://code.google.com/p/py-pointless/',
@@ -84,6 +84,8 @@ setup(
 			extra_link_args = extra_link_args
 		)
 	],
+
+        setup_requires = ['setuptools_scm'],
 
         test_suite = 'test',
         tests_require = ['twisted']
