@@ -2,6 +2,10 @@ build/
 .ropeproject/
 *.swp
 *.map
+*.so
+*.egg-info
+.eggs
+_trial_temp
 test/a.out
 test/dump.map
 test/run.sh

@@ -4,9 +4,5 @@ python:
   - "2.7"
 before_install:
   - sudo apt-get install libjudy-dev
-install:
-  - "pip install ."
-  - "pip install -r test-requirements.txt"
-
 script:
-  - "trial test.python_api"
+  - python setup.py test
