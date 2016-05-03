@@ -3,5 +3,13 @@ python:
   - 2.7
 before_install:
   - sudo apt-get install libjudy-dev
+install:
+  - pushd test
+  - ./compile.sh
+  - popd
 script:
   - python setup.py test
+  - pushd test
+  - ./a.out --unit-test-32
+  - ./a.out --unit-test-64
+  - popd
