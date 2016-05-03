@@ -3,7 +3,6 @@ from setuptools import setup, Extension
 extra_compile_args = [
 	'-I./include',
 	'-Wall',
-	'-Wno-strict-prototypes',
 	'-g',
 	'-D_GNU_SOURCE',
 	'-O2',
@@ -84,5 +83,8 @@ setup(
 			extra_compile_args = extra_compile_args,
 			extra_link_args = extra_link_args
 		)
-	]
+	],
+
+        test_suite = 'test',
+        tests_require = ['twisted']
 )
