@@ -1,3 +1,4 @@
+import glob
 from setuptools import setup, Extension
 
 extra_compile_args = [
@@ -82,6 +83,8 @@ setup(
 			extra_link_args = extra_link_args
 		)
 	],
+
+        headers = glob.glob('include/**/*.h'),
 
         setup_requires = ['setuptools_scm'],
 
