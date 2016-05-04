@@ -236,13 +236,6 @@ typedef struct {
 	uint8_t n_bits;
 } _var_string_t;
 
-_var_string_t foo()
-{
-	_var_string_t s;
-	s.n_bits = 0;
-	return s;
-}
-
 static _var_string_t pypointless_cmp_extract_string(pypointless_cmp_value_t* v, pypointless_cmp_state_t* state)
 {
 	_var_string_t s;
