@@ -20,8 +20,6 @@
 #include <pointless/pointless_unicode_utils.h>
 #include <pointless/bitutils.h>
 
-#include <Judy.h>
-
 // creation
 void pointless_create_begin_32(pointless_create_t* c);
 void pointless_create_begin_64(pointless_create_t* c);
