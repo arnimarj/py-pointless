@@ -222,8 +222,8 @@ typedef struct {
 
 #define POINTLESS_API_MAGIC 0xC6D89E28
 
-extern PyPointless_CAPI* PyPointlessAPI;
-extern int PyPointlessAPI_magic;
+static PyPointless_CAPI* PyPointlessAPI = 0;
+static int PyPointlessAPI_magic = 0;
 
 #define PyPointless_IS_GOOD_IMPORT(magic) (PyPointlessAPI != 0 && PyPointlessAPI_magic == (magic))
 
