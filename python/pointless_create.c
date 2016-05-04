@@ -1,4 +1,4 @@
-#include "../pointless_ext.h"
+#include "pointless/pointless_ext.h"
 
 typedef struct {
 	pointless_create_t c;   // create-time state

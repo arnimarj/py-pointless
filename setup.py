@@ -38,10 +38,8 @@ setup(
 	ext_modules = [
 		Extension('pointless',
 			sources = [
-				# python stuff
-				'pointless_ext.c',
-
 				# pypointless
+				'python/pointless_ext.c',
 				'python/pointless_create.c',
 				'python/pointless_vector.c',
 				'python/pointless_bitvector.c',
