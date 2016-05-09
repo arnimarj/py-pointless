@@ -1,4 +1,4 @@
-#include "pointless_ext.h"
+#include "pointless/pointless_ext.h"
 
 uint32_t PyPointlessBitvector_is_set(PyPointlessBitvector* self, uint32_t i);
 uint32_t PyPointlessBitvector_n_items(PyPointlessBitvector* self);

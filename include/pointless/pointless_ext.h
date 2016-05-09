@@ -2,7 +2,6 @@
 #define __POINTLESS__MODULE__H__
 
 #include <Python.h>
-#include <Judy.h>
 
 #include "structmember.h"
 

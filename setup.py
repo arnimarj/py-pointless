@@ -1,41 +1,20 @@
-import sys, commands
-from distutils.core import setup, Extension
-
-def build_judy():
-	print('INFO: building judy static library...')
-
-	# adding last two flags because of compiler and/or code bugs
-	# see http://sourceforge.net/p/judy/mailman/message/32417284/
-	if sys.maxint == 2**63-1:
-		CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
-	elif sys.maxint == 2**31-1:
-		CFLAGS = '           -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
-	else:
-		sys.exit('bad sys.maxint')
-
-	a, b = commands.getstatusoutput('(cd judy-1.0.5/src; COPT=\'%s\' sh ./sh_build)' % (CFLAGS,))
-
-	if a != 0:
-		sys.exit(b)
-
-build_judy()
+import glob
+from setuptools import setup, Extension
 
 extra_compile_args = [
 	'-I./include',
-	'-I./judy-1.0.5/src',
 	'-Wall',
-	'-Wno-strict-prototypes',
 	'-g',
 	'-D_GNU_SOURCE',
 	'-O2',
 	'-DNDEBUG'
 ]
 
-extra_link_args = ['-L./judy-1.0.5/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm']
+extra_link_args = ['-Bstatic', '-lJudy']
 
 setup(
 	name = 'pointless',
-	version = '0.2.5',
+        use_scm_version = True,
 	maintainer = 'Arni Mar Jonsson',
 	maintainer_email = 'arnimarj@gmail.com',
 	url = 'http://code.google.com/p/py-pointless/',
@@ -56,18 +35,12 @@ setup(
 
 	download_url = 'http://py-pointless.googlecode.com/files/pointless-0.2.3.tar.gz',
 	description = 'A read-only relocatable data structure for JSON like data, with C and Python APIs',
-	# long_description = 
-
-	packages = ['pointless'],
-	package_dir = {'pointless': ''},
 
 	ext_modules = [
 		Extension('pointless',
 			sources = [
-				# python stuff
-				'pointless_ext.c',
-
 				# pypointless
+				'python/pointless_ext.c',
 				'python/pointless_create.c',
 				'python/pointless_vector.c',
 				'python/pointless_bitvector.c',
@@ -109,5 +82,12 @@ setup(
 			extra_compile_args = extra_compile_args,
 			extra_link_args = extra_link_args
 		)
-	]
+	],
+
+        headers = glob.glob('include/**/*.h'),
+
+        setup_requires = ['setuptools_scm'],
+
+        test_suite = 'test',
+        tests_require = ['twisted']
 )

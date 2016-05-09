@@ -19,20 +19,20 @@ pointless_create_value_t pointless_value_create_i32(int32_t v);
 pointless_create_value_t pointless_value_create_u32(uint32_t v);
 pointless_create_value_t pointless_value_create_float(float v);
 
-pointless_create_value_t pointless_value_create_bool_false();
-pointless_create_value_t pointless_value_create_bool_true();
-pointless_create_value_t pointless_value_create_null();
-pointless_create_value_t pointless_value_create_empty_slot();
+pointless_create_value_t pointless_value_create_bool_false(void);
+pointless_create_value_t pointless_value_create_bool_true(void);
+pointless_create_value_t pointless_value_create_null(void);
+pointless_create_value_t pointless_value_create_empty_slot(void);
 
 // read-time values
 pointless_value_t pointless_value_create_as_read_i32(int32_t v);
 pointless_value_t pointless_value_create_as_read_u32(uint32_t v);
 pointless_value_t pointless_value_create_as_read_float(float v);
 
-pointless_value_t pointless_value_create_as_read_bool_false();
-pointless_value_t pointless_value_create_as_read_bool_true();
-pointless_value_t pointless_value_create_as_read_null();
-pointless_value_t pointless_value_create_as_read_empty_slot();
+pointless_value_t pointless_value_create_as_read_bool_false(void);
+pointless_value_t pointless_value_create_as_read_bool_true(void);
+pointless_value_t pointless_value_create_as_read_null(void);
+pointless_value_t pointless_value_create_as_read_empty_slot(void);
 
 // hash/cmp-time values
 
@@ -42,7 +42,7 @@ pointless_complete_create_value_t pointless_complete_value_create_u32(uint32_t v
 pointless_complete_create_value_t pointless_complete_value_create_i64(int64_t v);
 pointless_complete_create_value_t pointless_complete_value_create_u64(uint64_t v);
 pointless_complete_create_value_t pointless_complete_value_create_float(float v);
-pointless_complete_create_value_t pointless_complete_value_create_null();
+pointless_complete_create_value_t pointless_complete_value_create_null(void);
 
 //  ...read
 pointless_complete_value_t pointless_complete_value_create_as_read_i32(int32_t v);
@@ -50,7 +50,7 @@ pointless_complete_value_t pointless_complete_value_create_as_read_u32(uint32_t 
 pointless_complete_value_t pointless_complete_value_create_as_read_i64(int64_t v);
 pointless_complete_value_t pointless_complete_value_create_as_read_u64(uint64_t v);
 pointless_complete_value_t pointless_complete_value_create_as_read_float(float v);
-pointless_complete_value_t pointless_complete_value_create_as_read_null();
+pointless_complete_value_t pointless_complete_value_create_as_read_null(void);
 
 // read-time accessors
 int32_t pointless_value_get_i32(uint32_t t, pointless_value_data_t* v);

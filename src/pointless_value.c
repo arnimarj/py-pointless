@@ -182,7 +182,7 @@ pointless_complete_create_value_t pointless_complete_value_create_float(float v)
 	return pointless_create_value_to_complete(&_v);
 }
 
-pointless_complete_create_value_t pointless_complete_value_create_null();
+pointless_complete_create_value_t pointless_complete_value_create_null(void);
 
 //  ...read
 pointless_complete_value_t pointless_complete_value_create_as_read_i32(int32_t v)
