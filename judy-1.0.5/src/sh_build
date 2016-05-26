@@ -4,7 +4,7 @@ echo  "--- Must be in the 'src' directory to execute this script"
 echo  "--- I normally run it like: COPT='-O3 -march=i686' sh_build"
 
 echo  "--- Set Compiler"
-CC='cc'
+# CC='cc'
 
 echo  "--- Set Optimization"
 # COPT='-O'

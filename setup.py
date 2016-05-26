@@ -1,24 +1,46 @@
-import sys, commands
-from distutils.core import setup, Extension
+import sys, commands, os
+from setuptools import setup, Extension
 
 def build_judy():
 	print('INFO: building judy static library...')
 
+	CC = os.environ.get('CC', 'cc')
+
+	is_clang = False
+
+	# test if CC is clang
+	exitcode, output = commands.getstatusoutput('%s --version' % (CC,))
+
+	if exitcode != 0:
+		sys.exit(output)
+
+	if 'clang' in output:
+		is_clang = True
+
 	# adding last two flags because of compiler and/or code bugs
 	# see http://sourceforge.net/p/judy/mailman/message/32417284/
-	if sys.maxint == 2**63-1:
-		CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
-	elif sys.maxint == 2**31-1:
-		CFLAGS = '           -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
+	assert(sys.maxint in (2**63-1, 2**31-1))
+
+	if is_clang:
+		if sys.maxint == 2**63-1:
+			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing'
+		else:
+			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing'
 	else:
-		sys.exit('bad sys.maxint')
+		if sys.maxint == 2**63-1:
+			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
+		else:
+			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
 
-	a, b = commands.getstatusoutput('(cd judy-1.0.5/src; COPT=\'%s\' sh ./sh_build)' % (CFLAGS,))
+	exitcode, output = commands.getstatusoutput('(cd judy-1.0.5/src; CC=\'%s\' COPT=\'%s\' sh ./sh_build)' % (CC, CFLAGS))
 
-	if a != 0:
-		sys.exit(b)
+	if exitcode != 0:
+		sys.exit(output)
+
+	print output
 
 build_judy()
+sys.exit()
 
 extra_compile_args = [
 	'-I./include',
