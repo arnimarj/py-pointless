@@ -40,7 +40,6 @@ def build_judy():
 	print output
 
 build_judy()
-sys.exit()
 
 extra_compile_args = [
 	'-I./include',
