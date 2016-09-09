@@ -56,10 +56,10 @@ extra_link_args = ['-L./judy-1.0.5/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm
 
 setup(
 	name = 'pointless',
-	version = '0.2.5',
+	version = '0.2.6',
 	maintainer = 'Arni Mar Jonsson',
 	maintainer_email = 'arnimarj@gmail.com',
-	url = 'http://code.google.com/p/py-pointless/',
+	url = 'https://github.com/arnimarj/py-pointless',
 
 	classifiers = [
 		'Development Status :: 5 - Production/Stable',
@@ -77,7 +77,6 @@ setup(
 
 	download_url = 'http://py-pointless.googlecode.com/files/pointless-0.2.3.tar.gz',
 	description = 'A read-only relocatable data structure for JSON like data, with C and Python APIs',
-	# long_description = 
 
 	packages = ['pointless'],
 	package_dir = {'pointless': ''},
