@@ -46,7 +46,7 @@ static void pointless_walk_priv(pointless_t* p, pointless_value_t* v, uint32_t d
 	} else if (v->type == POINTLESS_MAP_VALUE_VALUE) {
 		pointless_value_t* hash_vector = pointless_map_hash_vector(p, v);
 		pointless_value_t* key_vector = pointless_map_key_vector(p, v);
-		pointless_value_t* value_vector = pointless_map_key_vector(p, v);
+		pointless_value_t* value_vector = pointless_map_value_vector(p, v);
 
 		pointless_walk_priv(p, hash_vector, depth + 1, cb, stop, user);
 
