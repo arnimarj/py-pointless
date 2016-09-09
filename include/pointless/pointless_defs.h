@@ -394,11 +394,6 @@ uint32_t pointless_vector_hash_end_32(pointless_vector_hash_state_32_t* state);
 
 uint32_t pointless_is_hashable(uint32_t type);
 
-uint32_t pointless_hash_unicode_ucs4_v0_32(uint32_t* s);
-uint32_t pointless_hash_unicode_ucs2_v0_32(uint16_t* s);
-uint32_t pointless_hash_string_v0_32(uint8_t* s);
-uint32_t pointless_hash_string_v0_32_(uint8_t* s, size_t n);
-
 uint32_t pointless_hash_unicode_ucs4_v1_32(uint32_t* s);
 uint32_t pointless_hash_unicode_ucs2_v1_32(uint16_t* s);
 uint32_t pointless_hash_string_v1_32(uint8_t* s);

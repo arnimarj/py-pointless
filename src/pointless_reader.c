@@ -16,6 +16,8 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 
 	switch (p->header->version) {
 		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
+			*error = "old-hash file version not supported";
+			return 0;
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 			p->is_32_offset = 1;
 			break;
