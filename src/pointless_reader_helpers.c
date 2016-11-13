@@ -144,41 +144,13 @@ static int pointless_get_set_(pointless_t* p, pointless_value_t* set, uint32_t h
 
 int pointless_get_mapping_string_to_u32(pointless_t* p, pointless_value_t* map, char* key, uint32_t* value)
 {
-	uint32_t hash = 0;
-
-	switch (p->header->version) {
-		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0_32((uint8_t*)key);
-			break;
-		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
-		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1_32((uint8_t*)key);
-			break;
-		default:
-			assert(0);
-			break;
-	}
-
+	uint32_t hash = pointless_hash_string_v1_32((uint8_t*)key);
 	return pointless_get_map_(p, map, hash, check_string, (void*)key, check_and_get_u32, 0, (void*)value);
 }
 
 int pointless_get_mapping_string_to_i64(pointless_t* p, pointless_value_t* map, char* key, int64_t* value)
 {
-	uint32_t hash = 0;
-
-	switch (p->header->version) {
-		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0_32((uint8_t*)key);
-			break;
-		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
-		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1_32((uint8_t*)key);
-			break;
-		default:
-			assert(0);
-			break;
-	}
-
+	uint32_t hash = pointless_hash_string_v1_32((uint8_t*)key);
 	return pointless_get_map_(p, map, hash, check_string, (void*)key, check_and_get_i64, 0, (void*)value);
 }
 
@@ -301,41 +273,13 @@ int pointless_get_mapping_string_to_vector_value(pointless_t* p, pointless_value
 
 int pointless_get_mapping_string_to_value(pointless_t* p, pointless_value_t* map, char* key, pointless_value_t* value)
 {
-	uint32_t hash = 0;
-
-	switch (p->header->version) {
-		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0_32((uint8_t*)key);
-			break;
-		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
-		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1_32((uint8_t*)key);
-			break;
-		default:
-			assert(0);
-			break;
-	}
-
+	uint32_t hash = pointless_hash_string_v1_32((uint8_t*)key);
 	return pointless_get_map_(p, map, hash, check_string, (void*)key, get_value, 0, (void*)value);
 }
 
 int pointless_get_mapping_string_n_to_value(pointless_t* p, pointless_value_t* map, char* key, size_t n, pointless_value_t* value)
 {
-	uint32_t hash = 0;
-
-	switch (p->header->version) {
-		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0_32_((uint8_t*)key, n);
-			break;
-		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
-		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1_32_((uint8_t*)key, n);
-			break;
-		default:
-			assert(0);
-			break;
-	}
-
+	uint32_t hash = pointless_hash_string_v1_32_((uint8_t*)key, n);
 
 	check_string_n_t user;
 	user.s = (uint8_t*)key;
@@ -346,61 +290,20 @@ int pointless_get_mapping_string_n_to_value(pointless_t* p, pointless_value_t* m
 
 int pointless_get_mapping_unicode_to_value(pointless_t* p, pointless_value_t* map, uint32_t* key, pointless_value_t* value)
 {
-	uint32_t hash = 0;
-
-	switch (p->header->version) {
-		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0_32((uint8_t*)key);
-			break;
-		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
-		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1_32((uint8_t*)key);
-			break;
-		default:
-			assert(0);
-			break;
-	}
-
+	uint32_t hash = pointless_hash_string_v1_32((uint8_t*)key);
 	return pointless_get_map_(p, map, hash, check_unicode, (void*)key, get_value, 0, (void*)value);
 }
 
 int pointless_get_mapping_unicode_to_u32(pointless_t* p, pointless_value_t* map, uint32_t* key, uint32_t* value)
 {
-	uint32_t hash = 0;
-
-	switch (p->header->version) {
-		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0_32((uint8_t*)key);
-			break;
-		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
-		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1_32((uint8_t*)key);
-			break;
-		default:
-			assert(0);
-			break;
-	}
-
+	uint32_t hash = pointless_hash_string_v1_32((uint8_t*)key);
 	return pointless_get_map_(p, map, hash, check_unicode, (void*)key, check_and_get_u32, 0, (void*)value);
 }
 
 
 static int pointless_get_mapping_string_to_value_type(pointless_t* p, pointless_value_t* map, char* key, pointless_value_t* value, uint32_t type)
 {
-	uint32_t hash = 0;
-
-	switch (p->header->version) {
-		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0_32((uint8_t*)key);
-			break;
-		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
-		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1_32((uint8_t*)key);
-			break;
-		default:
-			assert(0);
-			break;
-	}
+	uint32_t hash = pointless_hash_string_v1_32((uint8_t*)key);
 
 	pointless_value_t v;
 

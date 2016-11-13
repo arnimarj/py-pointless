@@ -30,29 +30,6 @@ uint32_t pointless_hash_unicode_ucs4_v1_32(uint32_t* s)
 
 #define HASH_UNICODE_SEED 1000000001L
 
-#define POINTLESS_HASH_STRING_32(s)     uint32_t v = 1;                   while (*(s))      { v = v + HASH_UNICODE_SEED + *(s); (s) += 1;          } return v
-#define POINTLESS_HASH_STRING_32_(s, n) uint32_t v = 1; uint32_t len = 0; while (len < (n)) { v = v + HASH_UNICODE_SEED + *(s); (s) += 1; len += 1;} return v
-
-uint32_t pointless_hash_unicode_ucs4_v0_32(uint32_t* s)
-{
-	POINTLESS_HASH_STRING_32(s);
-}
-
-uint32_t pointless_hash_unicode_ucs2_v0_32(uint16_t* s)
-{
-	POINTLESS_HASH_STRING_32(s);
-}
-
-uint32_t pointless_hash_string_v0_32(uint8_t* s)
-{
-	POINTLESS_HASH_STRING_32(s);
-}
-
-uint32_t pointless_hash_string_v0_32_(uint8_t* s, size_t n)
-{
-	POINTLESS_HASH_STRING_32_(s, n);
-}
-
 typedef uint32_t (*pointless_hash_reader_32_cb)(pointless_t* p, pointless_value_t* v);
 typedef uint32_t (*pointless_hash_create_32_cb)(pointless_create_t* c, pointless_create_value_t* v);
 
@@ -60,87 +37,25 @@ typedef uint32_t (*pointless_hash_create_32_cb)(pointless_create_t* c, pointless
 static uint32_t pointless_hash_reader_unicode_32(pointless_t* p, pointless_value_t* v)
 {
 	uint32_t* s = pointless_reader_unicode_value_ucs4(p, v);
-	uint32_t hash = 0;
-
-	switch (p->header->version) {
-		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_unicode_ucs4_v0_32(s);
-			break;
-		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
-		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_unicode_ucs4_v1_32(s);
-			break;
-		default:
-			assert(0);
-			break;
-	}
-
-	return hash;
+	return pointless_hash_unicode_ucs4_v1_32(s);
 }
 
 static uint32_t pointless_hash_create_unicode_32(pointless_create_t* c, pointless_create_value_t* v)
 {
 	uint32_t* s = ((uint32_t*)cv_get_unicode(v) + 1);
-
-	uint32_t hash = 0;
-
-	switch (c->version) {
-		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_unicode_ucs4_v0_32(s);
-			break;
-		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
-		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_unicode_ucs4_v1_32(s);
-			break;
-		default:
-			assert(0);
-			break;
-	}
-
-	return hash;
+	return pointless_hash_unicode_ucs4_v1_32(s);
 }
 
 static uint32_t pointless_hash_reader_string_32(pointless_t* p, pointless_value_t* v)
 {
 	uint8_t* s = pointless_reader_string_value_ascii(p, v);
-	uint32_t hash = 0;
-
-	switch (p->header->version) {
-		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0_32(s);
-			break;
-		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
-		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1_32(s);
-			break;
-		default:
-			assert(0);
-			break;
-	}
-
-	return hash;
+	return pointless_hash_string_v1_32(s);
 }
 
 static uint32_t pointless_hash_create_string_32(pointless_create_t* c, pointless_create_value_t* v)
 {
 	uint8_t* s = (uint8_t*)((uint32_t*)cv_get_string(v) + 1);
-
-	uint32_t hash = 0;
-
-	switch (c->version) {
-		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
-			hash = pointless_hash_string_v0_32(s);
-			break;
-		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
-		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_string_v1_32(s);
-			break;
-		default:
-			assert(0);
-			break;
-	}
-
-	return hash;
+	return pointless_hash_string_v1_32(s);
 }
 
 

@@ -301,7 +301,7 @@ void create_special_c(pointless_create_t* c)
 
 	// reverse order
 	for (i = 31; i >= 1; i--) {
-		if (!pointless_create_vector_value_append(c, vectors[i - 1], vectors[i]) == POINTLESS_CREATE_VALUE_FAIL) {
+		if (pointless_create_vector_value_append(c, vectors[i - 1], vectors[i]) == POINTLESS_CREATE_VALUE_FAIL) {
 			fprintf(stderr, "pointless_create_vector_value_append() failure\n");
 			exit(EXIT_FAILURE);
 		}

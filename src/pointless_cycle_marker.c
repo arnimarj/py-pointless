@@ -59,11 +59,13 @@ typedef struct {
 
 static uint32_t pointless_is_container(pointless_value_t* v)
 {
-	if (v->type == POINTLESS_VECTOR_VALUE || v->type == POINTLESS_VECTOR_VALUE_HASHABLE)
-		return 1;
-
-	if (v->type == POINTLESS_SET_VALUE || v->type == POINTLESS_MAP_VALUE_VALUE)
-		return 1;
+	switch (v->type) {
+		case POINTLESS_VECTOR_VALUE:
+		case POINTLESS_VECTOR_VALUE_HASHABLE:
+		case POINTLESS_SET_VALUE:
+		case POINTLESS_MAP_VALUE_VALUE:
+			return 1;
+	}
 
 	return 0;
 }
@@ -79,6 +81,9 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 
 static void process_child(pointless_cycle_marker_state_t* state, uint32_t v_id, pointless_value_t* w, Word_t count, uint32_t depth)
 {
+	if (!pointless_is_container(w))
+		return;
+
 	// if w not in visited: visit(w, cnt)
 	uint32_t w_id = pointless_container_id(state->p, w);
 	//print_depth(depth); printf("process_child(w = %u, count = %llu)\n", w_id, (unsigned long long)count);
@@ -119,7 +124,7 @@ static void process_child(pointless_cycle_marker_state_t* state, uint32_t v_id, 
 			PValue = JudyLIns(&state->root_judy, (Word_t)v_id, 0);
 
 			if (PValue == 0) {
-				state->error = "out of memory Q";
+				state->error = "out of memory";
 				return;
 			}
 
@@ -132,6 +137,8 @@ static void process_child(pointless_cycle_marker_state_t* state, uint32_t v_id, 
 
 static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, pointless_value_t* v, Word_t count, uint32_t depth)
 {
+	assert(pointless_is_container(v));
+
 	if (depth >= POINTLESS_MAX_DEPTH) {
 		state->error = "maximum recursion depth reached";
 		return;
@@ -142,11 +149,8 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 		return;
 	}
 
-	// if this is not a container (i.e. a leaf), go away
-	if (!pointless_is_container(v))
-		return;
-
-	//print_depth(depth); printf("pointless_cycle_marker_visit(v = %u, count = %llu):\n", pointless_container_id(state->p, v), (unsigned long long)count);
+	// if w not in visited: visit(w, cnt)
+	//print_depth(depth); printf("pointless_cycle_marker_visit(v = %u, type %u, count = %llu):\n", pointless_container_id(state->p, v), v->type, (unsigned long long)count);
 
 	uint32_t v_id = pointless_container_id(state->p, v);
 
@@ -154,7 +158,7 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 	Pvoid_t PValue = (Pvoid_t)JudyLIns(&state->root_judy, (Word_t)v_id, 0);
 
 	if (PValue == 0) {
-		state->error = "out of memory R";
+		state->error = "out of memory";
 		return;
 	}
 
@@ -166,7 +170,7 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 	PValue = JudyLIns(&state->visited_judy, (Word_t)v_id, 0);
 
 	if (PValue == 0) {
-		state->error = "out of memory S";
+		state->error = "out of memory";
 		return;
 	}
 
@@ -185,7 +189,7 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 
 	// stack.append(v)
 	if (!pointless_dynarray_push(&state->stack, &v_id)) {
-		state->error = "out of memory T";
+		state->error = "out of memory";
 		return;
 	}
 
@@ -197,55 +201,43 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 		pointless_value_t* children = pointless_reader_vector_value(state->p, v);
 
 		for (i = 0; i < n_items; i++) {
-			if (pointless_is_container(&children[i])) {
-				process_child(state, v_id, &children[i], count, depth);
+			process_child(state, v_id, &children[i], count, depth);
 
-				if (state->error)
-					return;
-			}
+			if (state->error)
+				return;
 		}
 	} else if (v->type == POINTLESS_SET_VALUE) {
 		pointless_value_t* hash_vector = pointless_set_hash_vector(state->p, v);
 		pointless_value_t* key_vector = pointless_set_key_vector(state->p, v);
 
-		if (pointless_is_container(hash_vector)) {
-			process_child(state, v_id, hash_vector, count, depth);
+		process_child(state, v_id, hash_vector, count, depth);
 
-			if (state->error)
-				return;
-		}
+		if (state->error)
+			return;
 
-		if (pointless_is_container(key_vector)) {
-			process_child(state, v_id, key_vector, count, depth);
+		process_child(state, v_id, key_vector, count, depth);
 
-			if (state->error)
-				return;
-		}
+		if (state->error)
+			return;
 	} else if (v->type == POINTLESS_MAP_VALUE_VALUE) {
 		pointless_value_t* hash_vector = pointless_map_hash_vector(state->p, v);
 		pointless_value_t* key_vector = pointless_map_key_vector(state->p, v);
 		pointless_value_t* value_vector = pointless_map_value_vector(state->p, v);
 
-		if (pointless_is_container(hash_vector)) {
-			process_child(state, v_id, hash_vector, count, depth);
+		process_child(state, v_id, hash_vector, count, depth);
 
-			if (state->error)
-				return;
-		}
+		if (state->error)
+			return;
 
-		if (pointless_is_container(key_vector)) {
-			process_child(state, v_id, key_vector, count, depth);
+		process_child(state, v_id, key_vector, count, depth);
 
-			if (state->error)
-				return;
-		}
+		if (state->error)
+			return;
 
-		if (pointless_is_container(value_vector)) {
-			process_child(state, v_id, value_vector, count, depth);
+		process_child(state, v_id, value_vector, count, depth);
 
-			if (state->error)
-				return;
-		}
+		if (state->error)
+			return;
 	}
 
 	// if root[v] == visited[v]
@@ -264,7 +256,7 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 		Pvoid_t PValue = (Pvoid_t)JudyLIns(&state->component_judy, (Word_t)v_id, 0);
 
 		if (PValue == 0) {
-			state->error = "out of memory W";
+			state->error = "out of memory";
 			return;
 		}
 
@@ -291,7 +283,7 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 			Pvoid_t PValue = (Pvoid_t)JudyLIns(&state->component_judy, (Word_t)w_id, 0);
 
 			if (PValue == 0) {
-				state->error = "out of memory WW";
+				state->error = "out of memory";
 				return;
 			}
 
@@ -322,13 +314,14 @@ void* pointless_cycle_marker(pointless_t* p, const char** error)
 	pointless_dynarray_init(&state.stack, sizeof(uint32_t));
 
 	if (state.cycle_marker == 0) {
-		state.error = "out of memory WWW";
+		state.error = "out of memory";
 		goto error;
 	}
 
 	root = pointless_root(p);
 
-	pointless_cycle_marker_visit(&state, root, 0, 0);
+	if (pointless_is_container(root))
+		pointless_cycle_marker_visit(&state, root, 0, 0);
 
 	if (state.error)
 		goto error;
