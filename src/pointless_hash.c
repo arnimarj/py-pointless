@@ -270,7 +270,7 @@ static uint32_t pointless_hash_create_bitvector_32(pointless_create_t* c, pointl
 	void* buffer = 0;
 
 	if (v->header.type_29 == POINTLESS_BITVECTOR)
-		buffer = cv_get_unicode(v);
+		buffer = cv_get_bitvector(v);
 
 	return pointless_bitvector_hash_32(v->header.type_29, &v->data, buffer);
 }
@@ -331,7 +331,7 @@ static uint32_t pointless_hash_reader_vector_32_priv(pointless_t* p, pointless_v
 				h = pointless_hash_i32_32(pointless_reader_vector_i32(p, v)[i]);
 				break;
 			case POINTLESS_VECTOR_U32:
-				h = pointless_hash_u32_32(pointless_reader_vector_i32(p, v)[i]);
+				h = pointless_hash_u32_32(pointless_reader_vector_u32(p, v)[i]);
 				break;
 			case POINTLESS_VECTOR_I64:
 				h = pointless_hash_i32_32((int32_t)(pointless_reader_vector_i64(p, v)[i]));

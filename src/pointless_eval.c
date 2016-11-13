@@ -166,7 +166,7 @@ static const char* pointless_eval_get_single(pointless_t* p, pointless_value_t* 
 			if (pointless_reader_bitvector_is_set(p, root, is_unsigned ? (uint32_t)v_u : (uint32_t)v_i))
 				*root = pointless_value_create_as_read_bool_true();
 			else
-				*root = pointless_value_create_as_read_bool_true();
+				*root = pointless_value_create_as_read_bool_false();
 		}
 	// map
 	} else if (root->type == POINTLESS_MAP_VALUE_VALUE) {
