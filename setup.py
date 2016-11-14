@@ -75,7 +75,7 @@ setup(
 		'Topic :: Software Development :: Libraries'
 	],
 
-	download_url = 'https://github.com/arnimarj/py-pointless/archive/v0.2.6.tar.gz',
+	download_url = 'https://github.com/arnimarj/py-pointless/archive/v0.2.7.tar.gz',
 	description = 'A read-only relocatable data structure for JSON like data, with C and Python APIs',
 
 	packages = ['pointless'],
