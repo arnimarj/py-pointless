@@ -1,4 +1,4 @@
-import sys, commands, os
+import sys, subprocess, os
 from setuptools import setup, Extension
 
 def build_judy():
@@ -9,7 +9,7 @@ def build_judy():
 	is_clang = False
 
 	# test if CC is clang
-	exitcode, output = commands.getstatusoutput('%s --version' % (CC,))
+	exitcode, output = subprocess.getstatusoutput('%s --version' % (CC,))
 
 	if exitcode != 0:
 		sys.exit(output)
@@ -19,25 +19,25 @@ def build_judy():
 
 	# adding last two flags because of compiler and/or code bugs
 	# see http://sourceforge.net/p/judy/mailman/message/32417284/
-	assert(sys.maxint in (2**63-1, 2**31-1))
+	assert(sys.maxsize in (2**63-1, 2**31-1))
 
 	if is_clang:
-		if sys.maxint == 2**63-1:
+		if sys.maxsize == 2**63-1:
 			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing'
 		else:
 			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing'
 	else:
-		if sys.maxint == 2**63-1:
+		if sys.maxsize == 2**63-1:
 			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
 		else:
 			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
 
-	exitcode, output = commands.getstatusoutput('(cd judy-1.0.5/src; CC=\'%s\' COPT=\'%s\' sh ./sh_build)' % (CC, CFLAGS))
+	exitcode, output = subprocess.getstatusoutput('(cd judy-1.0.5/src; CC=\'%s\' COPT=\'%s\' sh ./sh_build)' % (CC, CFLAGS))
 
 	if exitcode != 0:
 		sys.exit(output)
 
-	print output
+	print(output)
 
 build_judy()
 
