@@ -79,7 +79,12 @@ static void pypointless_cmp_value_init_python(pypointless_cmp_value_t* v, PyObje
 
 static int32_t pypointless_is_pylong_negative(PyObject* py_object, pypointless_cmp_state_t* state)
 {
+#if PY_MAJOR_VERSION < 3
 	PyObject* i = PyInt_FromLong(0);
+#else
+	PyObject* i = PyLong_FromLong(0);
+#endif
+
 	int32_t retval = 0;
 
 	if (i == 0) {
@@ -152,6 +157,7 @@ static pypointless_cmp_cb pypointless_cmp_func(pypointless_cmp_value_t* v, uint3
 		// we need to check for every useful Python type
 		PyObject* py_object = v->value.py_object;
 
+#if PY_MAJOR_VERSION < 3
 		if (PyInt_Check(py_object)) {
 			if (PyInt_AS_LONG(py_object) < 0)
 				*type = POINTLESS_I32;
@@ -160,6 +166,7 @@ static pypointless_cmp_cb pypointless_cmp_func(pypointless_cmp_value_t* v, uint3
 
 			return pypointless_cmp_int_float_bool;
 		}
+#endif
 
 		if (PyLong_Check(py_object)) {
 			if (pypointless_is_pylong_negative(py_object, state))
@@ -185,10 +192,12 @@ static pypointless_cmp_cb pypointless_cmp_func(pypointless_cmp_value_t* v, uint3
 			return pypointless_cmp_none;
 		}
 
-		if (PyString_Check(py_object) || PyUnicode_Check(py_object)) {
+#if PY_MAJOR_VERSION < 3
+		if (PyString_Check(py_object)) {
 			*type = POINTLESS_STRING_;
 			return pypointless_cmp_string_unicode;
 		}
+#endif
 
 		if (PyUnicode_Check(py_object)) {
 			*type = POINTLESS_UNICODE_;
@@ -236,13 +245,6 @@ typedef struct {
 	uint8_t n_bits;
 } _var_string_t;
 
-_var_string_t foo()
-{
-	_var_string_t s;
-	s.n_bits = 0;
-	return s;
-}
-
 static _var_string_t pypointless_cmp_extract_string(pypointless_cmp_value_t* v, pypointless_cmp_state_t* state)
 {
 	_var_string_t s;
@@ -258,12 +260,20 @@ static _var_string_t pypointless_cmp_extract_string(pypointless_cmp_value_t* v, 
 			s.string.string_8 = pointless_reader_string_value_ascii(v->value.pointless.p, &v_);
 		}
 	} else {
+#if PY_MAJOR_VERSION < 3
 		assert(PyString_Check(v->value.py_object) || PyUnicode_Check(v->value.py_object));
+#else
+		assert(PyUnicode_Check(v->value.py_object));
+#endif
 
+#if PY_MAJOR_VERSION < 3
 		if (PyString_Check(v->value.py_object)) {
 			s.n_bits = 8;
 			s.string.string_8 = (uint8_t*)PyString_AS_STRING(v->value.py_object);
-		} else {
+		} else
+#endif
+		{
+
 #ifdef Py_UNICODE_WIDE
 			s.n_bits = 32;
 			s.string.string_32 = (uint32_t*)PyUnicode_AS_UNICODE(v->value.py_object);
@@ -347,11 +357,15 @@ static pypointless_cmp_int_float_bool_t pypointless_cmp_int_float_bool_from_valu
 	} else {
 		PyObject* py_object = v->value.py_object;
 
+#if PY_MAJOR_VERSION < 3
 		if (PyInt_Check(py_object)) {
 			r.is_signed = 1;
 			r.ii = (int64_t)PyInt_AS_LONG(py_object);
 			return r;
-		} else if (PyLong_Check(py_object)) {
+		}
+#endif
+
+		if (PyLong_Check(py_object)) {
 			PY_LONG_LONG v = PyLong_AsLongLong(py_object);
 
 			if (!PyErr_Occurred() && (INT64_MIN <= v && INT64_MAX <= v)) {
@@ -642,7 +656,11 @@ PyObject* pointless_cmp(PyObject* self, PyObject* args)
 		return 0;
 	}
 
+#if PY_MAJOR_VERSION < 3
 	return PyInt_FromLong((long)c);
+#else
+	return PyLong_FromLong((long)c);
+#endif
 }
 
 const char pointless_is_eq_doc[] =
