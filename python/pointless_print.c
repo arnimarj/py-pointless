@@ -334,6 +334,7 @@ static int _pypointless_bitvector_str_buffer(void* buffer, uint32_t n_bits, _pyp
 	return _pypointless_print_append_8_(state, "b");
 }
 
+#if PY_MAJOR_VERSION < 3
 static int pointless_value_string_is_7bit(uint8_t* s)
 {
 	while (*s) {
@@ -345,19 +346,19 @@ static int pointless_value_string_is_7bit(uint8_t* s)
 
 	return 1;
 }
+#endif
 
 PyObject* PyPointless_string_from_buffer_8(pointless_dynarray_t* s)
 {
 	// if 7-bit, string, otherwise unicode
 	uint8_t* buffer = pointless_dynarray_buffer(s);
-	PyObject* ss = 0;
 
+#if PY_MAJOR_VERSION < 3
 	if (pointless_value_string_is_7bit(buffer))
-		ss = PyString_FromString((const char*)buffer);
-	else
-		ss = PyUnicode_DecodeLatin1((const char*)buffer, strlen((const char*)buffer), 0);
+		return PyString_FromString((const char*)buffer);
+#endif
 
-	return ss;
+	return PyUnicode_DecodeLatin1((const char*)buffer, strlen((const char*)buffer), 0);
 }
 
 PyObject* PyPointless_str(PyObject* py_object)
@@ -391,7 +392,11 @@ PyObject* PyPointless_str(PyObject* py_object)
 				return s;
 			} else {
 				pointless_dynarray_destroy(&state._string);
+#if PY_MAJOR_VERSION < 3
 				return PyString_FromFormat("<%s object at %p>", Py_TYPE(py_object)->tp_name, (void*)py_object);
+#else
+				return PyUnicode_FromFormat("<%s object at %p>", Py_TYPE(py_object)->tp_name, (void*)py_object);
+#endif
 			}
 		}
 	}
@@ -427,8 +432,13 @@ PyObject* PyPointless_str(PyObject* py_object)
 		return 0;
 	}
 
-	if (!pp->allow_print)
+	if (!pp->allow_print) {
+#if PY_MAJOR_VERSION < 3
 		return PyString_FromFormat("<%s object at %p>", Py_TYPE(py_object)->tp_name, (void*)py_object);
+#else
+		return PyUnicode_FromFormat("<%s object at %p>", Py_TYPE(py_object)->tp_name, (void*)py_object);
+#endif
+	}
 
 	pointless_complete_value_t _v = pointless_value_to_complete(v);
 	int i = _pypointless_str_rec(&pp->p, &_v, &state, vector_slice_i, vector_slice_n); 
