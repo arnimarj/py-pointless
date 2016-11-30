@@ -55,6 +55,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 
 		RETURN_OOM_IF_FAIL(handle, state);
 	// integer
+#if PY_MAJOR_VERSION < 3
 	} else if (PyInt_Check(py_object)) {
 		long v = PyInt_AS_LONG(py_object);
 
@@ -83,6 +84,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		}
 
 		RETURN_OOM_IF_FAIL(handle, state);
+#endif
 	// long
 	} else if (PyLong_Check(py_object)) {
 		// this will raise an overflow error if number is outside the legal range of PY_LONG_LONG
@@ -306,6 +308,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 
 	// unicode object
 	} else if (PyUnicode_Check(py_object)) {
+#if PY_MAJOR_VERSION < 3
 		// get it from python
 		Py_UNICODE* python_buffer = PyUnicode_AS_UNICODE(py_object);
 
@@ -317,15 +320,44 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		#else
 		uint32_t s_len_pointless = pointless_ucs2_len(python_buffer);
 		#endif
+#else
+		Py_ssize_t s_len_python = PyUnicode_GET_LENGTH(py_object);
+		Py_ssize_t s_len_pointless = 0;
 
-		if (s_len_python < 0 || (uint64_t)s_len_python != s_len_pointless) {
+		switch (PyUnicode_KIND(py_object)) {
+			case PyUnicode_WCHAR_KIND:
+				PyErr_SetString(PyExc_ValueError, "wchar kind unsupported");
+				state->error_line = __LINE__;
+				printf("line: %i\n", __LINE__);
+				state->is_error = 1;
+				return POINTLESS_CREATE_VALUE_FAIL;
+				break;
+			case PyUnicode_1BYTE_KIND:
+				s_len_pointless = pointless_ucs1_len((uint8_t*)PyUnicode_DATA(py_object));
+				break;
+			case PyUnicode_2BYTE_KIND:
+				s_len_pointless = pointless_ucs2_len((uint16_t*)PyUnicode_DATA(py_object));
+				break;
+			case PyUnicode_4BYTE_KIND:
+				s_len_pointless = pointless_ucs4_len((uint32_t*)PyUnicode_DATA(py_object));
+				break;
+			default:
+				PyErr_SetString(PyExc_ValueError, "unsupported unicode width");
+				state->error_line = __LINE__;
+				state->is_error = 1;
+				return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
+
+#endif
+		if (s_len_python < 0 || (int64_t)s_len_python != (int64_t)s_len_pointless) {
 			PyErr_SetString(PyExc_ValueError, "unicode string contains a zero, where it shouldn't");
 			state->error_line = __LINE__;
-			printf("line: %i\n", __LINE__);
 			state->is_error = 1;
 			return POINTLESS_CREATE_VALUE_FAIL;
 		}
 
+#if PY_MAJOR_VERSION < 3
 		#if Py_UNICODE_SIZE == 4
 			if (state->unwiden_strings && pointless_is_ucs4_ascii((uint32_t*)python_buffer))
 				handle = pointless_create_string_ucs4(&state->c, python_buffer);
@@ -337,13 +369,43 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			else
 				handle = pointless_create_unicode_ucs2(&state->c, python_buffer);
 		#endif
+#else
+		void* python_buffer = (void*)PyUnicode_DATA(py_object);
 
+		switch (PyUnicode_KIND(py_object)) {
+			case PyUnicode_WCHAR_KIND:
+				PyErr_SetString(PyExc_ValueError, "wchar based unicode strings not supported");
+				state->error_line = __LINE__;
+				state->is_error = 1;
+				return POINTLESS_CREATE_VALUE_FAIL;
+			case PyUnicode_1BYTE_KIND:
+				handle = pointless_create_string_ascii((uint8_t*)python_buffer);
+				break;
+			case PyUnicode_2BYTE_KIND:
+				if (state->unwiden_strings && pointless_is_ucs2_ascii(python_buffer))
+					handle = pointless_create_string_ucs2(&state->c, python_buffer);
+				else
+					handle = pointless_create_unicode_ucs2(&state->c, python_buffer);
+				break;
+			case PyUnicode_4BYTE_KIND:
+				if (state->unwiden_strings && pointless_is_ucs4_ascii((uint32_t*)python_buffer))
+					handle = pointless_create_unicode_ucs4((uint32_t*)python_buffer);
+				else
+					handler = pointless_create_string_ucs4((uint32_t*)python_buffer);
+				break;
+			// should not happen
+			default:
+				break
+		}
+
+#endif
 		RETURN_OOM_IF_FAIL(handle, state);
 
 		if (!pointless_export_set_seen(state, py_object, handle)) {
 			RETURN_OOM(state);
 		}
 
+#if PY_MAJOR_VERSION < 3
 	// string object
 	} else if (PyString_Check(py_object)) {
 		// get it from python
@@ -367,7 +429,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		if (!pointless_export_set_seen(state, py_object, handle)) {
 			RETURN_OOM(state);
 		}
-
+#endif
 	// dict object
 	} else if (PyDict_Check(py_object)) {
 		handle = pointless_create_map(&state->c);
