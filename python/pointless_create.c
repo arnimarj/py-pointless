@@ -368,7 +368,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 				state->is_error = 1;
 				return POINTLESS_CREATE_VALUE_FAIL;
 			case PyUnicode_1BYTE_KIND:
-				handle = pointless_create_string_ascii((uint8_t*)python_buffer);
+				handle = pointless_create_string_ascii(&state->c, (uint8_t*)python_buffer);
 				break;
 			case PyUnicode_2BYTE_KIND:
 				if (state->unwiden_strings && pointless_is_ucs2_ascii(python_buffer))
@@ -378,13 +378,13 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 				break;
 			case PyUnicode_4BYTE_KIND:
 				if (state->unwiden_strings && pointless_is_ucs4_ascii((uint32_t*)python_buffer))
-					handle = pointless_create_unicode_ucs4((uint32_t*)python_buffer);
+					handle = pointless_create_unicode_ucs4(&state->c, (uint32_t*)python_buffer);
 				else
-					handler = pointless_create_string_ucs4((uint32_t*)python_buffer);
+					handle = pointless_create_string_ucs4(&state->c, (uint32_t*)python_buffer);
 				break;
 			// should not happen
 			default:
-				break
+				break;
 		}
 
 #endif
