@@ -639,8 +639,7 @@ cleanup:
 	if (create_end)
 		pointless_create_end(&state.c);
 
-	Word_t n_bytes_freed = 0;
-	JLFA(n_bytes_freed, state.objects_used);
+	JudyLFreeArray(&state.objects_used, 0);
 
 	Py_XINCREF(retval);
 	return retval;
@@ -704,8 +703,7 @@ cleanup:
 	if (create_end)
 		pointless_create_end(&state.c);
 
-	Word_t n_bytes_freed = 0;
-	JLFA(n_bytes_freed, state.objects_used);
+	JudyLFreeArray(&state.objects_used, 0);
 
 	return retval;
 }
