@@ -3,7 +3,11 @@
 // yes I know, this is a global variable, but this is a similar trick to avoid cycles
 // as CPython does, since it guarantees that access to these functions is serialized
 typedef struct {
-	pointless_dynarray_t _string;
+#if PY_MAJOR_VERSION < 3
+	pointless_dynarray_t _string_8;
+#else
+	pointless_dynarray_t _string_32;
+#endif
 	uint32_t _depth;
 	uint32_t _container_ids[POINTLESS_MAX_DEPTH];
 } _pypointless_print_state_t;
@@ -36,10 +40,11 @@ static void print_state_pop(_pypointless_print_state_t* state)
 	state->_depth -= 1;
 }
 
+#if PY_MAJOR_VERSION < 3
 static int _pypointless_print_append_8_(_pypointless_print_state_t* state, const char* s)
 {
 	while (*s) {
-		if (!pointless_dynarray_push(&state->_string, (char*)s)) {
+		if (!pointless_dynarray_push(&state->_string_8, (char*)s)) {
 			PyErr_NoMemory();
 			return 0;
 		}
@@ -49,6 +54,62 @@ static int _pypointless_print_append_8_(_pypointless_print_state_t* state, const
 
 	return 1;
 }
+#else
+static int _pypointless_print_append_ucs4_(_pypointless_print_state_t* state, uint32_t* s, size_t len)
+{
+	for (size_t i = 0; i < len; i++) {
+		uint32_t value = (uint32_t)(*(s + i));
+
+		if (!pointless_dynarray_push(&state->_string_32, &value)) {
+			PyErr_NoMemory();
+			return 0;
+		}
+	}
+
+	return 1;
+}
+static int _pypointless_print_append_ucs2_(_pypointless_print_state_t* state, uint16_t* s, size_t len)
+{
+	for (size_t i = 0; i < len; i++) {
+		uint32_t value = (uint32_t)(*(s + i));
+
+		if (!pointless_dynarray_push(&state->_string_32, &value)) {
+			PyErr_NoMemory();
+			return 0;
+		}
+	}
+
+	return 1;
+}
+static int _pypointless_print_append_ucs1_(_pypointless_print_state_t* state, uint8_t* s, size_t len)
+{
+	for (size_t i = 0; i < len; i++) {
+		uint32_t value = (uint32_t)(*(s + i));
+
+		if (!pointless_dynarray_push(&state->_string_32, &value)) {
+			PyErr_NoMemory();
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static int _pypointless_print_append_8_(_pypointless_print_state_t* state, const char* s)
+{
+	size_t len = strlen(s);
+	for (size_t i = 0; i < len; i++) {
+		uint32_t value = (uint32_t)(*(s + i));
+
+		if (!pointless_dynarray_push(&state->_string_32, &value)) {
+			PyErr_NoMemory();
+			return 0;
+		}
+	}
+
+	return 1;
+}
+#endif
 
 static int _pypointless_unicode_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state);
 static int _pypointless_string_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state);
@@ -113,12 +174,40 @@ static int _pypointless_value_repr(pointless_t* p, PyObject* u_value, _pypointle
 	if (s_value == 0)
 		return 0;
 
+#if PY_MAJOR_VERSION < 3
 	assert(PyString_Check(s_value));
-
 	int i = _pypointless_print_append_8_(state, PyString_AS_STRING(s_value));
+#else
+	assert(PyUnicode_Check(s_value));
+
+	Py_ssize_t len = PyUnicode_GET_LENGTH(s_value);
+	void* data = PyUnicode_DATA(s_value);
+	int i = 0;
+
+	switch (PyUnicode_KIND(s_value)) {
+		case PyUnicode_WCHAR_KIND:
+			PyErr_SetString(PyExc_ValueError, "wchar unicode unsupported");
+			i = 0;
+			break;
+		case PyUnicode_1BYTE_KIND:
+			i = _pypointless_print_append_ucs1_(state, (uint8_t*)data, len);
+			break;
+		case PyUnicode_2BYTE_KIND:
+			i = _pypointless_print_append_ucs2_(state, (uint16_t*)data, len);
+			break;
+		case PyUnicode_4BYTE_KIND:
+			i = _pypointless_print_append_ucs4_(state, (uint32_t*)data, len);
+			break;
+		default:
+			assert(0);
+			PyErr_SetString(PyExc_ValueError, "strange unicode");
+			i = 0;
+			break;
+	}
+
+#endif
 
 	Py_DECREF(s_value);
-
 	return i;
 }
 
@@ -346,27 +435,37 @@ static int pointless_value_string_is_7bit(uint8_t* s)
 
 	return 1;
 }
-#endif
 
-PyObject* PyPointless_string_from_buffer_8(pointless_dynarray_t* s)
+static PyObject* PyPointless_string_from_buffer_8(pointless_dynarray_t* s)
 {
 	// if 7-bit, string, otherwise unicode
 	uint8_t* buffer = pointless_dynarray_buffer(s);
 
-#if PY_MAJOR_VERSION < 3
 	if (pointless_value_string_is_7bit(buffer))
 		return PyString_FromString((const char*)buffer);
-#endif
 
 	return PyUnicode_DecodeLatin1((const char*)buffer, strlen((const char*)buffer), 0);
 }
+#else
+static PyObject* PyPointless_string_from_buffer_32(pointless_dynarray_t* s)
+{
+	// if 7-bit, string, otherwise unicode
+	uint32_t* buffer = pointless_dynarray_buffer(s);
+	size_t n_chars = pointless_dynarray_n_items(s);
+	return PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, buffer, n_chars);
+}
+#endif
 
 PyObject* PyPointless_str(PyObject* py_object)
 {
 	// setup a state
 	_pypointless_print_state_t state;
 	state._depth = 0;
-	pointless_dynarray_init(&state._string, 1);
+#if PY_MAJOR_VERSION < 3
+	pointless_dynarray_init(&state._string_8, 1);
+#else
+	pointless_dynarray_init(&state._string_32, 4);
+#endif
 
 	// buffer based bitvectors handled seperately
 	if (PyPointlessBitvector_Check(py_object)) {
@@ -377,24 +476,35 @@ PyObject* PyPointless_str(PyObject* py_object)
 				int i = _pypointless_bitvector_str_buffer(b->primitive_bits, b->primitive_n_bits, &state);
 
 				PyObject* s = 0;
-				char zero = 0;
 
-				if (!pointless_dynarray_push(&state._string, &zero)) {
+#if PY_MAJOR_VERSION < 3
+				char zero = 0;
+				if (!pointless_dynarray_push(&state._string_8, &zero)) {
 					PyErr_NoMemory();
-					pointless_dynarray_destroy(&state._string);
+					pointless_dynarray_destroy(&state._string_8);
 					return 0;
 				}
+#endif
 
+#if PY_MAJOR_VERSION < 3
 				if (i)
-					s = PyPointless_string_from_buffer_8(&state._string);
+					s = PyPointless_string_from_buffer_8(&state._string_8);
 
-				pointless_dynarray_destroy(&state._string);
+				pointless_dynarray_destroy(&state._string_8);
+#else
+				if (i)
+					s = PyPointless_string_from_buffer_32(&state._string_32);
+
+				pointless_dynarray_destroy(&state._string_32);
+#endif
+
 				return s;
 			} else {
-				pointless_dynarray_destroy(&state._string);
 #if PY_MAJOR_VERSION < 3
+				pointless_dynarray_destroy(&state._string_8);
 				return PyString_FromFormat("<%s object at %p>", Py_TYPE(py_object)->tp_name, (void*)py_object);
 #else
+				pointless_dynarray_destroy(&state._string_32);
 				return PyUnicode_FromFormat("<%s object at %p>", Py_TYPE(py_object)->tp_name, (void*)py_object);
 #endif
 			}
@@ -444,18 +554,27 @@ PyObject* PyPointless_str(PyObject* py_object)
 	int i = _pypointless_str_rec(&pp->p, &_v, &state, vector_slice_i, vector_slice_n); 
 	PyObject* s = 0;
 
+#if PY_MAJOR_VERSION < 3
 	char zero = 0;
-
-	if (!pointless_dynarray_push(&state._string, &zero)) {
+	if (!pointless_dynarray_push(&state._string_8, &zero)) {
 		PyErr_NoMemory();
-		pointless_dynarray_destroy(&state._string);
+		pointless_dynarray_destroy(&state._string_8);
 		return 0;
 	}
+#endif
 
+#if PY_MAJOR_VERSION < 3
 	if (i)
-		s = PyPointless_string_from_buffer_8(&state._string);
+		s = PyPointless_string_from_buffer_8(&state._string_8);
 
-	pointless_dynarray_destroy(&state._string);
+	pointless_dynarray_destroy(&state._string_8);
+#else
+	if (i)
+		s = PyPointless_string_from_buffer_32(&state._string_32);
+
+	pointless_dynarray_destroy(&state._string_32);
+#endif
+
 	return s;
 }
 
