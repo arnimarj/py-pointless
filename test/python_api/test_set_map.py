@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import pointless, types
+import six, pointless
 
 from twisted.trial import unittest
 
@@ -16,7 +16,7 @@ class TestSetMap(unittest.TestCase):
 		pointless.serialize(v, fname)
 		vv = pointless.Pointless(fname).GetRoot()
 
-		for a, b in v.iteritems():
+		for a, b in six.iteritems(v):
 			self.assert_(a in vv)
 			bb = vv[a]
 			self.assertEquals(b, bb)
@@ -43,7 +43,7 @@ class TestSetMap(unittest.TestCase):
 			pointless.serialize(m, fname)
 			root_a = pointless.Pointless(fname).GetRoot()
 
-			for k in m.iterkeys():
+			for k in six.iterkeys(m):
 				self.assert_(k in root_a)
 
 				v_m = m[k]
@@ -54,7 +54,7 @@ class TestSetMap(unittest.TestCase):
 			del root_a
 
 	def _list_to_tuple(self, v):
-		return tuple(map(self._list_to_tuple, v)) if isinstance(v, types.ListType) else v
+		return tuple(map(self._list_to_tuple, v)) if isinstance(v, list) else v
 
 	def testSet(self):
 		fname_a = 'test_set_contains_a.map'
@@ -70,9 +70,9 @@ class TestSetMap(unittest.TestCase):
 			[0, 1, 2, 3, 4],
 			['a', 'b', 'c', ['d', 'e', 1.0]],
 			[None, [None]],
-			[range(10), range(100), range(1000), [range(10), ['asdf'] * 10]],
+			[list(range(10)), list(range(100)), list(range(1000)), [list(range(10)), ['asdf'] * 10]],
 			[[0]], [[-1]], [[-1.0, 0.0]], [[0, False]], [[0, True]],
-			[range(10, -100, -1), [[range(10)]]]
+			[list(range(10, -100, -1)), [[list(range(10))]]]
 		]
 
 		# for each set V of values
