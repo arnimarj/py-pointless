@@ -14,7 +14,9 @@ struct pointless_module_state {
 static struct pointless_module_state _state;
 #endif
 
-static PyPointless_CAPI CAPI = {
+static struct PyPointless_CAPI CAPI = {
+	POINTLESS_API_MAGIC,
+	sizeof(struct PyPointless_CAPI),
 	pointless_dynarray_init,
 	pointless_dynarray_n_items,
 	pointless_dynarray_pop,
@@ -100,7 +102,11 @@ PyMODINIT_FUNC
 void
 #endif
 
+#if PY_MAJOR_VERSION >= 3
+PyInit_pointless(void)
+#else
 initpointless(void)
+#endif
 {
 	if (sizeof(Word_t) != sizeof(void*)) {
 		PyErr_SetString(PyExc_ValueError, "word size mismatch");
@@ -154,9 +160,14 @@ initpointless(void)
 		}
 	}
 
-	PyObject* c_api = PyCObject_FromVoidPtrAndDesc(&CAPI, (void*)POINTLESS_API_MAGIC, NULL);
+	PyObject* c_api = PyCapsule_New(&CAPI, "pointless_CAPI", 0);
 
 	if (c_api == 0) {
+		Py_DECREF(module_pointless);
+		MODULEINITERROR;
+	}
+
+	if (PyCapsule_SetContext(c_api, (void*)POINTLESS_MAGIC_CONTEXT) != 0) {
 		Py_DECREF(module_pointless);
 		MODULEINITERROR;
 	}
