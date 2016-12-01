@@ -440,8 +440,7 @@ static PySequenceMethods PyPointlessMap_as_sequence = {
 };
 
 PyTypeObject PyPointlessMapType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                   /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessMap",          /*tp_name*/
 	sizeof(PyPointlessMap),              /*tp_basicsize*/
 	0,                                   /*tp_itemsize*/
@@ -482,8 +481,7 @@ PyTypeObject PyPointlessMapType = {
 };
 
 PyTypeObject PyPointlessMapKeyIterType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                            /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessMapKeyIter",            /*tp_name*/
 	sizeof(PyPointlessMapKeyIter),                /*tp_basicsize*/
 	0,                                            /*tp_itemsize*/
@@ -524,8 +522,7 @@ PyTypeObject PyPointlessMapKeyIterType = {
 };
 
 PyTypeObject PyPointlessMapValueIterType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                              /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessMapValueIter",            /*tp_name*/
 	sizeof(PyPointlessMapValueIter),                /*tp_basicsize*/
 	0,                                              /*tp_itemsize*/
@@ -566,8 +563,7 @@ PyTypeObject PyPointlessMapValueIterType = {
 };
 
 PyTypeObject PyPointlessMapItemIterType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                             /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessMapItemIter",            /*tp_name*/
 	sizeof(PyPointlessMapItemIter),                /*tp_basicsize*/
 	0,                                             /*tp_itemsize*/
