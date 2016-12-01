@@ -427,6 +427,7 @@ static void* pointless_prim_vector_base_ptr(PyPointlessVector* self)
 	return 0;
 }
 
+#if PY_MAJOR_VERSION < 3
 static Py_ssize_t PyPointlessVector_buffer_getreadbuf(PyPointlessVector* self, Py_ssize_t index, const void **ptr)
 {
 	if (index != 0) {
@@ -461,6 +462,7 @@ static Py_ssize_t PyPointlessVector_buffer_getcharbuf(PyPointlessVector* self, P
 	*ptr = pointless_prim_vector_base_ptr(self);
 	return pointless_vector_n_bytes(self);
 }
+#endif
 
 static int PyPointlessVector_getbuffer(PyPointlessVector* self, Py_buffer* view, int flags)
 {
@@ -602,6 +604,7 @@ static PyObject* PyPointlessVector_min(PyPointlessVector* self)
 
 static int parse_pyobject_number(PyObject* v, int* is_signed, int64_t* i, uint64_t* u)
 {
+#if PY_MAJOR_VERSION < 3
 	// simple case
 	if (PyInt_Check(v)) {
 		long _v = PyInt_AS_LONG(v);
@@ -615,6 +618,7 @@ static int parse_pyobject_number(PyObject* v, int* is_signed, int64_t* i, uint64
 
 		return 1;
 	}
+#endif
 
 	// complicated case
 	if (!PyLong_Check(v)) {
@@ -713,12 +717,14 @@ static PyMappingMethods PyPointlessVector_as_mapping = {
 };
 
 static PyBufferProcs PyPointlessVector_as_buffer = {
-    (readbufferproc)PyPointlessVector_buffer_getreadbuf,
-    (writebufferproc)0,
-    (segcountproc)PyPointlessVector_buffer_getsegcount,
-    (charbufferproc)PyPointlessVector_buffer_getcharbuf,
-    (getbufferproc)PyPointlessVector_getbuffer,
-    (releasebufferproc)PyPointlessVector_releasebuffer
+#if PY_MAJOR_VERSION < 3
+	(readbufferproc)PyPointlessVector_buffer_getreadbuf,
+	(writebufferproc)0,
+	(segcountproc)PyPointlessVector_buffer_getsegcount,
+	(charbufferproc)PyPointlessVector_buffer_getcharbuf,
+#endif
+	(getbufferproc)PyPointlessVector_getbuffer,
+	(releasebufferproc)PyPointlessVector_releasebuffer
 };
 
 
@@ -737,8 +743,7 @@ static PySequenceMethods PyPointlessVector_as_sequence = {
 };
 
 PyTypeObject PyPointlessVectorType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                              /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessVector",                  /*tp_name*/
 	sizeof(PyPointlessVector),                      /*tp_basicsize*/
 	0,                                              /*tp_itemsize*/
@@ -757,7 +762,11 @@ PyTypeObject PyPointlessVectorType = {
 	0,                                              /*tp_getattro*/
 	0,                                              /*tp_setattro*/
 	&PyPointlessVector_as_buffer,                   /*tp_as_buffer*/
+#if PY_MAJOR_VERSION < 3
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_NEWBUFFER, /*tp_flags*/
+#else
+	Py_TPFLAGS_DEFAULT,                             /*tp_flags*/
+#endif
 	"PyPointlessVector wrapper",                    /*tp_doc */
 	0,                                              /*tp_traverse */
 	0,                                              /*tp_clear */
@@ -779,8 +788,7 @@ PyTypeObject PyPointlessVectorType = {
 };
 
 PyTypeObject PyPointlessVectorIterType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                            /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessVectorIter",            /*tp_name*/
 	sizeof(PyPointlessVectorIter),                /*tp_basicsize*/
 	0,                                            /*tp_itemsize*/
@@ -847,3 +855,4 @@ PyPointlessVector* PyPointlessVector_New(PyPointless* pp, pointless_value_t* v, 
 
 	return pv;
 }
+
