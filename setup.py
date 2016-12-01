@@ -1,5 +1,11 @@
-import sys, subprocess, os
+import sys, subprocess, os, os.path
 from setuptools import setup, Extension
+
+if hasattr(subprocess, 'getstatusoutput'):
+	getstatusoutput = subprocess.getstatusoutput
+else:
+	import commands
+	getstatusoutput = commands.getstatusoutput
 
 def build_judy():
 	print('INFO: building judy static library...')
@@ -9,7 +15,7 @@ def build_judy():
 	is_clang = False
 
 	# test if CC is clang
-	exitcode, output = subprocess.getstatusoutput('%s --version' % (CC,))
+	exitcode, output = getstatusoutput('%s --version' % (CC,))
 
 	if exitcode != 0:
 		sys.exit(output)
@@ -32,14 +38,15 @@ def build_judy():
 		else:
 			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
 
-	exitcode, output = subprocess.getstatusoutput('(cd judy-1.0.5/src; CC=\'%s\' COPT=\'%s\' sh ./sh_build)' % (CC, CFLAGS))
+	exitcode, output = getstatusoutput('(cd judy-1.0.5/src; CC=\'%s\' COPT=\'%s\' sh ./sh_build)' % (CC, CFLAGS))
 
 	if exitcode != 0:
 		sys.exit(output)
 
 	print(output)
 
-build_judy()
+if not os.path.isfile('./judy-1.0.5/src/libJudy.a'):
+	build_judy()
 
 extra_compile_args = [
 	'-I./include',
