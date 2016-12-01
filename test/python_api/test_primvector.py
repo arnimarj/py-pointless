@@ -16,7 +16,7 @@ def RandomPrimVector(n, tc):
 	}
 
 	if tc == None:
-		tc = random.choice(ranges.keys())
+		tc = random.choice(list(ranges.keys()))
 
 	i_min, i_max = ranges[tc]
 
@@ -215,13 +215,7 @@ class TestPrimVector(unittest.TestCase):
 	def testProjSort(self):
 		# pure python projection sort
 		def my_proj_sort(proj, v):
-			def proj_cmp(i_a, i_b):
-				for vv in v:
-					c = cmp(vv[i_a], vv[i_b])
-					if c != 0:
-						return c
-				return 0
-			proj.sort(cmp = proj_cmp)
+			proj.sort(key = lambda i: tuple(v[index][i] for index in six.moves.range(len(v))))
 
 		random.seed(0)
 
@@ -230,7 +224,7 @@ class TestPrimVector(unittest.TestCase):
 			# generate projection with indices in the range [i_min, i_max[
 			i_min = random.randint(0, 1000)
 			i_max = random.randint(i_min, i_min + 60000)
-			py_proj = range(i_min, i_max)
+			py_proj = list(range(i_min, i_max))
 
 			tc = ['i64', 'u64']
 
