@@ -971,3 +971,4 @@ uint32_t pointless_pybitvector_hash_32(PyPointlessBitvector* bitvector)
 
 	return pointless_bitvector_hash_n_bits_bits_32(n_bits, bits);
 }
+
