@@ -186,7 +186,7 @@ int pointless_validate(pointless_validate_context_t* context, const char** error
 		goto cleanup;
 
 	// it is now safe to perform cycle analysis
-	state.cycle_marker = pointless_cycle_marker(context->p, error);
+	state.cycle_marker = pointless_cycle_marker_read(context->p, error);
 
 	if (state.cycle_marker == 0)
 		goto cleanup;

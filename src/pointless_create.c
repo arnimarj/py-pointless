@@ -602,7 +602,8 @@ static uint32_t pointless_create_vector_compression(pointless_create_t* c, uint3
 	assert(pointless_dynarray_n_items(&cv_priv_vector_at(vector)->vector) > 0);
 
 	// no compression possibilites found yet
-	uint32_t compression = POINTLESS_VECTOR_VALUE;
+	uint32_t compression = cv_value_type(vector);
+	assert(compression == POINTLESS_VECTOR_VALUE || compression == POINTLESS_VECTOR_VALUE_HASHABLE);
 	size_t i;
 
 	// value ranges we've found, we do not support 64 bit integers, only 8, 16 and 32
@@ -794,18 +795,24 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 
 	// ...and mark the ones which are
 	for (i = 0; i < n_values; i++) {
+		uint32_t offset = UINT32_MAX;
+
 		switch (cv_value_type(i)) {
 			case POINTLESS_VECTOR_VALUE:
-				if (cv_is_outside_vector(i))
-					continue;
-				ii
+				if (!cv_is_outside_vector(i))
+					offset = cv_value_data_u32(i);
+
 				break;
 			case POINTLESS_SET_VALUE:
-				//!
+				offset = cv_value_data_u32(i) + pointless_dynarray_n_items(&c->priv_vector_values);
 				break;
 			case POINTLESS_MAP_VALUE_VALUE:
-				//!
+				offset = cv_value_data_u32(i) + pointless_dynarray_n_items(&c->priv_vector_values) + pointless_dynarray_n_items(&c->set_values);
 				break;
+		}
+
+		if (offset != UINT32_MAX && bm_is_set_(cycle_marker, offset)) {
+			cv_value_at(i)->header.type_29 = POINTLESS_VECTOR_VALUE_HASHABLE;
 		}
 	}
 
