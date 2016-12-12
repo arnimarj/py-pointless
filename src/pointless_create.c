@@ -721,6 +721,37 @@ static int pointless_vector_check_hashable_rec(pointless_create_t* c, uint32_t v
 
 	size_t i, ii;
 
+	pointless_dynarray_t* keys_vector = 0;
+	pointless_dynarray_t* values_vector = 0;
+
+	// walk set/map
+	if (cv_value_type(v) == POINTLESS_MAP_VALUE_VALUE) {
+		keys_vector = &cv_map_at(v)->keys;
+		values_vector = &cv_map_at(v)->values;
+	} else if (cv_value_type(v) == POINTLESS_SET_VALUE) {
+		keys_vector = &cv_set_at(v)->keys;
+	}
+
+	for (i = 0; i < pointless_dynarray_n_items(keys_vector); i++) {
+		uint32_t cc = pointless_dynarray_ITEM_AT(uint32_t, keys_vector, i);
+		ii = cv_value_data_u32(cc);
+
+		if (!pointless_vector_check_hashable_rec(c, cc, priv_vector_bitmask, outside_vector_bitmask, depth + 1)) {
+			bm_reset_(priv_vector_bitmask, ii);
+			return 0;
+		}
+	}
+
+	for (i = 0; i < pointless_dynarray_n_items(values_vector); i++) {
+		uint32_t cc = pointless_dynarray_ITEM_AT(uint32_t, values_vector, i);
+		ii = cv_value_data_u32(cc);
+
+		if (!pointless_vector_check_hashable_rec(c, cc, priv_vector_bitmask, outside_vector_bitmask, depth + 1)) {
+			bm_reset_(priv_vector_bitmask, ii);
+			return 0;
+		}
+	}
+
 	if (cv_value_type(v) == POINTLESS_VECTOR_VALUE) {
 		// if this is a cycle, it is not hashable
 		ii = cv_value_data_u32(v);
