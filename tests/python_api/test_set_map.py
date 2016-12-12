@@ -35,7 +35,7 @@ class TestSetMap(unittest.TestCase):
 			}
 		]
 
-		maps[3][(1,2)].append(maps)
+		maps[-1][(1,2)].append(maps)
 
 		fname = 'test_map.map'
 

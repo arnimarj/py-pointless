@@ -19,6 +19,7 @@
 #include <pointless/pointless_create_cache.h>
 #include <pointless/pointless_unicode_utils.h>
 #include <pointless/bitutils.h>
+#include <pointless/pointless_cycle_marker_wrappers.h>
 
 #include <Judy.h>
 
