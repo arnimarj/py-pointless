@@ -231,7 +231,6 @@ struct PyPointless_CAPI {
 	PyObject*(*create_pypointless_value)(PyPointless* p, pointless_value_t* v);
 };
 
-/*
 static struct PyPointless_CAPI* PyPointless_IMPORT_CAPI(void)
 {
 	PyObject* m = PyImport_ImportModule("pointless");
@@ -263,6 +262,5 @@ static struct PyPointless_CAPI* PyPointless_IMPORT_CAPI(void)
 
 	return 0;
 }
-*/
 
 #endif

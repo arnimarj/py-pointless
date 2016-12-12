@@ -63,7 +63,7 @@ def PythonPrint(v, out, stack = None):
 
 		out.write('])')
 	else:
-		print type(v)
+		print(type(v))
 		out.write('<TYPE: %s>' % (type(v),))
 
 class TestPrint(unittest.TestCase):

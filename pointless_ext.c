@@ -4,7 +4,7 @@ uint32_t PyPointlessBitvector_is_set(PyPointlessBitvector* self, uint32_t i);
 uint32_t PyPointlessBitvector_n_items(PyPointlessBitvector* self);
 
 struct pointless_module_state {
-	PyObject *error;
+//	PyObject *error;
 };
 
 #if PY_MAJOR_VERSION >= 3
@@ -72,25 +72,25 @@ static PyMethodDef pointless_module_methods[] =
 #if PY_MAJOR_VERSION >= 3
 
 static int pointless_module_traverse(PyObject* m, visitproc visit, void* arg) {
-	Py_VISIT(GETSTATE(m)->error);
+//	Py_VISIT(GETSTATE(m)->error);
 	return 0;
 }
 
 static int pointless_module_clear(PyObject* m) {
-	Py_CLEAR(GETSTATE(m)->error);
+//	Py_CLEAR(GETSTATE(m)->error);
 	return 0;
 }
 
 static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "pointless",
-        NULL,
-        sizeof(struct pointless_module_state),
-        pointless_module_methods,
-        NULL,
-        pointless_module_traverse,
-        pointless_module_clear,
-        NULL
+	PyModuleDef_HEAD_INIT,
+	"pointless",
+	NULL,
+	sizeof(struct pointless_module_state),
+	pointless_module_methods,
+	NULL,
+	pointless_module_traverse,
+	pointless_module_clear,
+	NULL
 };
 #endif
 
