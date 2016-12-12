@@ -721,37 +721,6 @@ static int pointless_vector_check_hashable_rec(pointless_create_t* c, uint32_t v
 
 	size_t i, ii;
 
-	pointless_dynarray_t* keys_vector = 0;
-	pointless_dynarray_t* values_vector = 0;
-
-	// walk set/map
-	if (cv_value_type(v) == POINTLESS_MAP_VALUE_VALUE) {
-		keys_vector = &cv_map_at(v)->keys;
-		values_vector = &cv_map_at(v)->values;
-	} else if (cv_value_type(v) == POINTLESS_SET_VALUE) {
-		keys_vector = &cv_set_at(v)->keys;
-	}
-
-	for (i = 0; i < pointless_dynarray_n_items(keys_vector); i++) {
-		uint32_t cc = pointless_dynarray_ITEM_AT(uint32_t, keys_vector, i);
-		ii = cv_value_data_u32(cc);
-
-		if (!pointless_vector_check_hashable_rec(c, cc, priv_vector_bitmask, outside_vector_bitmask, depth + 1)) {
-			bm_reset_(priv_vector_bitmask, ii);
-			return 0;
-		}
-	}
-
-	for (i = 0; i < pointless_dynarray_n_items(values_vector); i++) {
-		uint32_t cc = pointless_dynarray_ITEM_AT(uint32_t, values_vector, i);
-		ii = cv_value_data_u32(cc);
-
-		if (!pointless_vector_check_hashable_rec(c, cc, priv_vector_bitmask, outside_vector_bitmask, depth + 1)) {
-			bm_reset_(priv_vector_bitmask, ii);
-			return 0;
-		}
-	}
-
 	if (cv_value_type(v) == POINTLESS_VECTOR_VALUE) {
 		// if this is a cycle, it is not hashable
 		ii = cv_value_data_u32(v);
@@ -910,36 +879,6 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 	new_priv_vector_values = c->priv_vector_values;
 	c->priv_vector_values = temp;
 
-	// see if some value-vectors can be compressed, and if not, whether they are hashable
-	priv_vector_bitmask = pointless_calloc(ICEIL(pointless_dynarray_n_items(&c->priv_vector_values), 8), 1);
-	outside_vector_bitmask = pointless_calloc(ICEIL(pointless_dynarray_n_items(&c->outside_vector_values), 8), 1);
-
-	if (priv_vector_bitmask == 0 || outside_vector_bitmask == 0) {
-		*error = "out of memory J";
-		goto error_cleanup;
-	}
-
-	for (i = 0; i < n_values; i++) {
-		// we can not compress outside vector
-		if (cv_value_type(i) == POINTLESS_VECTOR_VALUE && cv_is_outside_vector(i) == 0) {
-			// we're not allowed to compress set/map vectors
-			if (cv_is_set_map_vector(i) == 0)
-				cv_value_at(i)->header.type_29 = pointless_create_vector_compression(c, i);
-
-			// if no compression was possible, see if it is hashable
-			if (cv_value_type(i) == POINTLESS_VECTOR_VALUE && pointless_vector_check_hashable(c, i, priv_vector_bitmask, outside_vector_bitmask)) {
-				// hash check may fail
-				if (*error)
-					goto error_cleanup;
-
-				cv_value_at(i)->header.type_29 = POINTLESS_VECTOR_VALUE_HASHABLE;
-			// otherwise, mark it as compressed, this is necessary for correct serialization
-			} else {
-				cv_value_at(i)->header.is_compressed_vector = 1;
-			}
-		}
-	}
-
 	// right, now populate the hash, key and value vectors for sets and maps
 	for (i = 0; i < n_values; i++) {
 		if (cv_value_type(i) == POINTLESS_SET_VALUE) {
@@ -994,6 +933,27 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 			// now we can populate these
 			if (!pointless_hash_table_create(c, i, error))
 				goto error_cleanup;
+		}
+	}
+
+	// see if some value-vectors can be compressed, and if not, whether they are hashable
+	priv_vector_bitmask = pointless_calloc(ICEIL(pointless_dynarray_n_items(&c->priv_vector_values), 8), 1);
+	outside_vector_bitmask = pointless_calloc(ICEIL(pointless_dynarray_n_items(&c->outside_vector_values), 8), 1);
+
+	if (priv_vector_bitmask == 0 || outside_vector_bitmask == 0) {
+		*error = "out of memory J";
+		goto error_cleanup;
+	}
+
+	for (i = 0; i < n_values; i++) {
+		// we can not compress outside vector
+		if (cv_value_type(i) == POINTLESS_VECTOR_VALUE && cv_is_outside_vector(i) == 0) {
+			// we're not allowed to compress set/map vectors
+			if (cv_is_set_map_vector(i) == 0)
+				cv_value_at(i)->header.type_29 = pointless_create_vector_compression(c, i);
+
+			if (pointless_vector_check_hashable(c, i, priv_vector_bitmask, outside_vector_bitmask))
+				cv_value_at(i)->header.type_29 = POINTLESS_VECTOR_VALUE_HASHABLE;
 		}
 	}
 
