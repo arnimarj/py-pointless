@@ -58,11 +58,38 @@ static int pointless_validate_map_complicated(pointless_validate_state_t* state,
 	return pointless_hash_table_validate(state->context->p, header->n_items, n_keys, hashes, keys, values, &state->error);
 }
 
+static void print_prefix(uint32_t depth, int pass, uint32_t container_type, uint32_t container_id, int line)
+{
+	for (uint32_t i = 0; i < depth; i++) {
+		printf(".");
+	}
+
+	printf("pass %i for container-type/id %u:%u in line %i\n", pass, (unsigned int)container_type, (unsigned int)container_id, line);
+}
+
+
+static uint32_t pointless_is_container(pointless_value_t* v)
+{
+	switch (v->type) {
+		case POINTLESS_VECTOR_VALUE:
+		case POINTLESS_VECTOR_VALUE_HASHABLE:
+		case POINTLESS_SET_VALUE:
+		case POINTLESS_MAP_VALUE_VALUE:
+			return 1;
+	}
+
+	return 0;
+}
+
 static uint32_t pointless_validate_pass_cb(pointless_t* p, pointless_value_t* v, uint32_t depth, void* user)
 {
 	pointless_validate_state_t* state = (pointless_validate_state_t*)user;
 
 	assert(state->pass == 1 || state->pass == 2 || state->pass == 3);
+
+	if (pointless_is_container(v)) {
+		print_prefix(depth, state->pass, v->type, pointless_container_id(p, v), __LINE__);
+	}
 
 	if (depth >= POINTLESS_MAX_DEPTH) {
 		state->error = "maximum depth exceeded";
@@ -114,6 +141,7 @@ static uint32_t pointless_validate_pass_cb(pointless_t* p, pointless_value_t* v,
 
 			if (bm_is_set_(state->cycle_marker, container_id)) {
 				state->error = "POINTLESS_VECTOR_VALUE_HASHABLE is in a cycle";
+				printf("XXX %i\n", __LINE__);
 				return POINTLESS_WALK_STOP; 
 			}
 		}
