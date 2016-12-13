@@ -57,7 +57,7 @@ static uint32_t _reader_pointless_n_children(void* user_, uint64_t v_)
 			return 3;
 	}
 
-	printf("wat! %i\n", __LINE__);
+	//printf("wat! %i\n", __LINE__);
 	assert(0);
 	return 0;
 }
@@ -95,7 +95,7 @@ static uint64_t _reader_pointless_child_at(void* user_, uint64_t v_, uint32_t i)
 			break;
 	}
 
-	printf("wat! %i\n", __LINE__);
+	//printf("wat! %i\n", __LINE__);
 	assert(0);
 	return 0;
 }
@@ -163,36 +163,9 @@ static int _create_pointless_is_container(void* user_, uint64_t v_)
 
 static uint32_t _create_pointless_container_id(void* user_, uint64_t v_)
 {
-	_cycle_mark_create_t* user = (_cycle_mark_create_t*)user_;
-	pointless_create_t* c = ((_cycle_mark_create_t*)user_)->c;
 	uint32_t owner, value;
 	_unpack_map_and_vector(v_, &owner, &value);
-
-	uint32_t ii = cv_value_data_u32(value);
-	uint32_t container_id = UINT32_MAX;
-
-	switch (cv_value_type(value)) {
-		case POINTLESS_VECTOR_VALUE:
-		case POINTLESS_VECTOR_VALUE_HASHABLE:
-			assert(!cv_is_outside_vector(value));
-			container_id = ii;
-			break;
-		case POINTLESS_SET_VALUE:
-			container_id = ii
-				+ pointless_dynarray_n_items(&user->c->priv_vector_values);
-			;
-			break;
-
-		case POINTLESS_MAP_VALUE_VALUE:
-			container_id = ii
-				+ pointless_dynarray_n_items(&user->c->priv_vector_values)
-				+ pointless_dynarray_n_items(&user->c->set_values)
-			;
-			break;
-	}
-
-	assert(container_id != UINT32_MAX);
-	return container_id;
+	return value;
 }
 
 
@@ -204,26 +177,31 @@ static uint32_t _create_pointless_n_children(void* user_, uint64_t v_)
 
 	switch (cv_value_type(value)) {
 		case POINTLESS_SET_VALUE:
+			printf("A n-children(%i): 2\n", (int)value);
 			return 2;
 		case POINTLESS_MAP_VALUE_VALUE:
+			printf("B n-children(%i): 3\n", (int)value);
 			return 3;
 	}
 
 	if (owner == UINT32_MAX) {
 		assert(!cv_is_outside_vector(value));
+		printf("C n-children(%i): %i\n", (int)value, (int)pointless_dynarray_n_items(&cv_priv_vector_at(value)->vector));
 		return pointless_dynarray_n_items(&cv_priv_vector_at(value)->vector);
 	}
 
 	switch (cv_value_type(owner)) {
 		case POINTLESS_SET_VALUE:
 			assert(value == cv_set_at(owner)->serialize_keys);
+			printf("D n-children(%i): %i\n", (int)value, (int)pointless_dynarray_n_items(&cv_set_at(owner)->keys));
 			return pointless_dynarray_n_items(&cv_set_at(owner)->keys);
 		case POINTLESS_MAP_VALUE_VALUE:
 			assert(pointless_dynarray_n_items(&cv_map_at(owner)->keys) == pointless_dynarray_n_items(&cv_map_at(owner)->values));
+			printf("E n-children(%i): %i\n", (int)value, (int)pointless_dynarray_n_items(&cv_map_at(owner)->keys));
 			return pointless_dynarray_n_items(&cv_map_at(owner)->keys);
 	}
 
-	printf("wat! %i\n", __LINE__);
+//	printf("wat! %i\n", __LINE__);
 	assert(0);
 	return 0;
 }
@@ -271,12 +249,14 @@ static uint64_t _create_pointless_child_at(void* user_, uint64_t v_, uint32_t i)
 				child = pointless_dynarray_ITEM_AT(uint32_t, &cv_map_at(owner)->keys, i);
 			else if (value == cv_map_at(owner)->serialize_values)
 				child = pointless_dynarray_ITEM_AT(uint32_t, &cv_map_at(owner)->values, i);
+
 			break;
 	}
 
 	if (child != UINT32_MAX)
 		return _pack_owner_and_value(UINT32_MAX, child);
 
+//	printf("wat!\n");
 	assert(0);
 	return 0;
 }

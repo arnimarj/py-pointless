@@ -121,6 +121,23 @@ static void process_child(pointless_cycle_marker_state_t* state, uint32_t v_id, 
 	}
 }
 
+static void _unpack_map_and_vector(uint64_t v, uint32_t* owner, uint32_t* value)
+{
+	*owner = (uint32_t)(v >> 32);
+	*value = (uint32_t)(v & UINT32_MAX);
+}
+
+static char buffer[1000];
+
+static char* depth_buffer(uint32_t depth)
+{
+	uint32_t i;
+	for (i = 0; i < depth * 3; i++)
+		buffer[i] = ' ';
+	buffer[i] = 0;
+	return buffer;
+}
+
 static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, uint64_t v, Word_t count, uint32_t depth)
 {
 	assert((*state->cb_info->fn_is_container)(state->cb_info->user, v));
@@ -131,6 +148,7 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 	}
 
 	if (count >= (Word_t)((*state->cb_info->fn_n_nodes)(state->cb_info->user))) {
+		printf("B depth %u, count %u\n", depth, (unsigned int)count);
 		state->error = "internal error: pre-order count exceeds number of containers";
 		return;
 	}
@@ -161,14 +179,7 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 	*((Word_t*)PValue) = count;
 	//print_depth(depth); printf(" visited[%u] = %llu\n", v_id, (unsigned long long)count);
 
-	// count += 1
 	//print_depth(depth); printf(" count = %llu + 1\n", (unsigned long long)count);
-	count += 1;
-
-	if (count >= (Word_t)((*state->cb_info->fn_n_nodes)(state->cb_info->user))) {
-		state->error = "internal error: pre-order count exceeds number of containers";
-		return;
-	}
 
 	// stack.append(v)
 	//print_depth(depth); printf(" stack.append(v = %u)\n", (unsigned int)v_id);
@@ -178,10 +189,31 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 	}
 
 	uint32_t i, n_children = (*state->cb_info->fn_n_children)(state->cb_info->user, v);
+	uint32_t owner, value;
+	_unpack_map_and_vector(v, &owner, &value);
+	printf("%s%u/%u n-children: %u\n", depth_buffer(depth), owner, value, n_children);
 
 	for (i = 0; i < n_children; i++) {
 		uint64_t child = (*state->cb_info->fn_child_at)(state->cb_info->user, v, i);
-		process_child(state, v_id, child, count, depth + 1);
+		_unpack_map_and_vector(child, &owner, &value);
+		printf(" %schild %u/%u\n", depth_buffer(depth), owner, value);
+
+		// this algorithm does not support single-node cycles, so check for them manuall
+		if ((*state->cb_info->fn_is_container)(state->cb_info->user, child)) {
+			uint32_t parent_container_id = (*state->cb_info->fn_container_id)(state->cb_info->user, v);
+			uint32_t child_container_id  =(*state->cb_info->fn_container_id)(state->cb_info->user, child);
+
+			printf("%s  and it is a container\n", depth_buffer(depth));
+			printf("%s  parent/child-ids: %i/%i\n", depth_buffer(depth), (int)parent_container_id, (int)child_container_id);
+
+			if (parent_container_id == child_container_id) {
+				printf("zero cycle %u\n", (unsigned int)parent_container_id);
+				bm_set_(state->cycle_marker, parent_container_id);
+				continue;
+			}
+		}
+
+		process_child(state, v_id, child, count + 1, depth + 1);
 
 		if (state->error)
 			return;
@@ -225,6 +257,7 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 			pointless_dynarray_pop(&state->stack);
 			//print_depth(depth); printf("   w = stack.pop() (%u)\n", (unsigned int)w_id);
 
+			printf("B marking %u\n", w_id);
 			bm_set_(state->cycle_marker, w_id);
 
 			// component[w] = root[v]
@@ -273,6 +306,10 @@ void* pointless_cycle_marker(cycle_marker_info_t* info, const char** error)
 
 	if (state.error)
 		goto error;
+
+	for (uint32_t i = 0; i < n_nodes; i++) {
+		printf("cycle %i: %i\n", (int)i, bm_is_set_(state.cycle_marker, i) ? 1 : 0);
+	}
 
 	goto cleanup;
 

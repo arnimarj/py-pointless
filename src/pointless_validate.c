@@ -58,19 +58,6 @@ static int pointless_validate_map_complicated(pointless_validate_state_t* state,
 	return pointless_hash_table_validate(state->context->p, header->n_items, n_keys, hashes, keys, values, &state->error);
 }
 
-static uint32_t pointless_is_container(pointless_value_t* v)
-{
-	switch (v->type) {
-		case POINTLESS_VECTOR_VALUE:
-		case POINTLESS_VECTOR_VALUE_HASHABLE:
-		case POINTLESS_SET_VALUE:
-		case POINTLESS_MAP_VALUE_VALUE:
-			return 1;
-	}
-
-	return 0;
-}
-
 static uint32_t pointless_validate_pass_cb(pointless_t* p, pointless_value_t* v, uint32_t depth, void* user)
 {
 	pointless_validate_state_t* state = (pointless_validate_state_t*)user;

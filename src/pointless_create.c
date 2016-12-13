@@ -120,6 +120,7 @@ static int pointless_hash_table_create(pointless_create_t* c, uint32_t hash_tabl
 
 	// compute all the key hashes
 	for (i = 0; i < n_keys; i++) {
+		printf("value %i\n", (int)keys_vector_ptr[i]);
 		if (!pointless_is_hashable(cv_value_type(keys_vector_ptr[i]))) {
 			*error = "pointless_hash_table_create(): internal error: key not hashable";
 			goto cleanup;
@@ -413,7 +414,10 @@ static int pointless_serialize_vector_priv(pointless_create_t* c, uint32_t vecto
 	int is_compressed   = !is_uncompressed && cv_is_compressed_vector(vector);
 	int is_native       = !is_uncompressed && !is_compressed;
 
-	assert(is_uncompressed + is_compressed + is_native == 1);
+	//printf("serializing %i with flags %i/%i/%i\n", (int)vector, is_uncompressed, is_compressed, is_native);
+
+	//assert(is_uncompressed + is_compressed + is_native == 1);
+	assert(is_compressed + is_native == 1);
 
 	// if we have a native vector, we can write it in a single write call
 	if (is_native) {
@@ -458,7 +462,7 @@ static int pointless_serialize_vector_priv(pointless_create_t* c, uint32_t vecto
 
 	for (i = 0; i < n_items && !is_native; i++) {
 		// uncompressed value vector
-		if (is_uncompressed) {
+		if (!is_compressed) {//is_uncompressed) {
 			// WARNING: we are using a pointer to a dynamic array, so during its scope, we must
 			//          not touch the original array, c->values in this case
 			value.v = pointless_create_to_read_value(c, items[i], n_priv_vectors);
@@ -788,25 +792,37 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 	cycle_marker = pointless_cycle_marker_create(c, error);
 
 	if (cycle_marker == 0) {
-		*error = "out of memory J";
 		goto error_cleanup;
 	}
 
 	// ...and mark the ones which are
 	for (i = 0; i < n_values; i++) {
+		//printf("value type %i is %i\n", (int)i, (int)cv_value_type(i));
 		if (cv_value_type(i) == POINTLESS_VECTOR_VALUE && !cv_is_outside_vector(i)) {
-			if (!bm_is_set_(cycle_marker, i))
+			if (!bm_is_set_(cycle_marker, i)) {
 				cv_value_at(i)->header.type_29 = POINTLESS_VECTOR_VALUE_HASHABLE;
+				//printf("hashable %i\n", (int)i);
+			}
 		}
 	}
 
 	// check vectors for compressability
 	for (i = 0; i < n_values; i++) {
 		// we can not compress outside vector
-		if ((cv_value_type(i) == POINTLESS_VECTOR_VALUE || cv_value_type(i) == POINTLESS_VECTOR_VALUE_HASHABLE) && cv_is_outside_vector(i) == 0) {
-			// we're not allowed to compress set/map vectors
-			if (cv_is_set_map_vector(i) == 0)
-				cv_value_at(i)->header.type_29 = pointless_create_vector_compression(c, i);
+		switch (cv_value_type(i)) {
+			case POINTLESS_VECTOR_VALUE:
+			case POINTLESS_VECTOR_VALUE_HASHABLE:
+				// we're not allowed to compress outside or set/map vectors
+				if (cv_is_outside_vector(i) == 0 && cv_is_set_map_vector(i) == 0) {
+					cv_value_at(i)->header.type_29 = pointless_create_vector_compression(c, i);
+
+					if (cv_value_at(i)->header.type_29 != POINTLESS_VECTOR_VALUE && cv_value_at(i)->header.type_29 != POINTLESS_VECTOR_VALUE_HASHABLE) {
+						//printf("compressed %i to %i\n", (int)i, (int)cv_value_at(i)->header.type_29);
+						cv_value_at(i)->header.is_compressed_vector = 1;
+					}
+				}
+
+				break;
 		}
 	}
 
@@ -2063,6 +2079,8 @@ static uint32_t pointless_create_vector_append_priv(pointless_create_t* c, uint3
 	if (!pointless_dynarray_push(&cv_priv_vector_at(vector)->vector, v))
 		return POINTLESS_CREATE_VALUE_FAIL;
 
+	//printf("CC n-children(%i): %i\n", (int)vector, (int)pointless_dynarray_n_items(&cv_priv_vector_at(vector)->vector));
+
 	return vector;
 }
 
@@ -2368,6 +2386,9 @@ cleanup:
 uint32_t pointless_create_map_add(pointless_create_t* c, uint32_t m, uint32_t k, uint32_t v)
 {
 	assert(cv_value_type(m) == POINTLESS_MAP_VALUE_VALUE);
+
+	//printf("adding k/v: %u/%u to %u\n", k, v, m);
+	//printf("types %i/%i\n", (int)cv_value_type(k), (int)cv_value_type(v));
 
 	if (!pointless_dynarray_push(&cv_map_at(m)->keys, &k))
 		return POINTLESS_CREATE_VALUE_FAIL;
