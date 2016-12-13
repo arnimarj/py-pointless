@@ -121,7 +121,6 @@ static int pointless_hash_table_create(pointless_create_t* c, uint32_t hash_tabl
 	// compute all the key hashes
 	for (i = 0; i < n_keys; i++) {
 		if (!pointless_is_hashable(cv_value_type(keys_vector_ptr[i]))) {
-			printf("not hashable item %i\n", (int)keys_vector_ptr[i]);
 			*error = "pointless_hash_table_create(): internal error: key not hashable";
 			goto cleanup;
 		}
@@ -795,31 +794,16 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 
 	// ...and mark the ones which are
 	for (i = 0; i < n_values; i++) {
-		uint32_t offset = UINT32_MAX;
-
-		switch (cv_value_type(i)) {
-			case POINTLESS_VECTOR_VALUE:
-				if (!cv_is_outside_vector(i))
-					offset = cv_value_data_u32(i);
-
-				break;
-			case POINTLESS_SET_VALUE:
-				offset = cv_value_data_u32(i) + pointless_dynarray_n_items(&c->priv_vector_values);
-				break;
-			case POINTLESS_MAP_VALUE_VALUE:
-				offset = cv_value_data_u32(i) + pointless_dynarray_n_items(&c->priv_vector_values) + pointless_dynarray_n_items(&c->set_values);
-				break;
-		}
-
-		if (offset != UINT32_MAX && bm_is_set_(cycle_marker, offset)) {
-			cv_value_at(i)->header.type_29 = POINTLESS_VECTOR_VALUE_HASHABLE;
+		if (cv_value_type(i) == POINTLESS_VECTOR_VALUE && !cv_is_outside_vector(i)) {
+			if (!bm_is_set_(cycle_marker, i))
+				cv_value_at(i)->header.type_29 = POINTLESS_VECTOR_VALUE_HASHABLE;
 		}
 	}
 
 	// check vectors for compressability
 	for (i = 0; i < n_values; i++) {
 		// we can not compress outside vector
-		if (cv_value_type(i) == POINTLESS_VECTOR_VALUE && cv_is_outside_vector(i) == 0) {
+		if ((cv_value_type(i) == POINTLESS_VECTOR_VALUE || cv_value_type(i) == POINTLESS_VECTOR_VALUE_HASHABLE) && cv_is_outside_vector(i) == 0) {
 			// we're not allowed to compress set/map vectors
 			if (cv_is_set_map_vector(i) == 0)
 				cv_value_at(i)->header.type_29 = pointless_create_vector_compression(c, i);
@@ -1208,7 +1192,6 @@ static int file_align_4(void* user, const char** error)
 	long pos = ftell(f);
 
 	if (pos == -1) {
-		perror("ftell");
 		*error = "ftell() failure";
 		return 0;
 	}
@@ -1224,19 +1207,16 @@ static int file_align_4(void* user, const char** error)
 		*error = "fwrite() failure A";
 		return 0;
 	}
-	size_t i = 0;
-	for (i = 0; i < n; i++) {
-		//printf(" ...aligning B\n");
-	}
 
 	return 1;
 }
 
 static int file_write(void* buf, size_t buflen, void* user, const char** error)
 {
-	FILE* f = (FILE*)user;
+	if (buflen == 0)
+		return 1;
 
-	//printf("writing %i bytes to file\n", (int)buflen);
+	FILE* f = (FILE*)user;
 
 	if (fwrite(buf, buflen, 1, f) != 1) {
 		*error = "fwrite() failure B";

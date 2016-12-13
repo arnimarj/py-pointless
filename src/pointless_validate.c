@@ -141,7 +141,6 @@ static uint32_t pointless_validate_pass_cb(pointless_t* p, pointless_value_t* v,
 
 			if (bm_is_set_(state->cycle_marker, container_id)) {
 				state->error = "POINTLESS_VECTOR_VALUE_HASHABLE is in a cycle";
-				printf("XXX %i\n", __LINE__);
 				return POINTLESS_WALK_STOP; 
 			}
 		}

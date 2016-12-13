@@ -57,6 +57,7 @@ static uint32_t _reader_pointless_n_children(void* user_, uint64_t v_)
 			return 3;
 	}
 
+	printf("wat! %i\n", __LINE__);
 	assert(0);
 	return 0;
 }
@@ -94,6 +95,7 @@ static uint64_t _reader_pointless_child_at(void* user_, uint64_t v_, uint32_t i)
 			break;
 	}
 
+	printf("wat! %i\n", __LINE__);
 	assert(0);
 	return 0;
 }
@@ -115,31 +117,28 @@ void* pointless_cycle_marker_read(pointless_t* p, const char** error)
 	return pointless_cycle_marker(&cb_info, error);
 }
 
-static uint64_t _pack_owner_and_value(uint32_t owner, uint32_t value)
-{
-	return ((uint64_t)owner) << 32 || value;
-}
-
 static void _unpack_map_and_vector(uint64_t v, uint32_t* owner, uint32_t* value)
 {
-	*owner = (uint32_t)(v >> 32); 
-	*value = (uint32_t)(v & 0xFFFFFFFF);
+	*owner = (uint32_t)(v >> 32);
+	*value = (uint32_t)(v & UINT32_MAX);
 }
 
-static uint32_t _create_pointless_n_containers(void* user_)
+static uint64_t _pack_owner_and_value(uint32_t owner, uint32_t value)
+{
+	uint64_t o = owner, v = value;
+	return o << 32 | v;
+}
+
+static uint32_t _create_pointless_n_nodes(void* user_)
 {
 	_cycle_mark_create_t* user = (_cycle_mark_create_t*)user_;
-	uint32_t n = 0;
-	n += pointless_dynarray_n_items(&user->c->priv_vector_values);
-	n += pointless_dynarray_n_items(&user->c->set_values);
-	n += pointless_dynarray_n_items(&user->c->map_values);
-	return n;
+	return pointless_dynarray_n_items(&user->c->values);
 }
 
 static uint64_t _create_pointless_get_root(void* user_)
 {
 	_cycle_mark_create_t* user = (_cycle_mark_create_t*)user_;
-	return (uint64_t)user->c->root;
+	return _pack_owner_and_value(UINT32_MAX, user->c->root);
 }
 
 static int _create_pointless_is_container(void* user_, uint64_t v_)
@@ -151,10 +150,9 @@ static int _create_pointless_is_container(void* user_, uint64_t v_)
 	switch (cv_value_type(value)) {
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-			if (cv_is_outside_vector(value))
-				return 0;
-
-			return 1;
+			if (!cv_is_outside_vector(value))
+				return 1;
+			break;
 		case POINTLESS_SET_VALUE:
 		case POINTLESS_MAP_VALUE_VALUE:
 			return 1;
@@ -171,26 +169,30 @@ static uint32_t _create_pointless_container_id(void* user_, uint64_t v_)
 	_unpack_map_and_vector(v_, &owner, &value);
 
 	uint32_t ii = cv_value_data_u32(value);
+	uint32_t container_id = UINT32_MAX;
 
 	switch (cv_value_type(value)) {
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
 			assert(!cv_is_outside_vector(value));
-			return ii;
+			container_id = ii;
+			break;
 		case POINTLESS_SET_VALUE:
-			return ii
+			container_id = ii
 				+ pointless_dynarray_n_items(&user->c->priv_vector_values);
 			;
+			break;
 
 		case POINTLESS_MAP_VALUE_VALUE:
-			return ii
+			container_id = ii
 				+ pointless_dynarray_n_items(&user->c->priv_vector_values)
 				+ pointless_dynarray_n_items(&user->c->set_values)
 			;
+			break;
 	}
 
-	assert(0);
-	return 0;
+	assert(container_id != UINT32_MAX);
+	return container_id;
 }
 
 
@@ -202,9 +204,9 @@ static uint32_t _create_pointless_n_children(void* user_, uint64_t v_)
 
 	switch (cv_value_type(value)) {
 		case POINTLESS_SET_VALUE:
-			return 1;
-		case POINTLESS_MAP_VALUE_VALUE:
 			return 2;
+		case POINTLESS_MAP_VALUE_VALUE:
+			return 3;
 	}
 
 	if (owner == UINT32_MAX) {
@@ -217,10 +219,11 @@ static uint32_t _create_pointless_n_children(void* user_, uint64_t v_)
 			assert(value == cv_set_at(owner)->serialize_keys);
 			return pointless_dynarray_n_items(&cv_set_at(owner)->keys);
 		case POINTLESS_MAP_VALUE_VALUE:
-			assert(pointless_dynarray_n_items(&cv_map_at(owner)->keys) && pointless_dynarray_n_items(&cv_map_at(owner)->values));
+			assert(pointless_dynarray_n_items(&cv_map_at(owner)->keys) == pointless_dynarray_n_items(&cv_map_at(owner)->values));
 			return pointless_dynarray_n_items(&cv_map_at(owner)->keys);
 	}
 
+	printf("wat! %i\n", __LINE__);
 	assert(0);
 	return 0;
 }
@@ -234,11 +237,16 @@ static uint64_t _create_pointless_child_at(void* user_, uint64_t v_, uint32_t i)
 	switch (cv_value_type(value)) {
 		case POINTLESS_SET_VALUE:
 			assert(owner == UINT32_MAX);
-			assert(i == 0);
-			return _pack_owner_and_value(value, cv_set_at(value)->serialize_keys);
-		case POINTLESS_MAP_VALUE_VALUE:
 			assert(i == 0 || i == 1);
 			if (i == 0)
+				return _pack_owner_and_value(value, cv_set_at(value)->serialize_hash);
+			else
+				return _pack_owner_and_value(value, cv_set_at(value)->serialize_keys);
+		case POINTLESS_MAP_VALUE_VALUE:
+			assert(i == 0 || i == 1 || i == 2);
+			if (i == 0)
+				return _pack_owner_and_value(value, cv_map_at(value)->serialize_hash);
+			else if (i == 1)
 				return _pack_owner_and_value(value, cv_map_at(value)->serialize_keys);
 			else
 				return _pack_owner_and_value(value, cv_map_at(value)->serialize_values);
@@ -247,6 +255,7 @@ static uint64_t _create_pointless_child_at(void* user_, uint64_t v_, uint32_t i)
 	assert(!cv_is_outside_vector(value));
 
 	if (owner == UINT32_MAX) {
+		assert(!cv_is_set_map_vector(value));
 		child = pointless_dynarray_ITEM_AT(uint32_t, &cv_priv_vector_at(value)->vector, i);
 		return _pack_owner_and_value(UINT32_MAX, child);
 	}
@@ -254,17 +263,19 @@ static uint64_t _create_pointless_child_at(void* user_, uint64_t v_, uint32_t i)
 	// vector for set/map
 	switch (cv_value_type(owner)) {
 		case POINTLESS_SET_VALUE:
-			assert(i == 0);
-			child = pointless_dynarray_ITEM_AT(uint32_t, &cv_set_at(owner)->keys, i);
-			return _pack_owner_and_value(UINT32_MAX, child);
+			if (value == cv_set_at(owner)->serialize_keys)
+				child = pointless_dynarray_ITEM_AT(uint32_t, &cv_set_at(owner)->keys, i);
+			break;
 		case POINTLESS_MAP_VALUE_VALUE:
-			assert(i == 0 || i == 1);
-			if (i == 0)
+			if (value == cv_map_at(owner)->serialize_keys)
 				child = pointless_dynarray_ITEM_AT(uint32_t, &cv_map_at(owner)->keys, i);
-			else
+			else if (value == cv_map_at(owner)->serialize_values)
 				child = pointless_dynarray_ITEM_AT(uint32_t, &cv_map_at(owner)->values, i);
-			return _pack_owner_and_value(UINT32_MAX, child);
+			break;
 	}
+
+	if (child != UINT32_MAX)
+		return _pack_owner_and_value(UINT32_MAX, child);
 
 	assert(0);
 	return 0;
@@ -277,7 +288,7 @@ void* pointless_cycle_marker_create(pointless_create_t* c, const char** error)
 
 	cycle_marker_info_t cb_info;
 	cb_info.user = &context;
-	cb_info.fn_n_nodes = _create_pointless_n_containers;
+	cb_info.fn_n_nodes = _create_pointless_n_nodes;
 	cb_info.fn_get_root = _create_pointless_get_root;
 	cb_info.fn_is_container = _create_pointless_is_container;
 	cb_info.fn_container_id = _create_pointless_container_id;
