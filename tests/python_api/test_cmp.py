@@ -1,11 +1,18 @@
 #!/usr/bin/python
 
-import itertools, pointless, os
+import itertools, pointless, os, six
 
 from twisted.trial import unittest
 
 from .test_serialize import AllBitvectorTestCases
 from .common import VectorSlices
+
+if six.PY3:
+	def cmp(a, b):
+		if a is None and b is None:
+			return 0
+
+		return (a > b) - (a < b)
 
 def sign(i):
 	return min(max(-1, i), +1)
@@ -35,7 +42,12 @@ class TestCmp(unittest.TestCase):
 			self.assertEqual(p_cmp_a, p_cmp_d)
 
 			# test against python
-			py_cmp = sign(cmp(v_a, v_b))
+			try:
+				py_cmp = sign(cmp(v_a, v_b))
+			except TypeError as e:
+				if six.PY3 and 'not supported between instances of ' in str(e):
+					continue
+				raise
 
 			# we're only interested in pointless/python compatibility for equality matcing
 			self.assert_(not ((py_cmp == 0 or p_cmp_a == 0) and p_cmp_a != py_cmp))
@@ -82,7 +94,7 @@ class TestCmp(unittest.TestCase):
 	NONE           = [None]
 	STRINGS        = ['hello world', u'Hello world', u'Hello world', '', u'']
 	VECTORS        = [[0, 1, 2], [], [[]], ['asdf', None, True, False, [0, 1, 2, ['asdf']]], ['a', ['a']]]
-	SLICED_VECTORS = [v_py for (v_py, v_po) in VectorSlices('slice.map', range(1000))]
+	SLICED_VECTORS = [v_py for (v_py, v_po) in VectorSlices('slice.map', list(range(1000)))]
 	BITVECTORS     = AllBitvectorTestCases()
 
 	def testNumbers(self):
