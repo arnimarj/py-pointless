@@ -128,10 +128,26 @@ static PyObject* PyPointlessVector_subscript_priv(PyPointlessVector* self, uint3
 	return 0;
 }
 
+static PyObject* PyPointlessVector_slice(PyPointlessVector* self, Py_ssize_t ilow, Py_ssize_t ihigh);
+
 static PyObject* PyPointlessVector_subscript(PyPointlessVector* self, PyObject* item)
 {
 	// get the index
 	Py_ssize_t i;
+
+	if (PySlice_Check(item)) {
+		Py_ssize_t start, stop, step, slicelength;
+
+		if (PySlice_GetIndicesEx(item, self->slice_n, &start, &stop, &step, &slicelength) == -1)
+			return 0;
+
+		if (step != 1) {
+			PyErr_SetString(PyExc_ValueError, "only slice-steps of 1 supported");
+			return 0;
+		}
+
+		return PyPointlessVector_slice(self, start, stop);
+	}
 
 	if (!PyPointlessVector_check_index(self, item, &i))
 		return 0;
@@ -729,18 +745,30 @@ static PyBufferProcs PyPointlessVector_as_buffer = {
 
 
 
+#if PY_MAJOR_VERSION < 3
 static PySequenceMethods PyPointlessVector_as_sequence = {
 	(lenfunc)PyPointlessVector_length,          /* sq_length */
 	0,                                          /* sq_concat */
 	0,                                          /* sq_repeat */
 	(ssizeargfunc)PyPointlessVector_item,       /* sq_item */
-	(ssizessizeargfunc)PyPointlessVector_slice, /* sq_slice */
 	0,                                          /* sq_ass_item */
 	0,                                          /* sq_ass_slice */
 	(objobjproc)PyPointlessVector_contains,     /* sq_contains */
 	0,                                          /* sq_inplace_concat */
 	0,                                          /* sq_inplace_repeat */
 };
+#else
+static PySequenceMethods PyPointlessVector_as_sequence = {
+	(lenfunc)PyPointlessVector_length,          /* sq_length */
+	0,                                          /* sq_concat */
+	0,                                          /* sq_repeat */
+	(ssizeargfunc)PyPointlessVector_item,       /* sq_item */
+	0,                                          /* sq_ass_item */
+	(objobjproc)PyPointlessVector_contains,     /* sq_contains */
+	0,                                          /* sq_inplace_concat */
+	0,                                          /* sq_inplace_repeat */
+};
+#endif
 
 PyTypeObject PyPointlessVectorType = {
 	PyVarObject_HEAD_INIT(NULL, 0)

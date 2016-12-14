@@ -591,10 +591,26 @@ static PyObject* PyPointlessPrimVector_subscript_priv(PyPointlessPrimVector* sel
 	return 0;
 }
 
+static PyObject* PyPointlessPrimVector_slice(PyPointlessPrimVector* self, Py_ssize_t ilow, Py_ssize_t ihigh);
+
 static PyObject* PyPointlessPrimVector_subscript(PyPointlessPrimVector* self, PyObject* item)
 {
 	// get the index
 	Py_ssize_t i;
+
+	if (PySlice_Check(item)) {
+		Py_ssize_t start, stop, step, slicelength;
+
+		if (PySlice_GetIndicesEx(item, (Py_ssize_t)pointless_dynarray_n_items(&self->array), &start, &stop, &step, &slicelength) == -1)
+			return 0;
+
+		if (step != 1) {
+			PyErr_SetString(PyExc_ValueError, "only slice-steps of 1 supported");
+			return 0;
+		}
+
+		return PyPointlessPrimVector_slice(self, start, stop);
+	}
 
 	if (!PyPointlessPrimVector_check_index(self, item, &i))
 		return 0;
@@ -2003,6 +2019,7 @@ static PyMappingMethods PyPointlessPrimVector_as_mapping = {
 	(objobjargproc)0
 };
 
+#if PY_MAJOR_VERSION < 3
 static PySequenceMethods PyPointlessPrimVector_as_sequence = {
 	(lenfunc)PyPointlessPrimVector_length,            /* sq_length */
 	0,                                                /* sq_concat */
@@ -2015,7 +2032,18 @@ static PySequenceMethods PyPointlessPrimVector_as_sequence = {
 	0,                                                /* sq_inplace_concat */
 	0,                                                /* sq_inplace_repeat */
 };
-
+#else
+static PySequenceMethods PyPointlessPrimVector_as_sequence = {
+	(lenfunc)PyPointlessPrimVector_length,            /* sq_length */
+	0,                                                /* sq_concat */
+	0,                                                /* sq_repeat */
+	(ssizeargfunc)PyPointlessPrimVector_item,         /* sq_item */
+	(ssizeobjargproc)PyPointlessPrimVector_ass_item,  /* sq_ass_item */
+	0,                                                /* sq_contains */
+	0,                                                /* sq_inplace_concat */
+	0,                                                /* sq_inplace_repeat */
+};
+#endif
 PyTypeObject PyPointlessPrimVectorType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessPrimVector",              /*tp_name*/
