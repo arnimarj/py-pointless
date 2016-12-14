@@ -368,8 +368,8 @@ static pypointless_cmp_int_float_bool_t pypointless_cmp_int_float_bool_from_valu
 		if (PyLong_Check(py_object)) {
 			PY_LONG_LONG v = PyLong_AsLongLong(py_object);
 
-			if (!PyErr_Occurred() && (INT64_MIN <= v && INT64_MAX <= v)) {
-				r.is_signed = 0;
+			if (!PyErr_Occurred() && (INT64_MIN <= v && v <= INT64_MAX)) {
+				r.is_signed = 1;
 				r.ii = (int64_t)v;
 				return r;
 			}
