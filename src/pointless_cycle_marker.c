@@ -296,7 +296,7 @@ void* pointless_cycle_marker(cycle_marker_info_t* info, const char** error)
 
 	if (state.cycle_marker == 0) {
 		state.error = "out of memory";
-		goto error;
+		goto error_cleanup;
 	}
 
 	uint64_t root = (*info->fn_get_root)(state.cb_info->user);
@@ -305,7 +305,7 @@ void* pointless_cycle_marker(cycle_marker_info_t* info, const char** error)
 		pointless_cycle_marker_visit(&state, root, 0, 0);
 
 	if (state.error)
-		goto error;
+		goto error_cleanup;
 
 	for (uint32_t i = 0; i < n_nodes; i++) {
 		//printf("cycle %i: %i\n", (int)i, bm_is_set_(state.cycle_marker, i) ? 1 : 0);
@@ -313,7 +313,7 @@ void* pointless_cycle_marker(cycle_marker_info_t* info, const char** error)
 
 	goto cleanup;
 
-error:
+error_cleanup:
 
 	assert(state.error != 0);
 
