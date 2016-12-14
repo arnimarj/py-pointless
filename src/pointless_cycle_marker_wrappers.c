@@ -209,7 +209,7 @@ static uint32_t _create_pointless_n_children(void* user_, uint64_t v_)
 static uint64_t _create_pointless_child_at(void* user_, uint64_t v_, uint32_t i)
 {
 	pointless_create_t* c = ((_cycle_mark_create_t*)user_)->c;
-	uint32_t owner, value, child;
+	uint32_t owner, value, child = 0;
 	_unpack_map_and_vector(v_, &owner, &value);
 
 	switch (cv_value_type(value)) {

@@ -127,16 +127,15 @@ static void _unpack_map_and_vector(uint64_t v, uint32_t* owner, uint32_t* value)
 	*value = (uint32_t)(v & UINT32_MAX);
 }
 
-static char buffer[1000];
-
-static char* depth_buffer(uint32_t depth)
-{
-	uint32_t i;
-	for (i = 0; i < depth * 3; i++)
-		buffer[i] = ' ';
-	buffer[i] = 0;
-	return buffer;
-}
+//static char buffer[1000];
+//static char* depth_buffer(uint32_t depth)
+//{
+//	uint32_t i;
+//	for (i = 0; i < depth * 3; i++)
+//		buffer[i] = ' ';
+//	buffer[i] = 0;
+//	return buffer;
+//}
 
 static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, uint64_t v, Word_t count, uint32_t depth)
 {
@@ -284,6 +283,7 @@ static void pointless_cycle_marker_visit(pointless_cycle_marker_state_t* state, 
 void* pointless_cycle_marker(cycle_marker_info_t* info, const char** error)
 {
 	uint32_t n_nodes = (*info->fn_n_nodes)(info->user);
+	uint64_t root;
 
 	pointless_cycle_marker_state_t state;
 	state.cb_info = info;
@@ -299,7 +299,7 @@ void* pointless_cycle_marker(cycle_marker_info_t* info, const char** error)
 		goto error_cleanup;
 	}
 
-	uint64_t root = (*info->fn_get_root)(state.cb_info->user);
+	root = (*info->fn_get_root)(state.cb_info->user);
 
 	if ((*info->fn_is_container)(state.cb_info->user, root))
 		pointless_cycle_marker_visit(&state, root, 0, 0);
