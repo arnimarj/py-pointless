@@ -21,6 +21,43 @@ class TestSetMap(unittest.TestCase):
 			bb = vv[a]
 			self.assertEquals(b, bb)
 
+	def testEvilCases(self):
+		for value, comparable in self.bad_case_iter():
+			pointless.serialize(value, 'file.map')
+			svalue = pointless.Pointless('file.map').GetRoot()
+			if comparable:
+				self.assertEquals(pointless.pointless_cmp(value, svalue), 0)
+			else:
+				s_a = str(value)
+				s_b = str(svalue)
+				self.assertEquals(s_a, s_b)
+
+	def bad_case_iter(self):
+		value = { }
+		value[1] = value
+		yield value, True
+
+		value = {
+			(314,): []
+		}
+		value[(314,)].append(value)
+		yield value, True
+
+		value = {}
+		yield value, True
+
+		value = {
+			():   [],
+		}
+
+		value[()].append(value)
+		value[(1,)] = value[()]
+		yield value, True
+
+		value = []
+		value.append(value)
+		yield value, False
+
 	def testMap(self):
 		maps = [
 			{ 1: 0 },
@@ -80,6 +117,7 @@ class TestSetMap(unittest.TestCase):
 			# create set A out of it
 			w = self._list_to_tuple(v)
 			pointless.serialize(set(w), fname_a)
+			print 'V', set(w)
 			root_a = pointless.Pointless(fname_a).GetRoot()
 
 			# for each element in V
