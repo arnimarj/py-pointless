@@ -120,7 +120,6 @@ static int pointless_hash_table_create(pointless_create_t* c, uint32_t hash_tabl
 
 	// compute all the key hashes
 	for (i = 0; i < n_keys; i++) {
-		printf("value %i\n", (int)keys_vector_ptr[i]);
 		if (!pointless_is_hashable(cv_value_type(keys_vector_ptr[i]))) {
 			*error = "pointless_hash_table_create(): internal error: key not hashable";
 			goto cleanup;
@@ -414,10 +413,7 @@ static int pointless_serialize_vector_priv(pointless_create_t* c, uint32_t vecto
 	int is_compressed   = !is_uncompressed && cv_is_compressed_vector(vector);
 	int is_native       = !is_uncompressed && !is_compressed;
 
-	//printf("serializing %i with flags %i/%i/%i\n", (int)vector, is_uncompressed, is_compressed, is_native);
-
-	//assert(is_uncompressed + is_compressed + is_native == 1);
-	assert(is_compressed + is_native == 1);
+	assert(is_uncompressed + is_compressed + is_native == 1);
 
 	// if we have a native vector, we can write it in a single write call
 	if (is_native) {
@@ -761,7 +757,6 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 					n_outside_vectors += 1;
 					break;
 				}
-
 				// set/map vectors can not be emptied
 				if (pointless_dynarray_n_items(&cv_priv_vector_at(i)->vector) == 0 && cv_is_set_map_vector(i) == 0) {
 					cv_value_at(i)->header.type_29 = POINTLESS_VECTOR_EMPTY;
@@ -787,6 +782,14 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 				break;
 		}
 	}
+
+	// now, c->priv_vector_values should become new_priv_vector_values, but we must not forget to
+	// cleanup c->priv_vector_values, so we just swap them, and c->priv_vector_values will be
+	// cleaned up as new_priv_vector_values, later on
+	temp = new_priv_vector_values;
+	new_priv_vector_values = c->priv_vector_values;
+	c->priv_vector_values = temp;
+
 
 	// check which vectors are hashable
 	cycle_marker = pointless_cycle_marker_create(c, error);
@@ -826,12 +829,6 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 		}
 	}
 
-	// now, c->priv_vector_values should become new_priv_vector_values, but we must not forget to
-	// cleanup c->priv_vector_values, so we just swap them, and c->priv_vector_values will be
-	// cleaned up as new_priv_vector_values, later on
-	temp = new_priv_vector_values;
-	new_priv_vector_values = c->priv_vector_values;
-	c->priv_vector_values = temp;
 
 	// right, now populate the hash, key and value vectors for sets and maps
 	for (i = 0; i < n_values; i++) {
@@ -2079,8 +2076,6 @@ static uint32_t pointless_create_vector_append_priv(pointless_create_t* c, uint3
 	if (!pointless_dynarray_push(&cv_priv_vector_at(vector)->vector, v))
 		return POINTLESS_CREATE_VALUE_FAIL;
 
-	//printf("CC n-children(%i): %i\n", (int)vector, (int)pointless_dynarray_n_items(&cv_priv_vector_at(vector)->vector));
-
 	return vector;
 }
 
@@ -2387,8 +2382,8 @@ uint32_t pointless_create_map_add(pointless_create_t* c, uint32_t m, uint32_t k,
 {
 	assert(cv_value_type(m) == POINTLESS_MAP_VALUE_VALUE);
 
-	//printf("adding k/v: %u/%u to %u\n", k, v, m);
-	//printf("types %i/%i\n", (int)cv_value_type(k), (int)cv_value_type(v));
+//	printf("adding k/v: %u/%u to %u\n", k, v, m);
+//	printf("types %i/%i\n", (int)cv_value_type(k), (int)cv_value_type(v));
 
 	if (!pointless_dynarray_push(&cv_map_at(m)->keys, &k))
 		return POINTLESS_CREATE_VALUE_FAIL;
