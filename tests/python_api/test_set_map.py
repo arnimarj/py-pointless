@@ -54,6 +54,9 @@ class TestSetMap(unittest.TestCase):
 		value[(1,)] = value[()]
 		yield value, True
 
+		value[(1,)].append(value[(1,)])
+		yield value, True
+
 		value = []
 		value.append(value)
 		yield value, False
@@ -117,7 +120,6 @@ class TestSetMap(unittest.TestCase):
 			# create set A out of it
 			w = self._list_to_tuple(v)
 			pointless.serialize(set(w), fname_a)
-			print 'V', set(w)
 			root_a = pointless.Pointless(fname_a).GetRoot()
 
 			# for each element in V
