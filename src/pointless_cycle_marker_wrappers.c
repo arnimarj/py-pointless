@@ -72,7 +72,7 @@ static uint64_t _reader_pointless_child_at(void* user_, uint64_t v_, uint32_t i)
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
 			children = pointless_reader_vector_value(user->p, v);
-			return (uint64_t)(children + 1);
+			return (uint64_t)(children + i);
 		case POINTLESS_SET_VALUE:
 			assert(0 <= i && i <= 1);
 
