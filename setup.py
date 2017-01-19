@@ -39,7 +39,8 @@ def build_judy():
 
 	print output
 
-build_judy()
+if not os.path.isfile('./judy-1.0.5/src/libJudy.a'):
+	build_judy()
 
 extra_compile_args = [
 	'-I./include',
@@ -75,7 +76,7 @@ setup(
 		'Topic :: Software Development :: Libraries'
 	],
 
-	download_url = 'https://github.com/arnimarj/py-pointless/archive/v0.2.8.tar.gz',
+	download_url = 'https://github.com/arnimarj/py-pointless/archive/v0.2.8.1.tar.gz',
 	description = 'A read-only relocatable data structure for JSON like data, with C and Python APIs',
 
 	packages = ['pointless'],
