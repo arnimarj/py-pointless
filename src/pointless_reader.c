@@ -1,6 +1,6 @@
 #include <pointless/pointless_reader.h>
 
-static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_ucs2, const char** error)
+static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_ucs2, int do_validate, const char** error)
 {
 	// our header
 	if (buflen < sizeof(pointless_header_t)) {
@@ -77,10 +77,14 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 	pointless_validate_context_t context;
 	context.p = p;
 	context.force_ucs2 = force_ucs2;
-	return pointless_validate(&context, error);
+
+	if (do_validate)
+		return pointless_validate(&context, error);
+	else
+		return 1;
 }
 
-int pointless_open_f(pointless_t* p, const char* fname, int force_ucs2, const char** error)
+static int _pointless_open_f(pointless_t* p, const char* fname, int force_ucs2, int do_validate, const char** error)
 {
 	p->fd = 0;
 	p->fd_len = 0;
@@ -139,12 +143,22 @@ int pointless_open_f(pointless_t* p, const char* fname, int force_ucs2, const ch
 		return 0;
 	}
 
-	if (!pointless_init(p, p->fd_ptr, p->fd_len, force_ucs2, error)) {
+	if (!pointless_init(p, p->fd_ptr, p->fd_len, force_ucs2, do_validate, error)) {
 		pointless_close(p);
 		return 0;
 	}
 
 	return 1;
+}
+
+int pointless_open_f(pointless_t* p, const char* fname, int force_ucs2, const char** error)
+{
+	return _pointless_open_f(p, fname, force_ucs2, 1, error);
+}
+
+int pointless_open_f_skip_validate(pointless_t* p, const char* fname, int force_ucs2, const char** error)
+{
+	return _pointless_open_f(p, fname, force_ucs2, 0, error);
 }
 
 void pointless_close(pointless_t* p)
@@ -158,7 +172,7 @@ void pointless_close(pointless_t* p)
 	pointless_free(p->buf);
 }
 
-int pointless_open_b(pointless_t* p, const void* buffer, size_t n_buffer, int force_ucs2, const char** error)
+static int _pointless_open_b(pointless_t* p, const void* buffer, size_t n_buffer, int force_ucs2, int do_validate, const char** error)
 {
 	p->fd = 0;
 	p->fd_len = 0;
@@ -174,12 +188,22 @@ int pointless_open_b(pointless_t* p, const void* buffer, size_t n_buffer, int fo
 
 	memcpy(p->buf, buffer, n_buffer);
 
-	if (!pointless_init(p, p->buf, p->buflen, force_ucs2, error)) {
+	if (!pointless_init(p, p->buf, p->buflen, force_ucs2, do_validate, error)) {
 		pointless_close(p);
 		return 0;
 	}
 
 	return 1;
+}
+
+int pointless_open_b(pointless_t* p, const void* buffer, size_t n_buffer, int force_ucs2, const char** error)
+{
+	return _pointless_open_b(p, buffer, n_buffer, force_ucs2, 1, error);
+}
+
+int pointless_open_b_skip_validate(pointless_t* p, const void* buffer, size_t n_buffer, int force_ucs2, const char** error)
+{
+	return _pointless_open_b(p, buffer, n_buffer, force_ucs2, 0, error);
 }
 
 pointless_value_t* pointless_root(pointless_t* p)
