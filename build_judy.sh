@@ -8,7 +8,7 @@ fi
 
 COPT="-DJU_64BIT -O0 -fPIC -fno-strict-aliasing"
 
-if $JUDYCC --version | grep clang >& /dev/null; then
+if $JUDYCC -v 2>&1 >/dev/null | egrep "clang|gcc version 4.6"; then
 	COPT+=""
 else
 	COPT+=" -fno-aggressive-loop-optimizations"
