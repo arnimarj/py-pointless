@@ -10,7 +10,7 @@ def build_judy():
 	is_gcc_46 = False
 
 	# test if CC is clang/gcc-4.6
-	exitcode, output = commands.getstatusoutput('%s --version' % (CC,))
+	exitcode, output = commands.getstatusoutput('%s -v' % (CC,))
 
 	if exitcode != 0:
 		sys.exit(output)
