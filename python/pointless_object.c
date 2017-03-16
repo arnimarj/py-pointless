@@ -85,7 +85,6 @@ static PyObject* PyPointless_GetFileNo(PyPointless* self)
 	}
 
 	int f = fileno(self->p.fd);
-	struct stat buf;
 
 	if (f == -1) {
 		PyErr_SetFromErrno(PyExc_OSError);
