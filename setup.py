@@ -22,10 +22,10 @@ def build_judy():
 		sys.exit(output)
 
 	if 'clang' in output:
-		print 'INFO: compiler is Clang'
+		print('INFO: compiler is Clang')
 		is_clang = True
 	elif 'gcc version 4.6' in output:
-		print 'INFO: compiler is GCC 4.6'
+		print('INFO: compiler is GCC 4.6')
 		is_gcc_46 = True
 
 	# adding last two flags because of compiler and/or code bugs
@@ -83,6 +83,10 @@ setup(
 		'Programming Language :: Python',
 		'Programming Language :: Python :: 2.6',
 		'Programming Language :: Python :: 2.7',
+		'Programming Language :: Python :: 3',
+		'Programming Language :: Python :: 3.3',
+		'Programming Language :: Python :: 3.4',
+		'Programming Language :: Python :: 3.5',
 		'Topic :: Database',
 		'Topic :: Software Development :: Libraries'
 	],
