@@ -33,6 +33,118 @@ typedef struct {
 	float ff;
 } pypointless_cmp_int_float_bool_t;
 
+#if PY_MAJOR_VERSION < 3
+
+static const char* _type_name(uint32_t type)
+{
+	switch (type) {
+		case POINTLESS_VECTOR_VALUE:
+		case POINTLESS_VECTOR_VALUE_HASHABLE:
+		case POINTLESS_VECTOR_I8:
+		case POINTLESS_VECTOR_U8:
+		case POINTLESS_VECTOR_I16:
+		case POINTLESS_VECTOR_U16:
+		case POINTLESS_VECTOR_I32:
+		case POINTLESS_VECTOR_U32:
+		case POINTLESS_VECTOR_I64:
+		case POINTLESS_VECTOR_U64:
+		case POINTLESS_VECTOR_FLOAT:
+		case POINTLESS_VECTOR_EMPTY:
+			return "pointless.PyPointlessVector";
+		case POINTLESS_UNICODE_:
+			return "unicode";
+		case POINTLESS_STRING_:
+			return "str";
+		case POINTLESS_BITVECTOR:
+		case POINTLESS_BITVECTOR_0:
+		case POINTLESS_BITVECTOR_1:
+		case POINTLESS_BITVECTOR_01:
+		case POINTLESS_BITVECTOR_10:
+		case POINTLESS_BITVECTOR_PACKED:
+			return "pointless.PyPointlessBitvector";
+		case POINTLESS_SET_VALUE:
+			return "pointless.PyPointlessSet";
+		case POINTLESS_MAP_VALUE_VALUE:
+			return "pointless.PyPointlessMap";
+		case POINTLESS_I32:
+		case POINTLESS_U32:
+		case POINTLESS_FLOAT:
+			return "";
+		case POINTLESS_BOOLEAN:
+			return "bool";
+		case POINTLESS_NULL:
+			return "NoneType";
+		case POINTLESS_I64:
+		case POINTLESS_U64:
+			return "";
+	}
+
+	return "";
+}
+
+// stolen from https://github.com/python/cpython/blob/2.7/Objects/object.c
+static int
+adapted_default_3way_compare(pypointless_cmp_value_t *v_, pypointless_cmp_value_t *w_)
+{
+	int c;
+	const char *vname, *wname;
+
+	if (!v_->is_pointless && !w_->is_pointless) {
+		if (v_->value.py_object->ob_type == w_->value.py_object->ob_type) {
+			/* When comparing these pointers, they must be cast to
+			 * integer types (i.e. Py_uintptr_t, our spelling of C9X's
+			 * uintptr_t).  ANSI specifies that pointer compares other
+			 * than == and != to non-related structures are undefined.
+			 */
+			Py_uintptr_t vv = (Py_uintptr_t)v_;
+			Py_uintptr_t ww = (Py_uintptr_t)w_;
+			return (vv < ww) ? -1 : (vv > ww) ? 1 : 0;
+		}
+	}
+
+	if (v_->is_pointless && v_->value.pointless.v.type == POINTLESS_NULL)
+		return -1;
+
+	if (!v_->is_pointless && v_->value.py_object == Py_None)
+		return -1;
+
+	if (w_->is_pointless && w_->value.pointless.v.type == POINTLESS_NULL)
+		return 1;
+
+	if (!w_->is_pointless && w_->value.py_object == Py_None)
+		return 1;
+
+	if (!v_->is_pointless) {
+		if (PyNumber_Check(v_->value.py_object))
+			vname = "";
+		else
+			vname = v_->value.py_object->ob_type->tp_name;
+	} else {
+		vname = (char*)_type_name(v_->value.pointless.v.type);
+	}
+
+	if (!w_->is_pointless) {
+		if (PyNumber_Check(w_->value.py_object))
+			wname = "";
+		else
+			wname = w_->value.py_object->ob_type->tp_name;
+	} else {
+		wname = (char*)_type_name(w_->value.pointless.v.type);
+	}
+
+	c = strcmp(vname, wname);
+
+	if (c < 0)
+		return -1;
+
+	if (c > 0)
+		return 1;
+
+	// give up
+	return -2;
+}
+#endif
+
 static void pypointless_cmp_value_init_pointless(pypointless_cmp_value_t* cv, pointless_t* p, pointless_complete_value_t* v)
 {
 	cv->is_pointless = 1;
@@ -589,10 +701,23 @@ static int32_t pypointless_cmp_rec(pypointless_cmp_value_t* a, pypointless_cmp_v
 	// we're going one deep
 	state->depth += 1;
 
-	if (cmp_a == 0 || cmp_b == 0 || cmp_a != cmp_b)
-		c = SIMPLE_CMP(t_a, t_b);
-	else
+	if (cmp_a == 0 || cmp_b == 0 || cmp_a != cmp_b) {
+#if PY_MAJOR_VERSION < 3
+		c = adapted_default_3way_compare(a, b);
+
+		if (c == -2) {
+			state->error = "comparison not supported between these types";
+			state->depth -= 1;
+			return 0;
+		}
+#else
+		state->error = "comparison not supported between these types";
+		state->depth -= 1;
+		return 0;
+#endif
+	} else {
 		c = (*cmp_a)(a, b, state);
+	}
 
 	// ...and up again
 	state->depth -= 1;
