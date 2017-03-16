@@ -77,6 +77,24 @@ static PyObject* PyPointless_GetINode(PyPointless* self)
 	return PyLong_FromUnsignedLong(buf.st_ino);
 }
 
+static PyObject* PyPointless_GetFileNo(PyPointless* self)
+{
+	if (self->p.fd == 0) {
+		PyErr_Format(PyExc_ValueError, "pointless object is buffer-based");
+		return 0;
+	}
+
+	int f = fileno(self->p.fd);
+	struct stat buf;
+
+	if (f == -1) {
+		PyErr_SetFromErrno(PyExc_OSError);
+		return 0;
+	}
+
+	return PyLong_FromUnsignedLong((unsigned long long)f);
+}
+
 static PyObject* PyPointless_GetRefs(PyPointless* self)
 {
 	return Py_BuildValue("{s:n,s:n,s:n,s:n,s:n}",
@@ -97,10 +115,11 @@ static PyObject* PyPointless_sizeof(PyPointless* self)
 }
 
 static PyMethodDef PyPointless_methods[] = {
-	{"__sizeof__", (PyCFunction)PyPointless_sizeof,   METH_NOARGS, "get size in bytes of backing file or buffer"},
-	{"GetRoot",    (PyCFunction)PyPointless_GetRoot,  METH_NOARGS, "get pointless root object" },
-	{"GetINode",   (PyCFunction)PyPointless_GetINode, METH_NOARGS, "get inode of file descriptor" },
-	{"GetRefs",    (PyCFunction)PyPointless_GetRefs,  METH_NOARGS, "get inside-reference count to base object" },
+	{"__sizeof__", (PyCFunction)PyPointless_sizeof,    METH_NOARGS, "get size in bytes of backing file or buffer"},
+	{"GetRoot",    (PyCFunction)PyPointless_GetRoot,   METH_NOARGS, "get pointless root object" },
+	{"GetINode",   (PyCFunction)PyPointless_GetINode,  METH_NOARGS, "get inode of file descriptor" },
+	{"GetFileNo",  (PyCFunction)PyPointless_GetFileNo, METH_NOARGS, "get file descriptor" },
+	{"GetRefs",    (PyCFunction)PyPointless_GetRefs,   METH_NOARGS, "get inside-reference count to base object" },
 	{NULL}
 };
 
@@ -143,13 +162,16 @@ static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 	self->n_set_refs = 0;
 
 	PyObject* allow_print = Py_True;
-	static char* kwargs[] = {"filename_or_buffer", "allow_print", 0};
+	PyObject* validate = Py_True;
+	static char* kwargs[] = {"filename_or_buffer", "allow_print", "validate", 0};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O!", kwargs, &fname_or_buffer, &PyBool_Type, &allow_print))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O!O!", kwargs, &fname_or_buffer, &PyBool_Type, &allow_print, &PyBool_Type, &validate))
 		return -1;
 
 	if (allow_print == Py_False)
 		self->allow_print = 0;
+
+	int do_validate = (validate == Py_True);
 
 #ifdef Py_UNICODE_WIDE
 	int force_ucs2 = 0;
@@ -191,10 +213,17 @@ static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 
 	Py_BEGIN_ALLOW_THREADS
 
-	if (fname_)
-		i = pointless_open_f(&self->p, fname_, force_ucs2, &error);
-	else
-		i = pointless_open_b(&self->p, buf, buflen, force_ucs2, &error);
+	if (do_validate) {
+		if (fname_)
+			i = pointless_open_f(&self->p, fname_, force_ucs2, &error);
+		else
+			i = pointless_open_b(&self->p, buf, buflen, force_ucs2, &error);
+	} else {
+		if (fname_)
+			i = pointless_open_f_skip_validate(&self->p, fname_, force_ucs2, &error);
+		else
+			i = pointless_open_b_skip_validate(&self->p, buf, buflen, force_ucs2, &error);
+	}
 
 	Py_END_ALLOW_THREADS
 
