@@ -566,7 +566,6 @@ static int32_t pypointless_cmp_none(pypointless_cmp_value_t* a, pypointless_cmp_
 static uint32_t pypointless_cmp_vector_n_items(pypointless_cmp_value_t* a)
 {
 	if (a->is_pointless) {
-		pointless_value_t _v = pointless_value_from_complete(&a->value.pointless.v);
 		return a->value.pointless.vector_slice_n;
 	}
 
