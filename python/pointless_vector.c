@@ -138,7 +138,7 @@ static PyObject* PyPointlessVector_subscript(PyPointlessVector* self, PyObject* 
 	if (PySlice_Check(item)) {
 		Py_ssize_t start, stop, step, slicelength;
 
-		if (PySlice_GetIndicesEx(item, self->slice_n, &start, &stop, &step, &slicelength) == -1)
+		if (PySlice_GetIndicesEx((PySliceObject*)item, (Py_ssize_t)self->slice_n, &start, &stop, &step, &slicelength) == -1)
 			return 0;
 
 		if (step != 1) {
@@ -743,14 +743,13 @@ static PyBufferProcs PyPointlessVector_as_buffer = {
 	(releasebufferproc)PyPointlessVector_releasebuffer
 };
 
-
-
 #if PY_MAJOR_VERSION < 3
 static PySequenceMethods PyPointlessVector_as_sequence = {
 	(lenfunc)PyPointlessVector_length,          /* sq_length */
 	0,                                          /* sq_concat */
 	0,                                          /* sq_repeat */
 	(ssizeargfunc)PyPointlessVector_item,       /* sq_item */
+    (ssizessizeargfunc)PyPointlessVector_slice, /* sq_slice */
 	0,                                          /* sq_ass_item */
 	0,                                          /* sq_ass_slice */
 	(objobjproc)PyPointlessVector_contains,     /* sq_contains */
@@ -763,12 +762,15 @@ static PySequenceMethods PyPointlessVector_as_sequence = {
 	0,                                          /* sq_concat */
 	0,                                          /* sq_repeat */
 	(ssizeargfunc)PyPointlessVector_item,       /* sq_item */
+    (ssizessizeargfunc)PyPointlessVector_slice, /* sq_slice */
 	0,                                          /* sq_ass_item */
+    0,                                          /* sq_ass_slice */
 	(objobjproc)PyPointlessVector_contains,     /* sq_contains */
 	0,                                          /* sq_inplace_concat */
 	0,                                          /* sq_inplace_repeat */
 };
 #endif
+
 
 PyTypeObject PyPointlessVectorType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
