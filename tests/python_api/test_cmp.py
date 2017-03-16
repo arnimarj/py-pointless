@@ -28,29 +28,37 @@ def serialize_and_get(value):
 class TestCmp(unittest.TestCase):
 	def _testPythonCmp(self, values):
 		for i, (v_a, v_b) in enumerate(itertools.product(values, values)):
-			# print 'cmp', i, len(values) ** 2
-			p_a = serialize_and_get(v_a)
-			p_b = serialize_and_get(v_b)
-
-			p_cmp_a = sign(pointless.pointless_cmp(p_a, p_b))
-			p_cmp_b = sign(pointless.pointless_cmp(p_a, v_b))
-			p_cmp_c = sign(pointless.pointless_cmp(v_a, p_b))
-			p_cmp_d = sign(pointless.pointless_cmp(v_a, v_b))
-
-			self.assertEqual(p_cmp_a, p_cmp_b)
-			self.assertEqual(p_cmp_a, p_cmp_c)
-			self.assertEqual(p_cmp_a, p_cmp_d)
-
 			# test against python
+			cmp_failure = False
+
 			try:
 				py_cmp = sign(cmp(v_a, v_b))
 			except TypeError as e:
 				if six.PY3 and 'not supported between instances of ' in str(e):
-					continue
-				raise
+					cmp_failure = True
+				else:
+					raise
 
-			# we're only interested in pointless/python compatibility for equality matcing
-			self.assert_(not ((py_cmp == 0 or p_cmp_a == 0) and p_cmp_a != py_cmp))
+			p_a = serialize_and_get(v_a)
+			p_b = serialize_and_get(v_b)
+
+			if cmp_failure:
+				self.assertRaises(TypeError, pointless.pointless_cmp, p_a, p_b)
+				self.assertRaises(TypeError, pointless.pointless_cmp, p_a, v_b)
+				self.assertRaises(TypeError, pointless.pointless_cmp, v_a, p_b)
+				self.assertRaises(TypeError, pointless.pointless_cmp, v_a, v_b)
+			else:
+				p_cmp_a = sign(pointless.pointless_cmp(p_a, p_b))
+				p_cmp_b = sign(pointless.pointless_cmp(p_a, v_b))
+				p_cmp_c = sign(pointless.pointless_cmp(v_a, p_b))
+				p_cmp_d = sign(pointless.pointless_cmp(v_a, v_b))
+
+				self.assertEqual(p_cmp_a, p_cmp_b)
+				self.assertEqual(p_cmp_a, p_cmp_c)
+				self.assertEqual(p_cmp_a, p_cmp_d)
+
+				# we're only interested in pointless/python compatibility for equality matcing
+				self.assert_(not ((py_cmp == 0 or p_cmp_a == 0) and p_cmp_a != py_cmp))
 
 			del p_a
 			del p_b
@@ -64,27 +72,58 @@ class TestCmp(unittest.TestCase):
 			p_b = serialize_and_get(v_b)
 			p_c = serialize_and_get(v_c)
 
-			# test (a > b) <=> (a < b)
-			cmp_ab = sign(pointless.pointless_cmp(p_a, p_b))
-			cmp_ba = sign(pointless.pointless_cmp(p_b, p_a))
-			self.assert_(cmp_ab == -cmp_ba)
+			is_type_error_ab = False
+			is_type_error_ac = False
+			is_type_error_bc = False
 
-			cmp_ac = sign(pointless.pointless_cmp(p_a, p_c))
-			cmp_ca = sign(pointless.pointless_cmp(p_c, p_a))
-			self.assert_(cmp_ac == -cmp_ca)
+			try:
+				cmp(p_a, p_b)
+			except TypeError:
+				is_type_error_ab = True
 
-			cmp_bc = sign(pointless.pointless_cmp(p_b, p_c))
-			cmp_cb = sign(pointless.pointless_cmp(p_c, p_b))
-			self.assert_(cmp_bc == -cmp_cb)
+			try:
+				cmp(p_a, p_c)
+			except TypeError:
+				is_type_error_ac = True
 
-			# a <= b and b <= a -> a == b
-			self.assert_(not (cmp_ab in (-1, 0) and cmp_ba in (-1, 0) and cmp_ab != 0))
+			try:
+				cmp(p_b, p_c)
+			except TypeError:
+				is_type_error_bc = True
 
-			# a <= b and b <= c -> a <= c
-			self.assert_(not (cmp_ab in (-1, 0) and cmp_bc in (-1, 0) and cmp_ac not in (-1, 0)))
+			if not (is_type_error_ab or is_type_error_ac or is_type_error_bc):
+				# test (a > b) <=> (a < b)
+				cmp_ab = sign(pointless.pointless_cmp(p_a, p_b))
+				cmp_ba = sign(pointless.pointless_cmp(p_b, p_a))
+				self.assert_(cmp_ab == -cmp_ba)
 
-			# a <= b or b <= a
-			self.assert_(cmp_ab in (-1, 0) or cmp_ba in (-1, 0))
+				cmp_ac = sign(pointless.pointless_cmp(p_a, p_c))
+				cmp_ca = sign(pointless.pointless_cmp(p_c, p_a))
+				self.assert_(cmp_ac == -cmp_ca)
+
+				cmp_bc = sign(pointless.pointless_cmp(p_b, p_c))
+				cmp_cb = sign(pointless.pointless_cmp(p_c, p_b))
+				self.assert_(cmp_bc == -cmp_cb)
+
+				# a <= b and b <= a -> a == b
+				self.assert_(not (cmp_ab in (-1, 0) and cmp_ba in (-1, 0) and cmp_ab != 0))
+
+				# a <= b and b <= c -> a <= c
+				self.assert_(not (cmp_ab in (-1, 0) and cmp_bc in (-1, 0) and cmp_ac not in (-1, 0)))
+
+				# a <= b or b <= a
+				self.assert_(cmp_ab in (-1, 0) or cmp_ba in (-1, 0))
+			else:
+				try:
+					pointless.pointless_cmp(p_a, p_b)
+					pointless.pointless_cmp(p_b, p_a)
+					pointless.pointless_cmp(p_a, p_c)
+					pointless.pointless_cmp(p_c, p_a)
+					pointless.pointless_cmp(p_b, p_c)
+					pointless.pointless_cmp(p_c, p_b)
+					self.fail('some of these should have raised TypeError')
+				except TypeError:
+					pass
 
 			del p_a
 			del p_b

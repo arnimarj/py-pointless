@@ -256,11 +256,13 @@ static pypointless_cmp_cb pypointless_cmp_func(pypointless_cmp_value_t* v, uint3
 				return 0;
 		}
 
-		if (pointless_is_vector_type(*type))
+		if (pointless_is_vector_type(*type)) {
 			return pypointless_cmp_vector;
+		}
 
-		if (pointless_is_bitvector_type(*type))
+		if (pointless_is_bitvector_type(*type)) {
 			return pypointless_cmp_bitvector;
+		}
 
 		// some illegal type, anyways, we cannot compare it
 		state->error = "comparison not supported for pointless type";
@@ -563,13 +565,16 @@ static int32_t pypointless_cmp_none(pypointless_cmp_value_t* a, pypointless_cmp_
 
 static uint32_t pypointless_cmp_vector_n_items(pypointless_cmp_value_t* a)
 {
-	if (a->is_pointless)
+	if (a->is_pointless) {
+		pointless_value_t _v = pointless_value_from_complete(&a->value.pointless.v);
 		return a->value.pointless.vector_slice_n;
+	}
 
 	assert(PyList_Check(a->value.py_object) || PyTuple_Check(a->value.py_object));
 
-	if (PyList_Check(a->value.py_object))
+	if (PyList_Check(a->value.py_object)) {
 		return (uint32_t)PyList_GET_SIZE(a->value.py_object);
+	}
 
 	return (uint32_t)PyTuple_GET_SIZE(a->value.py_object);
 }
@@ -777,7 +782,7 @@ PyObject* pointless_cmp(PyObject* self, PyObject* args)
 	c = pypointless_cmp_rec(&v_a, &v_b, &state);
 
 	if (state.error) {
-		PyErr_Format(PyExc_ValueError, "pointless_cmp: %s", state.error);
+		PyErr_Format(PyExc_TypeError, "pointless_cmp: %s", state.error);
 		return 0;
 	}
 
