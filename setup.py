@@ -61,7 +61,8 @@ extra_compile_args = [
 	'-g',
 	'-D_GNU_SOURCE',
 	'-O2',
-	'-DNDEBUG'
+	'-DNDEBUG',
+	'-c99'
 ]
 
 extra_link_args = ['-L./judy-1.0.5/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm']
