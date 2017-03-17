@@ -36,6 +36,8 @@ class TestCmp(unittest.TestCase):
 			except TypeError as e:
 				if six.PY3 and 'not supported between instances of ' in str(e):
 					cmp_failure = True
+				elif six.PY3 and 'unorderable types' in str(e):
+					cmp_failure = True
 				else:
 					raise
 
