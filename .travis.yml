@@ -12,6 +12,7 @@ install:
   - ./compile.sh
   - cd ..
   - pip install -r test-requirements.txt
+  - python setup.py install
 
 script:
   - cd tests
