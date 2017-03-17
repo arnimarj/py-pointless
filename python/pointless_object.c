@@ -85,7 +85,6 @@ static PyObject* PyPointless_GetFileNo(PyPointless* self)
 	}
 
 	int f = fileno(self->p.fd);
-	struct stat buf;
 
 	if (f == -1) {
 		PyErr_SetFromErrno(PyExc_OSError);
@@ -180,14 +179,21 @@ static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 #endif
 
 	if (PyUnicode_Check(fname_or_buffer)) {
-		string_of_unicode = PyUnicode_AsASCIIString(fname_or_buffer);
+		string_of_unicode = PyUnicode_AsLatin1String(fname_or_buffer);
 
 		if (string_of_unicode == 0)
 			return -1;
 
+#if PY_MAJOR_VERSION < 3
 		fname_ = PyString_AS_STRING(string_of_unicode);
+#else
+		fname_ = PyBytes_AS_STRING(string_of_unicode);
+#endif
+
+#if PY_MAJOR_VERSION < 3
 	} else if (PyString_Check(fname_or_buffer)) {
 		fname_ = PyString_AS_STRING(fname_or_buffer);
+#endif
 	} else if (PyPointlessPrimVector_Check(fname_or_buffer)) {
 		vector = (PyPointlessPrimVector*)fname_or_buffer;
 
@@ -238,8 +244,7 @@ static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 }
 
 PyTypeObject PyPointlessType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                               /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointless",         /*tp_name*/
 	sizeof(PyPointless),             /*tp_basicsize*/
 	0,                               /*tp_itemsize*/

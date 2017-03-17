@@ -3,7 +3,11 @@
 // yes I know, this is a global variable, but this is a similar trick to avoid cycles
 // as CPython does, since it guarantees that access to these functions is serialized
 typedef struct {
-	pointless_dynarray_t _string;
+#if PY_MAJOR_VERSION < 3
+	pointless_dynarray_t _string_8;
+#else
+	pointless_dynarray_t _string_32;
+#endif
 	uint32_t _depth;
 	uint32_t _container_ids[POINTLESS_MAX_DEPTH];
 } _pypointless_print_state_t;
@@ -36,10 +40,11 @@ static void print_state_pop(_pypointless_print_state_t* state)
 	state->_depth -= 1;
 }
 
+#if PY_MAJOR_VERSION < 3
 static int _pypointless_print_append_8_(_pypointless_print_state_t* state, const char* s)
 {
 	while (*s) {
-		if (!pointless_dynarray_push(&state->_string, (char*)s)) {
+		if (!pointless_dynarray_push(&state->_string_8, (char*)s)) {
 			PyErr_NoMemory();
 			return 0;
 		}
@@ -49,23 +54,79 @@ static int _pypointless_print_append_8_(_pypointless_print_state_t* state, const
 
 	return 1;
 }
+#else
+static int _pypointless_print_append_ucs4_(_pypointless_print_state_t* state, uint32_t* s, size_t len)
+{
+	for (size_t i = 0; i < len; i++) {
+		uint32_t value = (uint32_t)(*(s + i));
+
+		if (!pointless_dynarray_push(&state->_string_32, &value)) {
+			PyErr_NoMemory();
+			return 0;
+		}
+	}
+
+	return 1;
+}
+static int _pypointless_print_append_ucs2_(_pypointless_print_state_t* state, uint16_t* s, size_t len)
+{
+	for (size_t i = 0; i < len; i++) {
+		uint32_t value = (uint32_t)(*(s + i));
+
+		if (!pointless_dynarray_push(&state->_string_32, &value)) {
+			PyErr_NoMemory();
+			return 0;
+		}
+	}
+
+	return 1;
+}
+static int _pypointless_print_append_ucs1_(_pypointless_print_state_t* state, uint8_t* s, size_t len)
+{
+	for (size_t i = 0; i < len; i++) {
+		uint32_t value = (uint32_t)(*(s + i));
+
+		if (!pointless_dynarray_push(&state->_string_32, &value)) {
+			PyErr_NoMemory();
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static int _pypointless_print_append_8_(_pypointless_print_state_t* state, const char* s)
+{
+	size_t len = strlen(s);
+	for (size_t i = 0; i < len; i++) {
+		uint32_t value = (uint32_t)(*(s + i));
+
+		if (!pointless_dynarray_push(&state->_string_32, &value)) {
+			PyErr_NoMemory();
+			return 0;
+		}
+	}
+
+	return 1;
+}
+#endif
 
 static int _pypointless_unicode_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state);
 static int _pypointless_string_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state);
-static int _pypointless_vector_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state, uint32_t slice_i, uint32_t slice_n);
+static int _pypointless_vector_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state, uint32_t slice_i, uint32_t slice_n, int vector_as_tuple);
 static int _pypointless_set_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state);
 static int _pypointless_map_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state);
 static int _pypointless_bitvector_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state);
 static int _pypointless_bitvector_str_buffer(void* buffer, uint32_t n_bits, _pypointless_print_state_t* state);
 
-static int _pypointless_str_rec(pointless_t* p, pointless_complete_value_t* v, _pypointless_print_state_t* state, uint32_t vector_slice_i, uint32_t vector_slice_n)
+static int _pypointless_str_rec(pointless_t* p, pointless_complete_value_t* v, _pypointless_print_state_t* state, uint32_t vector_slice_i, uint32_t vector_slice_n, int vector_as_tuple)
 {
 	// convert value
 	pointless_value_t _v = pointless_value_from_complete(v);
 
 	// both compressible types
 	if (pointless_is_vector_type(v->type))
-		return _pypointless_vector_str(p, &_v, state, vector_slice_i, vector_slice_n);
+		return _pypointless_vector_str(p, &_v, state, vector_slice_i, vector_slice_n, vector_as_tuple);
 
 	if (pointless_is_bitvector_type(v->type))
 		return _pypointless_bitvector_str(p, &_v, state);
@@ -113,12 +174,40 @@ static int _pypointless_value_repr(pointless_t* p, PyObject* u_value, _pypointle
 	if (s_value == 0)
 		return 0;
 
+#if PY_MAJOR_VERSION < 3
 	assert(PyString_Check(s_value));
-
 	int i = _pypointless_print_append_8_(state, PyString_AS_STRING(s_value));
+#else
+	assert(PyUnicode_Check(s_value));
+
+	Py_ssize_t len = PyUnicode_GET_LENGTH(s_value);
+	void* data = PyUnicode_DATA(s_value);
+	int i = 0;
+
+	switch (PyUnicode_KIND(s_value)) {
+		case PyUnicode_WCHAR_KIND:
+			PyErr_SetString(PyExc_ValueError, "wchar unicode unsupported");
+			i = 0;
+			break;
+		case PyUnicode_1BYTE_KIND:
+			i = _pypointless_print_append_ucs1_(state, (uint8_t*)data, len);
+			break;
+		case PyUnicode_2BYTE_KIND:
+			i = _pypointless_print_append_ucs2_(state, (uint16_t*)data, len);
+			break;
+		case PyUnicode_4BYTE_KIND:
+			i = _pypointless_print_append_ucs4_(state, (uint32_t*)data, len);
+			break;
+		default:
+			assert(0);
+			PyErr_SetString(PyExc_ValueError, "strange unicode");
+			i = 0;
+			break;
+	}
+
+#endif
 
 	Py_DECREF(s_value);
-
 	return i;
 }
 
@@ -146,15 +235,20 @@ static int _pypointless_string_str(pointless_t* p, pointless_value_t* v, _pypoin
 	return i;
 }
 
-static int _pypointless_vector_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state, uint32_t slice_i, uint32_t slice_n)
+static int _pypointless_vector_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state, uint32_t slice_i, uint32_t slice_n, int vector_as_tuple)
 {
 	uint32_t container_id = pointless_container_id(p, v);
 
 	if (print_state_has_container(state, container_id))
 		return _pypointless_print_append_8_(state, "[...]");
 
-	if (!_pypointless_print_append_8_(state, "["))
-		return 0;
+	if (vector_as_tuple) {
+		if (!_pypointless_print_append_8_(state, "("))
+			return 0;
+	} else {
+		if (!_pypointless_print_append_8_(state, "["))
+			return 0;
+	}
 
 	if (!print_state_push(state, container_id))
 		return 0;
@@ -172,7 +266,7 @@ static int _pypointless_vector_str(pointless_t* p, pointless_value_t* v, _pypoin
 			v_slice_n = pointless_reader_vector_n_items(p, &_value);
 		}
 
-		if (!_pypointless_str_rec(p, &value, state, v_slice_i, v_slice_n)) {
+		if (!_pypointless_str_rec(p, &value, state, v_slice_i, v_slice_n, vector_as_tuple)) {
 			print_state_pop(state);
 			return 0;
 		}
@@ -185,7 +279,15 @@ static int _pypointless_vector_str(pointless_t* p, pointless_value_t* v, _pypoin
 
 	print_state_pop(state);
 
-	return _pypointless_print_append_8_(state, "]");
+	if (vector_as_tuple) {
+		if (slice_n == 1) {
+			return _pypointless_print_append_8_(state, ",)");
+		} else {
+			return _pypointless_print_append_8_(state, ")");
+		}
+	} else {
+		return _pypointless_print_append_8_(state, "]");
+	}
 }
 
 static int _pypointless_set_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state)
@@ -216,7 +318,7 @@ static int _pypointless_set_str(pointless_t* p, pointless_value_t* v, _pypointle
 
 		pointless_complete_value_t _value = pointless_value_to_complete(value);
 
-		if (!_pypointless_str_rec(p, &_value, state, v_slice_i, v_slice_n)) {
+		if (!_pypointless_str_rec(p, &_value, state, v_slice_i, v_slice_n, 1)) {
 			print_state_pop(state);
 			return 0;
 		}
@@ -271,7 +373,7 @@ static int _pypointless_map_str(pointless_t* p, pointless_value_t* v, _pypointle
 		pointless_complete_value_t _key = pointless_value_to_complete(key);
 		pointless_complete_value_t _value = pointless_value_to_complete(value);
 
-		if (!_pypointless_str_rec(p, &_key, state, v_slice_i_k, v_slice_n_k)) {
+		if (!_pypointless_str_rec(p, &_key, state, v_slice_i_k, v_slice_n_k, 1)) {
 			print_state_pop(state);
 			return 0;
 		}
@@ -281,7 +383,7 @@ static int _pypointless_map_str(pointless_t* p, pointless_value_t* v, _pypointle
 			return 0;
 		}
 
-		if (!_pypointless_str_rec(p, &_value, state, v_slice_i_v, v_slice_n_v)) {
+		if (!_pypointless_str_rec(p, &_value, state, v_slice_i_v, v_slice_n_v, 0)) {
 			print_state_pop(state);
 			return 0;
 		}
@@ -334,6 +436,7 @@ static int _pypointless_bitvector_str_buffer(void* buffer, uint32_t n_bits, _pyp
 	return _pypointless_print_append_8_(state, "b");
 }
 
+#if PY_MAJOR_VERSION < 3
 static int pointless_value_string_is_7bit(uint8_t* s)
 {
 	while (*s) {
@@ -346,26 +449,36 @@ static int pointless_value_string_is_7bit(uint8_t* s)
 	return 1;
 }
 
-PyObject* PyPointless_string_from_buffer_8(pointless_dynarray_t* s)
+static PyObject* PyPointless_string_from_buffer_8(pointless_dynarray_t* s)
 {
 	// if 7-bit, string, otherwise unicode
 	uint8_t* buffer = pointless_dynarray_buffer(s);
-	PyObject* ss = 0;
 
 	if (pointless_value_string_is_7bit(buffer))
-		ss = PyString_FromString((const char*)buffer);
-	else
-		ss = PyUnicode_DecodeLatin1((const char*)buffer, strlen((const char*)buffer), 0);
+		return PyString_FromString((const char*)buffer);
 
-	return ss;
+	return PyUnicode_DecodeLatin1((const char*)buffer, strlen((const char*)buffer), 0);
 }
+#else
+static PyObject* PyPointless_string_from_buffer_32(pointless_dynarray_t* s)
+{
+	// if 7-bit, string, otherwise unicode
+	uint32_t* buffer = pointless_dynarray_buffer(s);
+	size_t n_chars = pointless_dynarray_n_items(s);
+	return PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, buffer, n_chars);
+}
+#endif
 
 PyObject* PyPointless_str(PyObject* py_object)
 {
 	// setup a state
 	_pypointless_print_state_t state;
 	state._depth = 0;
-	pointless_dynarray_init(&state._string, 1);
+#if PY_MAJOR_VERSION < 3
+	pointless_dynarray_init(&state._string_8, 1);
+#else
+	pointless_dynarray_init(&state._string_32, 4);
+#endif
 
 	// buffer based bitvectors handled seperately
 	if (PyPointlessBitvector_Check(py_object)) {
@@ -376,22 +489,37 @@ PyObject* PyPointless_str(PyObject* py_object)
 				int i = _pypointless_bitvector_str_buffer(b->primitive_bits, b->primitive_n_bits, &state);
 
 				PyObject* s = 0;
-				char zero = 0;
 
-				if (!pointless_dynarray_push(&state._string, &zero)) {
+#if PY_MAJOR_VERSION < 3
+				char zero = 0;
+				if (!pointless_dynarray_push(&state._string_8, &zero)) {
 					PyErr_NoMemory();
-					pointless_dynarray_destroy(&state._string);
+					pointless_dynarray_destroy(&state._string_8);
 					return 0;
 				}
+#endif
 
+#if PY_MAJOR_VERSION < 3
 				if (i)
-					s = PyPointless_string_from_buffer_8(&state._string);
+					s = PyPointless_string_from_buffer_8(&state._string_8);
 
-				pointless_dynarray_destroy(&state._string);
+				pointless_dynarray_destroy(&state._string_8);
+#else
+				if (i)
+					s = PyPointless_string_from_buffer_32(&state._string_32);
+
+				pointless_dynarray_destroy(&state._string_32);
+#endif
+
 				return s;
 			} else {
-				pointless_dynarray_destroy(&state._string);
+#if PY_MAJOR_VERSION < 3
+				pointless_dynarray_destroy(&state._string_8);
 				return PyString_FromFormat("<%s object at %p>", Py_TYPE(py_object)->tp_name, (void*)py_object);
+#else
+				pointless_dynarray_destroy(&state._string_32);
+				return PyUnicode_FromFormat("<%s object at %p>", Py_TYPE(py_object)->tp_name, (void*)py_object);
+#endif
 			}
 		}
 	}
@@ -427,25 +555,39 @@ PyObject* PyPointless_str(PyObject* py_object)
 		return 0;
 	}
 
-	if (!pp->allow_print)
+	if (!pp->allow_print) {
+#if PY_MAJOR_VERSION < 3
 		return PyString_FromFormat("<%s object at %p>", Py_TYPE(py_object)->tp_name, (void*)py_object);
-
-	pointless_complete_value_t _v = pointless_value_to_complete(v);
-	int i = _pypointless_str_rec(&pp->p, &_v, &state, vector_slice_i, vector_slice_n); 
-	PyObject* s = 0;
-
-	char zero = 0;
-
-	if (!pointless_dynarray_push(&state._string, &zero)) {
-		PyErr_NoMemory();
-		pointless_dynarray_destroy(&state._string);
-		return 0;
+#else
+		return PyUnicode_FromFormat("<%s object at %p>", Py_TYPE(py_object)->tp_name, (void*)py_object);
+#endif
 	}
 
-	if (i)
-		s = PyPointless_string_from_buffer_8(&state._string);
+	pointless_complete_value_t _v = pointless_value_to_complete(v);
+	int i = _pypointless_str_rec(&pp->p, &_v, &state, vector_slice_i, vector_slice_n, 0);
+	PyObject* s = 0;
 
-	pointless_dynarray_destroy(&state._string);
+#if PY_MAJOR_VERSION < 3
+	char zero = 0;
+	if (!pointless_dynarray_push(&state._string_8, &zero)) {
+		PyErr_NoMemory();
+		pointless_dynarray_destroy(&state._string_8);
+		return 0;
+	}
+#endif
+
+#if PY_MAJOR_VERSION < 3
+	if (i)
+		s = PyPointless_string_from_buffer_8(&state._string_8);
+
+	pointless_dynarray_destroy(&state._string_8);
+#else
+	if (i)
+		s = PyPointless_string_from_buffer_32(&state._string_32);
+
+	pointless_dynarray_destroy(&state._string_32);
+#endif
+
 	return s;
 }
 

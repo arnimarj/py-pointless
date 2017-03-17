@@ -1,6 +1,11 @@
 #!/usr/bin/python
 
-import threading, thread, random, pointless
+import threading, random, pointless, six
+
+if six.PY2:
+	import thread
+else:
+	import _thread as thread
 
 from twisted.trial import unittest
 
@@ -12,18 +17,18 @@ class TestThreadSafe(unittest.TestCase):
 
 		V = [None]
 		V += range(10000)
-		fnames = ['out.%i.map' % (i,) for i in xrange(n_files)]
+		fnames = ['out.%i.map' % (i,) for i in six.moves.range(n_files)]
 
 		for fname in fnames:
 			pointless.serialize(V, fname)
 
-		p_list = [pointless.Pointless(fname) for i in xrange(n_files)]
-		s_list = [threading.Event() for i in xrange(n_threads)]
+		p_list = [pointless.Pointless(fname) for i in six.moves.range(n_files)]
+		s_list = [threading.Event() for i in six.moves.range(n_threads)]
 
 		def thread_func(e):
 			c = 0
 
-			for i in xrange(n_iter):
+			for i in six.moves.range(n_iter):
 				j = random.randint(0, len(p_list) - 1)
 				c += len(p_list[j].GetRoot())
 
@@ -32,8 +37,8 @@ class TestThreadSafe(unittest.TestCase):
 
 			e.set()
 
-		for i in xrange(n_threads):
+		for i in six.moves.range(n_threads):
 			thread.start_new_thread(thread_func, (s_list[i],))
 
-		for i in xrange(n_threads):
+		for i in six.moves.range(n_threads):
 			s_list[i].wait()

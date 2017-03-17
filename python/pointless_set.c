@@ -148,8 +148,7 @@ static PySequenceMethods PyPointlessSet_as_sequence = {
 };
 
 PyTypeObject PyPointlessSetType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                   /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessSet",          /*tp_name*/
 	sizeof(PyPointlessSet),              /*tp_basicsize*/
 	0,                                   /*tp_itemsize*/
@@ -190,8 +189,7 @@ PyTypeObject PyPointlessSetType = {
 };
 
 PyTypeObject PyPointlessSetIterType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                         /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessSetIter",            /*tp_name*/
 	sizeof(PyPointlessSetIter),                /*tp_basicsize*/
 	0,                                         /*tp_itemsize*/

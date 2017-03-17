@@ -1,5 +1,11 @@
-import sys, commands, os
+import sys, subprocess, os, os.path
 from setuptools import setup, Extension
+
+if hasattr(subprocess, 'getstatusoutput'):
+	getstatusoutput = subprocess.getstatusoutput
+else:
+	import commands
+	getstatusoutput = commands.getstatusoutput
 
 def build_judy():
 	print('INFO: building judy static library...')
@@ -16,15 +22,15 @@ def build_judy():
 		sys.exit(output)
 
 	if 'clang' in output:
-		print 'INFO: compiler is Clang'
+		print('INFO: compiler is Clang')
 		is_clang = True
 	elif 'gcc version 4.6' in output:
-		print 'INFO: compiler is GCC 4.6'
+		print('INFO: compiler is GCC 4.6')
 		is_gcc_46 = True
 
 	# adding last two flags because of compiler and/or code bugs
 	# see http://sourceforge.net/p/judy/mailman/message/32417284/
-	assert(sys.maxint in (2**63-1, 2**31-1))
+	assert(sys.maxsize in (2**63-1, 2**31-1))
 
 	if is_clang or is_gcc_46:
 		if sys.maxint == 2**63-1:
@@ -32,17 +38,17 @@ def build_judy():
 		else:
 			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing'
 	else:
-		if sys.maxint == 2**63-1:
+		if sys.maxsize == 2**63-1:
 			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
 		else:
 			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
 
-	exitcode, output = commands.getstatusoutput('(cd judy-1.0.5/src; CC=\'%s\' COPT=\'%s\' sh ./sh_build)' % (CC, CFLAGS))
+	exitcode, output = getstatusoutput('(cd judy-1.0.5/src; CC=\'%s\' COPT=\'%s\' sh ./sh_build)' % (CC, CFLAGS))
 
 	if exitcode != 0:
 		sys.exit(output)
 
-	print output
+	print(output)
 
 if not os.path.isfile('./judy-1.0.5/src/libJudy.a'):
 	build_judy()
@@ -55,14 +61,15 @@ extra_compile_args = [
 	'-g',
 	'-D_GNU_SOURCE',
 	'-O2',
-	'-DNDEBUG'
+	'-DNDEBUG',
+	'-std=c99'
 ]
 
 extra_link_args = ['-L./judy-1.0.5/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm']
 
 setup(
 	name = 'pointless',
-	version = '0.2.8.2',
+	version = '0.3',
 	maintainer = 'Arni Mar Jonsson',
 	maintainer_email = 'arnimarj@gmail.com',
 	url = 'https://github.com/arnimarj/py-pointless',
@@ -75,8 +82,12 @@ setup(
 		'Operating System :: POSIX',
 		'Programming Language :: C',
 		'Programming Language :: Python',
-		'Programming Language :: Python :: 2.6',
+		'Programming Language :: Python :: 2',
 		'Programming Language :: Python :: 2.7',
+		'Programming Language :: Python :: 3',
+		'Programming Language :: Python :: 3.4',
+		'Programming Language :: Python :: 3.5',
+		'Programming Language :: Python :: 3.6',
 		'Topic :: Database',
 		'Topic :: Software Development :: Libraries'
 	],
@@ -122,6 +133,7 @@ setup(
 				'src/pointless_bitvector.c',
 				'src/pointless_walk.c',
 				'src/pointless_cycle_marker.c',
+				'src/pointless_cycle_marker_wrappers.c',
 				'src/pointless_validate.c',
 				'src/pointless_validate_heap_ref.c',
 				'src/pointless_validate_heap.c',

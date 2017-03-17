@@ -103,13 +103,15 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 	int is_error = 0;
 
 	if (size != 0) {
-		if (PyInt_Check(size) || PyInt_CheckExact(size)) {
-			n_items = (Py_ssize_t)PyInt_AS_LONG(size);
-		} else if (PyLong_Check(size) || PyLong_CheckExact(size)) {
+		if (PyLong_Check(size) || PyLong_CheckExact(size)) {
 			n_items = (Py_ssize_t)PyLong_AsLongLong(size);
 
 			if (PyErr_Occurred())
 				return -1;
+#if PY_MAJOR_VERSION < 3
+		} else if (PyInt_Check(size) || PyInt_CheckExact(size)) {
+			n_items = (Py_ssize_t)PyInt_AS_LONG(size);
+#endif
 		} else {
 			is_error = 1;
 		}
@@ -165,11 +167,13 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 					self->primitive_n_one += 1;
 				}
 			// 2) integer (must be 0 or 1)
+#if PY_MAJOR_VERSION < 3
 			} else if ((PyInt_Check(obj) || PyInt_CheckExact(obj)) && (PyInt_AS_LONG(obj) == 0 || PyInt_AS_LONG(obj) == 1)) {
 				if (PyInt_AS_LONG(obj) == 1) {
 					bm_set_(self->primitive_bits, i);
 					self->primitive_n_one += 1;
 				}
+#endif
 			// 3) long (must be 0 or 1)
 			} else if (PyLong_Check(obj) || PyLong_CheckExact(obj)) {
 				PY_LONG_LONG v = PyLong_AsLongLong(obj);
@@ -277,42 +281,53 @@ static int PyPointlessBitvector_ass_subscript(PyPointlessBitvector* self, PyObje
 
 	// true iff: the value was set
 	uint32_t was_set = PyPointlessBitvector_is_set(self, i);
+	int i_value = -1;
 
 	// we only want 0|1|True|PyPointlessBitvector_extend_false
 	if (PyBool_Check(value)) {
-		if (value == Py_True) {
-			bm_set_(self->primitive_bits, i);
-
-			if (!was_set)
-				self->primitive_n_one += 1;
-		} else {
-			bm_reset_(self->primitive_bits, i);
-
-			if (was_set)
-				self->primitive_n_one -= 1;
-		}
-
-		return 0;	
+		if (value == Py_True)
+			i_value = 1;
+		else
+			i_value = 0;
 	}
 
+	if (PyLong_Check(value)) {
+		long long v = PyLong_AsLongLong(value);
+
+		if (PyErr_Occurred())
+			return -1;
+
+		if (v == 0)
+			i_value = 0;
+		else if (v == 1)
+			i_value = 1;
+	}
+
+#if PY_MAJOR_VERSION < 3
 	if (PyInt_Check(value)) {
 		long v = PyInt_AS_LONG(value);
 
-		if (v == 0 || v == 1) {
-			if (v == 1) {
-				bm_set_(self->primitive_bits, i);
+		if (v == 0)
+			i_value = 0;
+		else if (v == 1)
+			i_value = 1;
+	}
+#endif
 
-				if (!was_set)
-					self->primitive_n_one += 1;
-			} else {
-				bm_reset_(self->primitive_bits, i);
+	if (i_value == 0) {
+		bm_reset_(self->primitive_bits, i);
 
-				if (was_set)
-					self->primitive_n_one -= 1;
-			}
+		if (was_set)
+			self->primitive_n_one -= 1;
 
-			return 0;
-		}
+		return 0;
+	} else if (i_value == 1) {
+		bm_set_(self->primitive_bits, i);
+
+		if (!was_set)
+			self->primitive_n_one += 1;
+
+		return 0;
 	}
 
 	PyErr_SetString(PyExc_ValueError, "we only want 0, 1, True or False");
@@ -619,7 +634,7 @@ static PyObject* PyPointlessBitvector_extend_(PyPointlessBitvector* self, PyObje
 	}
 
 	// overflow
-	if (n > UINT32_MAX) {
+	if (n >= 0 && (uint64_t)n > UINT32_MAX) {
 		PyErr_SetString(PyExc_ValueError, "resulting bitvector would be too large");
 		return 0;
 	}
@@ -792,23 +807,32 @@ static long PyPointlessBitVector_hash(PyPointlessBitvector* self)
 
 PyObject* PyBitvector_repr(PyPointlessBitvector* self)
 {
-	if (!self->is_pointless && !self->allow_print)
+	if (!self->is_pointless && !self->allow_print) {
+#if PY_MAJOR_VERSION < 3
 		return PyString_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
+#else
+		return PyUnicode_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
+#endif
+	}
 
 	return PyPointless_repr((PyObject*)self);
 }
 
 PyObject* PyBitvector_str(PyPointlessBitvector* self)
 {
-	if (!self->is_pointless && !self->allow_print)
+	if (!self->is_pointless && !self->allow_print) {
+#if PY_MAJOR_VERSION < 3
 		return PyString_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
+#else
+		return PyUnicode_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
+#endif
+	}
 
 	return PyPointless_str((PyObject*)self);
 }
 
 PyTypeObject PyPointlessBitvectorType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                        /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessBitvector",         /*tp_name*/
 	sizeof(PyPointlessBitvector),             /*tp_basicsize*/
 	0,                                        /*tp_itemsize*/
@@ -871,8 +895,7 @@ static PyObject* PyPointlessBitvectorIter_iternext(PyPointlessBitvectorIter* ite
 
 
 PyTypeObject PyPointlessBitvectorIterType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                               /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessBitvectorIter",            /*tp_name*/
 	sizeof(PyPointlessBitvectorIter),                /*tp_basicsize*/
 	0,                                               /*tp_itemsize*/
@@ -948,3 +971,4 @@ uint32_t pointless_pybitvector_hash_32(PyPointlessBitvector* bitvector)
 
 	return pointless_bitvector_hash_n_bits_bits_32(n_bits, bits);
 }
+

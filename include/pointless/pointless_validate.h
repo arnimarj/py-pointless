@@ -42,7 +42,7 @@ Checking all this is pretty expensive, and is done after the first set of tests.
 #include <pointless/pointless_reader_utils.h>
 #include <pointless/pointless_hash_table.h>
 #include <pointless/pointless_unicode_utils.h>
-#include <pointless/pointless_cycle_marker.h>
+#include <pointless/pointless_cycle_marker_wrappers.h>
 #include <pointless/pointless_walk.h>
 
 typedef struct {

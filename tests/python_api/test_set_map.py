@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import pointless, types
+import six, pointless
 
 from twisted.trial import unittest
 
@@ -16,10 +16,55 @@ class TestSetMap(unittest.TestCase):
 		pointless.serialize(v, fname)
 		vv = pointless.Pointless(fname).GetRoot()
 
-		for a, b in v.iteritems():
+		for a, b in six.iteritems(v):
 			self.assert_(a in vv)
 			bb = vv[a]
 			self.assertEquals(b, bb)
+
+	def testEvilCases(self):
+		for value, comparable in self.bad_case_iter():
+			pointless.serialize(value, 'file.map')
+			svalue = pointless.Pointless('file.map').GetRoot()
+
+			if comparable:
+				self.assertEquals(pointless.pointless_cmp(value, svalue), 0)
+
+			s_a = str(value)
+			s_b = str(svalue)
+
+			# stringifaction of dicts/set does not have a consistent ordering
+			if comparable:
+				if not self._contains_dict_or_set(value):
+					self.assertEquals(s_a, s_b)
+
+	def bad_case_iter(self):
+		value = { }
+		value[1] = value
+		yield value, False
+
+		value = {
+			(314,): []
+		}
+		value[(314,)].append(value)
+		yield value, False
+
+		value = {}
+		yield value, False
+
+		value = {
+			():   [],
+		}
+
+		value[()].append(value)
+		value[(1,)] = value[()]
+		yield value, False
+
+		value[(1,)].append(value[(1,)])
+		yield value, False
+
+		value = []
+		value.append(value)
+		yield value, False
 
 	def testMap(self):
 		maps = [
@@ -35,7 +80,7 @@ class TestSetMap(unittest.TestCase):
 			}
 		]
 
-		maps[3][(1,2)].append(maps)
+		maps[-1][(1,2)].append(maps)
 
 		fname = 'test_map.map'
 
@@ -43,18 +88,29 @@ class TestSetMap(unittest.TestCase):
 			pointless.serialize(m, fname)
 			root_a = pointless.Pointless(fname).GetRoot()
 
-			for k in m.iterkeys():
+			for k in six.iterkeys(m):
 				self.assert_(k in root_a)
 
 				v_m = m[k]
 				v_a = root_a[k]
 
-				self.assert_(pointless.pointless_cmp(v_m, v_a) == 0)
+				if not self._contains_dict_or_set(v_m):
+					self.assert_(pointless.pointless_cmp(v_m, v_a) == 0)
 
 			del root_a
 
+	def _contains_dict_or_set(self, v):
+		if isinstance(v, (tuple, list, pointless.PointlessVector)):
+			return any(map(self._contains_dict_or_set, v))
+
+		if isinstance(v, (dict, pointless.PointlessMap, set, pointless.PointlessSet)):
+			return True
+
+		return False
+
+
 	def _list_to_tuple(self, v):
-		return tuple(map(self._list_to_tuple, v)) if isinstance(v, types.ListType) else v
+		return tuple(map(self._list_to_tuple, v)) if isinstance(v, list) else v
 
 	def testSet(self):
 		fname_a = 'test_set_contains_a.map'
@@ -70,9 +126,9 @@ class TestSetMap(unittest.TestCase):
 			[0, 1, 2, 3, 4],
 			['a', 'b', 'c', ['d', 'e', 1.0]],
 			[None, [None]],
-			[range(10), range(100), range(1000), [range(10), ['asdf'] * 10]],
+			[list(range(10)), list(range(100)), list(range(1000)), [list(range(10)), ['asdf'] * 10]],
 			[[0]], [[-1]], [[-1.0, 0.0]], [[0, False]], [[0, True]],
-			[range(10, -100, -1), [[range(10)]]]
+			[list(range(10, -100, -1)), [[list(range(10))]]]
 		]
 
 		# for each set V of values

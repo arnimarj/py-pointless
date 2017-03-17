@@ -458,7 +458,7 @@ static int pointless_serialize_vector_priv(pointless_create_t* c, uint32_t vecto
 
 	for (i = 0; i < n_items && !is_native; i++) {
 		// uncompressed value vector
-		if (is_uncompressed) {
+		if (!is_compressed) {//is_uncompressed) {
 			// WARNING: we are using a pointer to a dynamic array, so during its scope, we must
 			//          not touch the original array, c->values in this case
 			value.v = pointless_create_to_read_value(c, items[i], n_priv_vectors);
@@ -601,7 +601,8 @@ static uint32_t pointless_create_vector_compression(pointless_create_t* c, uint3
 	assert(pointless_dynarray_n_items(&cv_priv_vector_at(vector)->vector) > 0);
 
 	// no compression possibilites found yet
-	uint32_t compression = POINTLESS_VECTOR_VALUE;
+	uint32_t compression = cv_value_type(vector);
+	assert(compression == POINTLESS_VECTOR_VALUE || compression == POINTLESS_VECTOR_VALUE_HASHABLE);
 	size_t i;
 
 	// value ranges we've found, we do not support 64 bit integers, only 8, 16 and 32
@@ -686,94 +687,6 @@ static uint32_t pointless_create_vector_compression(pointless_create_t* c, uint3
 	return 0;
 }
 
-//! COMPLICATED BIT HERE, WE NEED TO KNOW FOR EACH POINTLESS_VECTOR_VALUE, IF IT CONTAINS AND NON-HASHABLE VALUES
-//  OR IF IT PART OF A CYCLE
-
-/*
-	 def check_rec(vector, vector_stack):
-	   if vector in vector_stack:
-		 return False
-
-	   for child in vector:
-		 if child is vector:
-		   vector_stack.push(child)
-		   if not check_rec(child, vector_stack):
-			 return False
-		   vector_stack.pop()
-
-	   if not is_hashable(child):
-		 return False
-
-	  return True
-
-	def check(vector):
-	  return check_rec(vector, [ ])
-*/
-
-
-static int pointless_vector_check_hashable_rec(pointless_create_t* c, uint32_t v, void* priv_vector_bitmask, void* outside_vector_bitmask, uint32_t depth)
-{
-	// we might see an outside vector here, all of which are hashable
-	if (pointless_is_vector_type(cv_value_type(v)) && cv_value_type(v) != POINTLESS_VECTOR_EMPTY) {
-		if (cv_is_outside_vector(v))
-			return 1;
-	}
-
-	size_t i, ii;
-
-	if (cv_value_type(v) == POINTLESS_VECTOR_VALUE) {
-		// if this is a cycle, it is not hashable
-		ii = cv_value_data_u32(v);
-
-		// outside vector
-		if (cv_is_outside_vector(v)) {
-			if (bm_is_set_(outside_vector_bitmask, ii))
-				return 0;
-
-			bm_set_(outside_vector_bitmask, ii);
-
-			for (i = 0; i < cv_outside_vector_at(v)->n_items; i++) {
-				uint32_t cc = ((uint32_t*)cv_outside_vector_at(v)->items)[i];
-
-				if (!pointless_vector_check_hashable_rec(c, cc, priv_vector_bitmask, outside_vector_bitmask, depth + 1)) {
-					bm_reset_(outside_vector_bitmask, ii);
-					return 0;
-				}
-			}
-
-			bm_reset_(outside_vector_bitmask, ii);
-		// private vector
-		} else {
-			if (bm_is_set_(priv_vector_bitmask, ii))
-				return 0;
-
-			bm_set_(priv_vector_bitmask, ii);
-
-			for (i = 0; i < pointless_dynarray_n_items(&cv_priv_vector_at(v)->vector); i++) {
-				uint32_t cc = pointless_dynarray_ITEM_AT(uint32_t, &cv_priv_vector_at(v)->vector, i);
-
-				if (!pointless_vector_check_hashable_rec(c, cc, priv_vector_bitmask, outside_vector_bitmask, depth + 1)) {
-					bm_reset_(priv_vector_bitmask, ii);
-					return 0;
-				}
-			}
-
-			bm_reset_(priv_vector_bitmask, ii);
-		}
-
-		// vector not in a cycle, and all children are hashable
-		return 1;
-	}
-
-	return pointless_is_hashable(cv_value_type(v));
-}
-
-static int pointless_vector_check_hashable(pointless_create_t* c, uint32_t vector, void* priv_vector_bitmask, void* outside_vector_bitmask)
-{
-	assert(cv_is_outside_vector(vector) == 0);
-	return pointless_vector_check_hashable_rec(c, vector, priv_vector_bitmask, outside_vector_bitmask, 0);
-}
-
 static int pointless_create_output_and_end_(pointless_create_t* c, pointless_create_cb_t* cb, const char** error)
 {
 	// return value
@@ -805,9 +718,8 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 
 	pointless_dynarray_t temp;
 
-	// bitmask for each value, used in cycle-detection
-	void* priv_vector_bitmask = 0;
-	void* outside_vector_bitmask = 0;
+	// bitmask for each container, used in cycle-detection
+	void* cycle_marker = 0;
 
 	// since we're removing some vectors from c->priv_vector_values, references to it change, so we need
 	// a new c->priv_vector_values
@@ -845,7 +757,6 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 					n_outside_vectors += 1;
 					break;
 				}
-
 				// set/map vectors can not be emptied
 				if (pointless_dynarray_n_items(&cv_priv_vector_at(i)->vector) == 0 && cv_is_set_map_vector(i) == 0) {
 					cv_value_at(i)->header.type_29 = POINTLESS_VECTOR_EMPTY;
@@ -879,35 +790,45 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 	new_priv_vector_values = c->priv_vector_values;
 	c->priv_vector_values = temp;
 
-	// see if some value-vectors can be compressed, and if not, whether they are hashable
-	priv_vector_bitmask = pointless_calloc(ICEIL(pointless_dynarray_n_items(&c->priv_vector_values), 8), 1);
-	outside_vector_bitmask = pointless_calloc(ICEIL(pointless_dynarray_n_items(&c->outside_vector_values), 8), 1);
 
-	if (priv_vector_bitmask == 0 || outside_vector_bitmask == 0) {
-		*error = "out of memory J";
+	// check which vectors are hashable
+	cycle_marker = pointless_cycle_marker_create(c, error);
+
+	if (cycle_marker == 0) {
 		goto error_cleanup;
 	}
 
+	// ...and mark the ones which are
 	for (i = 0; i < n_values; i++) {
-		// we can not compress outside vector
-		if (cv_value_type(i) == POINTLESS_VECTOR_VALUE && cv_is_outside_vector(i) == 0) {
-			// we're not allowed to compress set/map vectors
-			if (cv_is_set_map_vector(i) == 0)
-				cv_value_at(i)->header.type_29 = pointless_create_vector_compression(c, i);
-
-			// if no compression was possible, see if it is hashable
-			if (cv_value_type(i) == POINTLESS_VECTOR_VALUE && pointless_vector_check_hashable(c, i, priv_vector_bitmask, outside_vector_bitmask)) {
-				// hash check may fail
-				if (*error)
-					goto error_cleanup;
-
+		//printf("value type %i is %i\n", (int)i, (int)cv_value_type(i));
+		if (cv_value_type(i) == POINTLESS_VECTOR_VALUE && !cv_is_outside_vector(i)) {
+			if (!bm_is_set_(cycle_marker, i)) {
 				cv_value_at(i)->header.type_29 = POINTLESS_VECTOR_VALUE_HASHABLE;
-			// otherwise, mark it as compressed, this is necessary for correct serialization
-			} else {
-				cv_value_at(i)->header.is_compressed_vector = 1;
+				//printf("hashable %i\n", (int)i);
 			}
 		}
 	}
+
+	// check vectors for compressability
+	for (i = 0; i < n_values; i++) {
+		// we can not compress outside vector
+		switch (cv_value_type(i)) {
+			case POINTLESS_VECTOR_VALUE:
+			case POINTLESS_VECTOR_VALUE_HASHABLE:
+				// we're not allowed to compress outside or set/map vectors
+				if (cv_is_outside_vector(i) == 0 && cv_is_set_map_vector(i) == 0) {
+					cv_value_at(i)->header.type_29 = pointless_create_vector_compression(c, i);
+
+					if (cv_value_at(i)->header.type_29 != POINTLESS_VECTOR_VALUE && cv_value_at(i)->header.type_29 != POINTLESS_VECTOR_VALUE_HASHABLE) {
+						//printf("compressed %i to %i\n", (int)i, (int)cv_value_at(i)->header.type_29);
+						cv_value_at(i)->header.is_compressed_vector = 1;
+					}
+				}
+
+				break;
+		}
+	}
+
 
 	// right, now populate the hash, key and value vectors for sets and maps
 	for (i = 0; i < n_values; i++) {
@@ -1271,8 +1192,7 @@ error_cleanup:
 success_cleanup:
 
 	pointless_dynarray_destroy(&new_priv_vector_values);
-	pointless_free(priv_vector_bitmask);
-	pointless_free(outside_vector_bitmask);
+	pointless_free(cycle_marker);
 
 	pointless_create_end(c);
 
@@ -1285,7 +1205,6 @@ static int file_align_4(void* user, const char** error)
 	long pos = ftell(f);
 
 	if (pos == -1) {
-		perror("ftell");
 		*error = "ftell() failure";
 		return 0;
 	}
@@ -1301,19 +1220,16 @@ static int file_align_4(void* user, const char** error)
 		*error = "fwrite() failure A";
 		return 0;
 	}
-	size_t i = 0;
-	for (i = 0; i < n; i++) {
-		//printf(" ...aligning B\n");
-	}
 
 	return 1;
 }
 
 static int file_write(void* buf, size_t buflen, void* user, const char** error)
 {
-	FILE* f = (FILE*)user;
+	if (buflen == 0)
+		return 1;
 
-	//printf("writing %i bytes to file\n", (int)buflen);
+	FILE* f = (FILE*)user;
 
 	if (fwrite(buf, buflen, 1, f) != 1) {
 		*error = "fwrite() failure B";
@@ -2465,6 +2381,9 @@ cleanup:
 uint32_t pointless_create_map_add(pointless_create_t* c, uint32_t m, uint32_t k, uint32_t v)
 {
 	assert(cv_value_type(m) == POINTLESS_MAP_VALUE_VALUE);
+
+//	printf("adding k/v: %u/%u to %u\n", k, v, m);
+//	printf("types %i/%i\n", (int)cv_value_type(k), (int)cv_value_type(v));
 
 	if (!pointless_dynarray_push(&cv_map_at(m)->keys, &k))
 		return POINTLESS_CREATE_VALUE_FAIL;

@@ -194,6 +194,7 @@ static int32_t pointless_validate_set_heap(pointless_validate_context_t* context
 
 	if (header->key_vector.type != POINTLESS_VECTOR_VALUE_HASHABLE) {
 		*error = "set key vector not of type POINTLESS_VECTOR_VALUE_HASHABLE";
+		printf("but rather %i\n", (int)header->key_vector.type);
 		return 0;
 	}
 
@@ -222,6 +223,7 @@ static int32_t pointless_validate_map_heap(pointless_validate_context_t* context
 
 	if (header->key_vector.type != POINTLESS_VECTOR_VALUE_HASHABLE) {
 		*error = "map key vector not of type POINTLESS_VECTOR_VALUE_HASHABLE";
+		printf("but rather %i\n", (int)header->key_vector.type);
 		return 0;
 	}
 

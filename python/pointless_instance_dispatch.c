@@ -2,9 +2,13 @@
 
 static PyObject* pointless_int_to_python(int64_t v)
 {
-	if (LONG_MIN <= v && v <= LONG_MAX)
+	if (LONG_MIN <= v && v <= LONG_MAX) {
+		#if PY_MAJOR_VERSION >= 3
+		return PyLong_FromLong((long)v);
+		#else
 		return PyInt_FromLong((long)v);
-	else if (LLONG_MIN <= v && v <= LLONG_MAX)
+		#endif
+	} else if (LLONG_MIN <= v && v <= LLONG_MAX)
 		return PyLong_FromLongLong((PY_LONG_LONG)v);
 	else
 		return PyErr_Format(PyExc_ValueError, "this particular integer value not supported by python");
@@ -12,9 +16,13 @@ static PyObject* pointless_int_to_python(int64_t v)
 
 static PyObject* pointless_uint_to_python(uint64_t v)
 {
-	if (v <= LONG_MAX)
+	if (v <= LONG_MAX) {
+		#if PY_MAJOR_VERSION >= 3
+		return PyLong_FromLong((long)v);
+		#else
 		return PyInt_FromLong((long)v);
-	else if (v <= LLONG_MAX)
+		#endif
+	} else if (v <= LLONG_MAX)
 		return PyLong_FromLongLong((PY_LONG_LONG)v);
 	else if (v <= ULLONG_MAX)
 		return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG)v);
@@ -79,6 +87,7 @@ PyObject* pypointless_value_unicode(pointless_t* p, pointless_value_t* v)
 #endif
 }
 
+#if PY_MAJOR_VERSION < 3
 static int pointless_value_string_is_7bit(uint8_t* s)
 {
 	while (*s) {
@@ -90,16 +99,23 @@ static int pointless_value_string_is_7bit(uint8_t* s)
 
 	return 1;
 }
+#endif
 
 PyObject* pypointless_value_string(pointless_t* p, pointless_value_t* v)
 {
 	uint8_t* string_ascii = pointless_reader_string_value_ascii(p, v);
 
 	// if 7-bit, string, otherwise unicode
-	if (pointless_value_string_is_7bit(string_ascii))
+
+	#if PY_MAJOR_VERSION < 3
+
+	if (pointless_value_string_is_7bit(string_ascii)) {
 		return PyString_FromString((const char*)string_ascii);
-	else
-		return PyUnicode_DecodeLatin1((const char*)string_ascii, strlen((const char*)string_ascii), 0);
+	}
+
+	#endif
+
+	return PyUnicode_DecodeLatin1((const char*)string_ascii, strlen((const char*)string_ascii), 0);
 
 	// we do this for a reason, this, in Python 2.7 fails:
 	//

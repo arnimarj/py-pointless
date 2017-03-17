@@ -1,17 +1,23 @@
 language: python
+cache: pip
+dist: xenial
 python:
-  - "2.6"
   - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
 
 install:
-  - which sh
-  - export COPT="-DJU_64BIT -O2 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations"
-  - cd judy-1.0.5/src
-  - /bin/sh ./sh_build
-  - gcc test.c -B./judy-1.0.5/src -Bstatic -lJudy
-  - cd ../..
-  - "pip install ."
-  - "pip install -r test-requirements.txt"
+  - bash ./build_judy.sh
+  - cd tests
+  - ./compile.sh
+  - cd ..
+  - pip install -r test-requirements.txt
+  - python setup.py install
 
 script:
-  - "trial test.python_api"
+  - cd tests
+  - ./a.out --unit-test-32
+  - ./a.out --unit-test-64
+  - cd ..
+  - PYTHONPATH=`pwd` trial tests.python_api

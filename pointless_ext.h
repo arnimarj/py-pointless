@@ -2,7 +2,11 @@
 #define __POINTLESS__MODULE__H__
 
 #include <Python.h>
-#include <Judy.h>
+
+// PyPy 5.6 hack
+#ifndef PyFrozenSet_Check
+#define PyFrozenSet_Check(ob) (Py_TYPE(ob) == &PyPyFrozenSet_Type || PyType_IsSubtype(Py_TYPE(ob), &PyPyFrozenSet_Type))
+#endif
 
 #include "structmember.h"
 
@@ -180,7 +184,14 @@ extern PyTypeObject PyPointlessPrimVectorIterType;
 PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t* v, uint32_t t);
 PyPointlessPrimVector* PyPointlessPrimVector_from_buffer(void* buffer, size_t n_buffer);
 
-typedef struct {
+#define POINTLESS_API_MAGIC "pointless.pointless_CAPI 1.0"
+#define POINTLESS_MAGIC_CONTEXT 0x1ABEEFFE
+
+struct PyPointless_CAPI {
+	// version info
+	char* magic; // set to POINTLESS_API_MAGIC
+	size_t size; // set to sizeof(struct PyPointless_CAPI)
+
 	// prim-vector operations
 	void(*primvector_init)(pointless_dynarray_t* a, size_t item_size);
 	size_t(*primvector_n_items)(pointless_dynarray_t* a);
@@ -218,39 +229,38 @@ typedef struct {
 
 	// object instantiation
 	PyObject*(*create_pypointless_value)(PyPointless* p, pointless_value_t* v);
+};
 
-} PyPointless_CAPI;
+static struct PyPointless_CAPI* PyPointless_IMPORT_CAPI(void)
+{
+	PyObject* m = PyImport_ImportModule("pointless");
 
-#define POINTLESS_API_MAGIC 0xC6D89E28
+	if (m) {
+		PyObject* c = PyObject_GetAttrString(m, "pointless_CAPI");                                                               \
 
-static PyPointless_CAPI* PyPointlessAPI = 0;
-static int PyPointlessAPI_magic = 0;
+		if (c == 0)
+			return 0;
 
-#define PyPointless_IS_GOOD_IMPORT(magic) (PyPointlessAPI != 0 && PyPointlessAPI_magic == (magic))
+		if (!PyCapsule_IsValid(c, "pointless_CAPI")) {
+			Py_DECREF(c);
+			PyErr_Format(PyExc_ImportError, "pointless.pointless_API is an invalid capsule");
+			return 0;
+		}
 
-#define PyPointless_IMPORT_MACRO(magic)                                                                                              \
-	if (PyPointlessAPI != 0 && PyPointlessAPI_magic != (magic)) {                                                                    \
-		PyErr_Format(PyExc_ImportError, "pointless already imported with other magic [%ld, %ld]", (long)(magic), (long)PyPointlessAPI_magic);\
-	} else if (PyPointlessAPI == 0) {                                                                                                \
-		PyObject* m = PyImport_ImportModule("pointless");                                                                            \
-		if (m != 0) {                                                                                                                \
-			PyObject* c = PyObject_GetAttrString(m, "pointless_CAPI");                                                               \
-			if (c != 0) {                                                                                                            \
-				void* next_PyPointlessAPI = PyCObject_AsVoidPtr(c);                                                                  \
-				Py_DECREF(c);                                                                                                        \
-				if (next_PyPointlessAPI != 0) {                                                                                      \
-					void* desc = PyCObject_GetDesc(c);                                                                               \
-					if (desc != 0) {                                                                                                 \
-						if (desc != (void*)POINTLESS_API_MAGIC) {                                                                    \
-							PyErr_Format(PyExc_ImportError, "pointless magic does not match [%ld, %ld]", (long)(magic), (long)desc);  \
-						} else {                                                                                                     \
-							PyPointlessAPI = next_PyPointlessAPI;                                                                    \
-							PyPointlessAPI_magic = magic;                                                                            \
-						}                                                                                                            \
-					}                                                                                                                \
-				}                                                                                                                    \
-			}                                                                                                                        \
-		}                                                                                                                            \
+		void* context = PyCapsule_GetContext(c);
+
+		if (context != (void*)POINTLESS_MAGIC_CONTEXT) {
+			Py_DECREF(c);
+			PyErr_Format(PyExc_ImportError, "invalid capsule context, was %ld, expected %ld", (long)context, (long)POINTLESS_MAGIC_CONTEXT);
+			return 0;
+		}
+
+		void* pointer = PyCapsule_GetPointer(c, "pointless_CAPI");
+		Py_DECREF(c);
+		return pointer;
 	}
+
+	return 0;
+}
 
 #endif

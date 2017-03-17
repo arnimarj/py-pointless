@@ -34,7 +34,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 	if (depth >= POINTLESS_MAX_DEPTH) {
 		PyErr_SetString(PyExc_ValueError, "structure is too deep");
 		state->is_error = 1;
-		printf("line: %i\n", __LINE__);
 		state->error_line = __LINE__;
 		return POINTLESS_CREATE_VALUE_FAIL;
 	}
@@ -43,7 +42,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 	uint32_t handle = POINTLESS_CREATE_VALUE_FAIL;
 
 	// return an error on failure
-	#define RETURN_OOM(state) {PyErr_NoMemory(); (state)->is_error = 1; printf("line: %i\n", __LINE__); state->error_line = __LINE__; return POINTLESS_CREATE_VALUE_FAIL;}
+	#define RETURN_OOM(state) {PyErr_NoMemory(); (state)->is_error = 1; state->error_line = __LINE__; return POINTLESS_CREATE_VALUE_FAIL;}
 	#define RETURN_OOM_IF_FAIL(handle, state) if ((handle) == POINTLESS_CREATE_VALUE_FAIL) RETURN_OOM(state);
 
 	// booleans, need this above integer check, cause PyInt_Check return 1 for booleans
@@ -55,6 +54,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 
 		RETURN_OOM_IF_FAIL(handle, state);
 	// integer
+#if PY_MAJOR_VERSION < 3
 	} else if (PyInt_Check(py_object)) {
 		long v = PyInt_AS_LONG(py_object);
 
@@ -62,7 +62,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		if (v >= 0) {
 			if (v > UINT32_MAX) {
 				PyErr_Format(PyExc_ValueError, "integer too large for mere 32 bits");
-				printf("line: %i\n", __LINE__);
 				state->is_error = 1;
 				state->error_line = __LINE__;
 				return POINTLESS_CREATE_VALUE_FAIL;
@@ -73,7 +72,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		} else {
 			if (!(INT32_MIN <= v && v <= INT32_MAX)) {
 				PyErr_Format(PyExc_ValueError, "integer too large for mere 32 bits with a sign");
-				printf("line: %i\n", __LINE__);
 				state->is_error = 1;
 				state->error_line = __LINE__;
 				return POINTLESS_CREATE_VALUE_FAIL;
@@ -83,6 +81,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		}
 
 		RETURN_OOM_IF_FAIL(handle, state);
+#endif
 	// long
 	} else if (PyLong_Check(py_object)) {
 		// this will raise an overflow error if number is outside the legal range of PY_LONG_LONG
@@ -92,7 +91,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		if (PyErr_Occurred()) {
 			PyErr_Clear();
 			PyErr_SetString(PyExc_ValueError, "value of long is way beyond what we can store right now");
-			printf("line: %i\n", __LINE__);
 			state->is_error = 1;
 			state->error_line = __LINE__;
 			return POINTLESS_CREATE_VALUE_FAIL;
@@ -102,7 +100,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		if (v >= 0) {
 			if (v > UINT32_MAX) {
 				PyErr_Format(PyExc_ValueError, "long too large for mere 32 bits");
-				printf("line: %i\n", __LINE__);
 				state->is_error = 1;
 				state->error_line = __LINE__;
 				return POINTLESS_CREATE_VALUE_FAIL;
@@ -113,7 +110,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		} else {
 			if (!(INT32_MIN <= v && v <= INT32_MAX)) {
 				PyErr_Format(PyExc_ValueError, "long too large for mere 32 bits with a sign");
-				printf("line: %i\n", __LINE__);
 				state->is_error = 1;
 				state->error_line = __LINE__;
 				return POINTLESS_CREATE_VALUE_FAIL;
@@ -183,7 +179,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 				handle = pointless_recreate_value(&v->pp->p, v->v, &state->c, &error);
 
 				if (handle == POINTLESS_CREATE_VALUE_FAIL) {
-					printf("line: %i\n", __LINE__);
 					state->is_error = 1;
 					state->error_line = __LINE__;
 					PyErr_Format(PyExc_ValueError, "pointless_recreate_value(): %s", error);
@@ -223,7 +218,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 				break;
 			default:
 				state->error_line = __LINE__;
-				printf("line: %i\n", __LINE__);
 				state->is_error = 1;
 				PyErr_SetString(PyExc_ValueError, "internal error: illegal type for primitive vector");
 				return POINTLESS_CREATE_VALUE_FAIL;
@@ -243,7 +237,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		if (n_items > UINT32_MAX) {
 			PyErr_SetString(PyExc_ValueError, "bytearray has too many items");
 			state->error_line = __LINE__;
-			printf("line: %i\n", __LINE__);
 			state->is_error = 1;
 			return POINTLESS_CREATE_VALUE_FAIL;
 		}
@@ -293,7 +286,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			default:
 				PyErr_SetString(PyExc_ValueError, "internal error: illegal type for primitive vector");
 				state->error_line = __LINE__;
-				printf("line: %i\n", __LINE__);
 				state->is_error = 1;
 				return POINTLESS_CREATE_VALUE_FAIL;
 		}
@@ -306,6 +298,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 
 	// unicode object
 	} else if (PyUnicode_Check(py_object)) {
+#if PY_MAJOR_VERSION < 3
 		// get it from python
 		Py_UNICODE* python_buffer = PyUnicode_AS_UNICODE(py_object);
 
@@ -317,15 +310,43 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		#else
 		uint32_t s_len_pointless = pointless_ucs2_len(python_buffer);
 		#endif
+#else
+		Py_ssize_t s_len_python = PyUnicode_GET_LENGTH(py_object);
+		Py_ssize_t s_len_pointless = 0;
 
-		if (s_len_python < 0 || (uint64_t)s_len_python != s_len_pointless) {
+		switch (PyUnicode_KIND(py_object)) {
+			case PyUnicode_WCHAR_KIND:
+				PyErr_SetString(PyExc_ValueError, "wchar kind unsupported");
+				state->error_line = __LINE__;
+				state->is_error = 1;
+				return POINTLESS_CREATE_VALUE_FAIL;
+				break;
+			case PyUnicode_1BYTE_KIND:
+				s_len_pointless = pointless_ucs1_len((uint8_t*)PyUnicode_DATA(py_object));
+				break;
+			case PyUnicode_2BYTE_KIND:
+				s_len_pointless = pointless_ucs2_len((uint16_t*)PyUnicode_DATA(py_object));
+				break;
+			case PyUnicode_4BYTE_KIND:
+				s_len_pointless = pointless_ucs4_len((uint32_t*)PyUnicode_DATA(py_object));
+				break;
+			default:
+				PyErr_SetString(PyExc_ValueError, "unsupported unicode width");
+				state->error_line = __LINE__;
+				state->is_error = 1;
+				return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
+
+#endif
+		if (s_len_python < 0 || (int64_t)s_len_python != (int64_t)s_len_pointless) {
 			PyErr_SetString(PyExc_ValueError, "unicode string contains a zero, where it shouldn't");
 			state->error_line = __LINE__;
-			printf("line: %i\n", __LINE__);
 			state->is_error = 1;
 			return POINTLESS_CREATE_VALUE_FAIL;
 		}
 
+#if PY_MAJOR_VERSION < 3
 		#if Py_UNICODE_SIZE == 4
 			if (state->unwiden_strings && pointless_is_ucs4_ascii((uint32_t*)python_buffer))
 				handle = pointless_create_string_ucs4(&state->c, python_buffer);
@@ -337,13 +358,43 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			else
 				handle = pointless_create_unicode_ucs2(&state->c, python_buffer);
 		#endif
+#else
+		void* python_buffer = (void*)PyUnicode_DATA(py_object);
 
+		switch (PyUnicode_KIND(py_object)) {
+			case PyUnicode_WCHAR_KIND:
+				PyErr_SetString(PyExc_ValueError, "wchar based unicode strings not supported");
+				state->error_line = __LINE__;
+				state->is_error = 1;
+				return POINTLESS_CREATE_VALUE_FAIL;
+			case PyUnicode_1BYTE_KIND:
+				handle = pointless_create_string_ascii(&state->c, (uint8_t*)python_buffer);
+				break;
+			case PyUnicode_2BYTE_KIND:
+				if (state->unwiden_strings && pointless_is_ucs2_ascii(python_buffer))
+					handle = pointless_create_string_ucs2(&state->c, python_buffer);
+				else
+					handle = pointless_create_unicode_ucs2(&state->c, python_buffer);
+				break;
+			case PyUnicode_4BYTE_KIND:
+				if (state->unwiden_strings && pointless_is_ucs4_ascii((uint32_t*)python_buffer))
+					handle = pointless_create_unicode_ucs4(&state->c, (uint32_t*)python_buffer);
+				else
+					handle = pointless_create_string_ucs4(&state->c, (uint32_t*)python_buffer);
+				break;
+			// should not happen
+			default:
+				break;
+		}
+
+#endif
 		RETURN_OOM_IF_FAIL(handle, state);
 
 		if (!pointless_export_set_seen(state, py_object, handle)) {
 			RETURN_OOM(state);
 		}
 
+#if PY_MAJOR_VERSION < 3
 	// string object
 	} else if (PyString_Check(py_object)) {
 		// get it from python
@@ -356,7 +407,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		if (s_len_python < 0 || (uint64_t)s_len_python != s_len_pointless) {
 			PyErr_SetString(PyExc_ValueError, "string contains a zero, where it shouldn't");
 			state->error_line = __LINE__;
-			printf("line: %i\n", __LINE__);
 			state->is_error = 1;
 			return POINTLESS_CREATE_VALUE_FAIL;
 		}
@@ -367,7 +417,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		if (!pointless_export_set_seen(state, py_object, handle)) {
 			RETURN_OOM(state);
 		}
-
+#endif
 	// dict object
 	} else if (PyDict_Check(py_object)) {
 		handle = pointless_create_map(&state->c);
@@ -391,7 +441,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			if (pointless_create_map_add(&state->c, handle, key_handle, value_handle) == POINTLESS_CREATE_VALUE_FAIL) {
 				PyErr_SetString(PyExc_ValueError, "error adding key/value pair to map");
 				state->error_line = __LINE__;
-				printf("line: %i\n", __LINE__);
 				state->is_error = 1;
 				break;
 			}
@@ -407,7 +456,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		PyObject* item = 0;
 
 		if (iterator == 0) {
-			printf("line: %i\n", __LINE__);
 			state->is_error = 1;
 			state->error_line = __LINE__;
 			return POINTLESS_CREATE_VALUE_FAIL;
@@ -431,7 +479,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 
 			if (pointless_create_set_add(&state->c, handle, item_handle) == POINTLESS_CREATE_VALUE_FAIL) {
 				PyErr_SetString(PyExc_ValueError, "error adding item to set");
-				printf("line: %i\n", __LINE__);
 				state->is_error = 1;
 				state->error_line = __LINE__;
 				break;
@@ -441,7 +488,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		Py_DECREF(iterator);
 
 		if (PyErr_Occurred()) {
-			printf("line: %i\n", __LINE__);
 			state->is_error = 1;
 			state->error_line = __LINE__;
 			return POINTLESS_CREATE_VALUE_FAIL;
@@ -490,7 +536,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		handle = pointless_recreate_value(&set->pp->p, set->v, &state->c, &error);
 
 		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
-			printf("line: %i\n", __LINE__);
 			state->is_error = 1;
 			state->error_line = __LINE__;
 			PyErr_Format(PyExc_ValueError, "pointless_recreate_value(): %s", error);
@@ -507,7 +552,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		handle = pointless_recreate_value(&map->pp->p, map->v, &state->c, &error);
 
 		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
-			printf("line: %i\n", __LINE__);
 			state->is_error = 1;
 			state->error_line = __LINE__;
 			PyErr_Format(PyExc_ValueError, "pointless_recreate_value(): %s", error);
@@ -522,7 +566,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 	} else {
 		PyErr_Format(PyExc_ValueError, "type <%s> not supported", py_object->ob_type->tp_name);
 		state->error_line = __LINE__;
-		printf("line: %i\n", __LINE__);
 		state->is_error = 1;
 	}
 
@@ -596,8 +639,7 @@ cleanup:
 	if (create_end)
 		pointless_create_end(&state.c);
 
-	Word_t n_bytes_freed = 0;
-	JLFA(n_bytes_freed, state.objects_used);
+	JudyLFreeArray(&state.objects_used, 0);
 
 	Py_XINCREF(retval);
 	return retval;
@@ -661,8 +703,7 @@ cleanup:
 	if (create_end)
 		pointless_create_end(&state.c);
 
-	Word_t n_bytes_freed = 0;
-	JLFA(n_bytes_freed, state.objects_used);
+	JudyLFreeArray(&state.objects_used, 0);
 
 	return retval;
 }

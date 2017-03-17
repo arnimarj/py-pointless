@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import operator, pointless, random
+import operator, pointless, random, six
 
 from twisted.trial import unittest
 
@@ -9,7 +9,7 @@ from .common import VectorSlices
 class TestPointless(unittest.TestCase):
 	def test_vector_slice(self):
 		random.seed(0)
-		vector = range(1000)
+		vector = list(range(1000))
 
 		for v_py, v_po in VectorSlices('deleteme.map', vector):
 			c = pointless.pointless_cmp(v_py, v_po)
@@ -46,12 +46,12 @@ class TestPointless(unittest.TestCase):
 	def testCompression(self):
 		# None, or compressed vector type -> values in vector
 		vm = [
-			('i8',  range(-128, 128)),
-			('u8',  range(0, 256)),
-			('i16', range(-600, 600)),
-			('u16', range(0, 1200)),
-			('i32', range(-1, 33000)),
-			('u32', range(0, 66000)),
+			('i8',  list(range(-128, 128))),
+			('u8',  list(range(0, 256))),
+			('i16', list(range(-600, 600))),
+			('u16', list(range(0, 1200))),
+			('i32', list(range(-1, 33000))),
+			('u32', list(range(0, 66000))),
 			('f',   [0.0, 1.0]),
 			(None,  []),
 			(None,  ['asdf', 'foo'])
@@ -88,7 +88,7 @@ class TestPointless(unittest.TestCase):
 			self.assertEquals(len(v_b), 3)
 
 			for a, b in zip(v_a, v_b):
-				if isinstance(a, (int, long)) and isinstance(b, (int, long)):
+				if isinstance(a, six.integer_types) and isinstance(b, six.integer_types):
 					self.assertEquals(a, b)
 				else:
 					self.assertApproximates(a, b, 0.001)

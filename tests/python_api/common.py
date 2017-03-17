@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import pointless, random
+import pointless, random, six
 
 def VectorSlices(fname, py_vector):
 	pointless.serialize(py_vector, fname)
@@ -10,7 +10,7 @@ def VectorSlices(fname, py_vector):
 	yield (py_vector, po_vector)
 
 	# then further slices of those two
-	for i in xrange(100):
+	for i in six.moves.range(100):
 		i_0 = random.randint(-100, len(py_vector) * 2)
 		i_1 = random.randint(-100, len(py_vector) * 2)
 
@@ -20,7 +20,7 @@ def VectorSlices(fname, py_vector):
 		yield s_py_vector, s_po_vector
 
 		# and further slices of those
-		for j in xrange(100):
+		for j in six.moves.range(100):
 			ii_0 = random.randint(-100, len(py_vector) // 2)
 			ii_1 = random.randint(-100, len(py_vector) // 2)
 

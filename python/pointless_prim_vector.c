@@ -17,6 +17,7 @@ typedef union {
 
 static int parse_pyobject_number(PyObject* v, int* is_signed, int64_t* i, uint64_t* u)
 {
+#if PY_MAJOR_VERSION < 3
 	// simple case
 	if (PyInt_Check(v)) {
 		long _v = PyInt_AS_LONG(v);
@@ -30,7 +31,7 @@ static int parse_pyobject_number(PyObject* v, int* is_signed, int64_t* i, uint64
 
 		return 1;
 	}
-
+#endif
 	// complicated case
 	if (!PyLong_Check(v)) {
 		PyErr_SetString(PyExc_TypeError, "expected an integer");
@@ -198,91 +199,104 @@ static int PyPointlessPrimVectorIter_traverse(PyPointlessPrimVectorIter* self, v
 
 PyObject* PyPointlessPrimVector_str(PyPointlessPrimVector* self)
 {
-	if (!self->allow_print)
+	if (!self->allow_print) {
+#if PY_MAJOR_VERSION < 3
 		return PyString_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
+#else
+		return PyUnicode_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
+#endif
+	}
 
-	PyObject* vector_s = PyString_FromString("[");
-	PyObject* vector_comma = PyString_FromString(", ");
-	PyObject* vector_postfix = PyString_FromString("]");
+	pointless_dynarray_t string;
+	pointless_dynarray_init(&string, 1);
 
-	PyObject* v_s = 0;
-
-	if (vector_s == 0 || vector_comma == 0 || vector_postfix == 0)
-		goto error;
+	uint8_t bracket_left = '[';
+	uint8_t comma = ',';
+	uint8_t space = ' ';
+	uint8_t bracket_right = ']';
+	uint8_t terminating_zero = 0;
 
 	uint32_t i, n = pointless_dynarray_n_items(&self->array);
-	void* data = 0;
 	char buffer[1024];
 
+	if (!pointless_dynarray_push(&string, &bracket_left)) {
+		PyErr_NoMemory();
+		goto error;
+	}
+
 	for (i = 0; i < n; i++) {
-		data = pointless_dynarray_item_at(&self->array, i);
+		void* data = pointless_dynarray_item_at(&self->array, i);
 
 		switch (self->type) {
 			case POINTLESS_PRIM_VECTOR_TYPE_I8:
-				v_s = PyString_FromFormat("%i", (int)(*((int8_t*)data)));
+				snprintf(buffer, sizeof(buffer), "%i", (int)(*((int8_t*)data)));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_U8:
-				v_s = PyString_FromFormat("%u", (unsigned int)(*((uint8_t*)data)));
+				snprintf(buffer, sizeof(buffer), "%u", (unsigned int)(*((uint8_t*)data)));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_I16:
-				v_s = PyString_FromFormat("%i", (int)(*((int16_t*)data)));
+				snprintf(buffer, sizeof(buffer), "%i", (int)(*((int16_t*)data)));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_U16:
-				v_s = PyString_FromFormat("%u", (unsigned int)(*((uint16_t*)data)));
+				snprintf(buffer, sizeof(buffer), "%u", (unsigned int)(*((uint16_t*)data)));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_I32:
-				v_s = PyString_FromFormat("%i", (int)(*((int32_t*)data)));
+				snprintf(buffer, sizeof(buffer), "%i", (int)(*((int32_t*)data)));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_U32:
-				v_s = PyString_FromFormat("%u", (unsigned int)(*((uint32_t*)data)));
+				snprintf(buffer, sizeof(buffer), "%u", (unsigned int)(*((uint32_t*)data)));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_I64:
-				v_s = PyString_FromFormat("%lld", (long long)(*((int64_t*)data)));
+				snprintf(buffer, sizeof(buffer), "%lld", (long long)(*((int64_t*)data)));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_U64:
-				v_s = PyString_FromFormat("%llu", (unsigned long long)(*((uint64_t*)data)));
+				snprintf(buffer, sizeof(buffer), "%llu", (unsigned long long)(*((uint64_t*)data)));
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
 				snprintf(buffer, sizeof(buffer), "%f", (*((float*)data)));
-				v_s = PyString_FromString(buffer);
 				break;
 		}
 
-		if (v_s == 0)
+		if (!pointless_dynarray_push_bulk(&string, buffer, strlen(buffer))) {
+			PyErr_NoMemory();
 			goto error;
-
-		PyString_ConcatAndDel(&vector_s, v_s);
-		v_s = 0;
-
-		if (vector_s == 0)
-			goto error;
+		}
 
 		if (i + 1 < n) {
-			PyString_Concat(&vector_s, vector_comma);
-
-			if (vector_s == 0)
+			if (!pointless_dynarray_push(&string, &comma)) {
+				PyErr_NoMemory();
 				goto error;
+			}
+
+			if (!pointless_dynarray_push(&string, &space)) {
+				PyErr_NoMemory();
+				goto error;
+			}
 		}
 	}
 
-	PyString_Concat(&vector_s, vector_postfix);
-
-	if (vector_s == 0)
+	if (!pointless_dynarray_push(&string, &bracket_right)) {
+		PyErr_NoMemory();
 		goto error;
+	}
 
-	Py_DECREF(vector_comma);
-	Py_DECREF(vector_postfix);
+	if (!pointless_dynarray_push(&string, &terminating_zero)) {
+		PyErr_NoMemory();
+		goto error;
+	}
 
-	Py_XDECREF(v_s);
+#if PY_MAJOR_VERSION < 3
+	PyObject* v_s = PyString_FromString(pointless_dynarray_buffer(&string));
+#else
+	PyObject* v_s = PyUnicode_FromString(pointless_dynarray_buffer(&string));
+#endif
 
-	return vector_s;
+	pointless_dynarray_destroy(&string);
+
+	return v_s;
 
 error:
-	Py_XDECREF(vector_s);
-	Py_XDECREF(vector_comma);
-	Py_XDECREF(vector_postfix);
-
-	Py_XDECREF(v_s);
+	pointless_dynarray_destroy(&string);
 
 	return 0;
 }
@@ -409,7 +423,7 @@ static int PyPointlessPrimVector_init(PyPointlessPrimVector* self, PyObject* arg
 	// else a single buffer
 	} else {
 		// de-serialize the buffer
-		if (buffer.len < sizeof(uint32_t) + sizeof(uint32_t)) {
+		if (buffer.len < (int)(sizeof(uint32_t) + sizeof(uint32_t))) {
 			PyErr_SetString(PyExc_ValueError, "buffer too short");
 			goto cleanup;
 		}
@@ -533,15 +547,36 @@ static PyObject* PyPointlessPrimVector_subscript_priv(PyPointlessPrimVector* sel
 
 	switch (self->type) {
 		case POINTLESS_PRIM_VECTOR_TYPE_I8:
+#if PY_MAJOR_VERSION < 3
 			return PyInt_FromLong((long)(*((int8_t*)base_value)));
+#else
+			return PyLong_FromLong((long)(*((int8_t*)base_value)));
+#endif
 		case POINTLESS_PRIM_VECTOR_TYPE_U8:
+#if PY_MAJOR_VERSION < 3
 			return PyInt_FromLong((long)(*((uint8_t*)base_value)));
+#else
+			return PyLong_FromLong((long)(*((uint8_t*)base_value)));
+#endif
 		case POINTLESS_PRIM_VECTOR_TYPE_I16:
+#if PY_MAJOR_VERSION < 3
 			return PyInt_FromLong((long)(*((int16_t*)base_value)));
+#else
+			return PyLong_FromLong((long)(*((int16_t*)base_value)));
+#endif
 		case POINTLESS_PRIM_VECTOR_TYPE_U16:
+#if PY_MAJOR_VERSION < 3
 			return PyInt_FromLong((long)(*((uint16_t*)base_value)));
+#else
+			return PyLong_FromLong((long)(*((uint16_t*)base_value)));
+#endif
+
 		case POINTLESS_PRIM_VECTOR_TYPE_I32:
+#if PY_MAJOR_VERSION < 3
 			return PyInt_FromLong((long)(*((int32_t*)base_value)));
+#else
+			return PyLong_FromLong((long)(*((int32_t*)base_value)));
+#endif
 		case POINTLESS_PRIM_VECTOR_TYPE_U32:
 			return PyLong_FromUnsignedLong((unsigned long)(*((uint32_t*)base_value)));
 		case POINTLESS_PRIM_VECTOR_TYPE_I64:
@@ -556,10 +591,26 @@ static PyObject* PyPointlessPrimVector_subscript_priv(PyPointlessPrimVector* sel
 	return 0;
 }
 
+static PyObject* PyPointlessPrimVector_slice(PyPointlessPrimVector* self, Py_ssize_t ilow, Py_ssize_t ihigh);
+
 static PyObject* PyPointlessPrimVector_subscript(PyPointlessPrimVector* self, PyObject* item)
 {
 	// get the index
 	Py_ssize_t i;
+
+	if (PySlice_Check(item)) {
+		Py_ssize_t start, stop, step, slicelength;
+
+		if (PySlice_GetIndicesEx((PySliceObject*)item, (Py_ssize_t)pointless_dynarray_n_items(&self->array), &start, &stop, &step, &slicelength) == -1)
+			return 0;
+
+		if (step != 1) {
+			PyErr_SetString(PyExc_ValueError, "only slice-steps of 1 supported");
+			return 0;
+		}
+
+		return PyPointlessPrimVector_slice(self, start, stop);
+	}
 
 	if (!PyPointlessPrimVector_check_index(self, item, &i))
 		return 0;
@@ -569,7 +620,7 @@ static PyObject* PyPointlessPrimVector_subscript(PyPointlessPrimVector* self, Py
 
 static PyObject* PyPointlessPrimVector_item(PyPointlessPrimVector* self, Py_ssize_t i)
 {
-	if (!(0 <= i && i < pointless_dynarray_n_items(&self->array))) {
+	if (!(0 <= i && (size_t)i < pointless_dynarray_n_items(&self->array))) {
 		PyErr_SetString(PyExc_IndexError, "vector index out of range");
 		return 0;
 	}
@@ -834,7 +885,7 @@ static PyObject* PyPointlessPrimVector_pop_bulk(PyPointlessPrimVector* self, PyO
 	if (!PyArg_ParseTuple(args, "L", &n))
 		return 0;
 
-	if (n > pointless_dynarray_n_items(&self->array)) {
+	if (n > 0 && (size_t)n > pointless_dynarray_n_items(&self->array)) {
 		PyErr_SetString(PyExc_ValueError, "vector is not big enough");
 		return 0;
 	}
@@ -896,7 +947,7 @@ static size_t PyPointlessPrimVector_index_i_u(PyPointlessPrimVector* self, uint6
 	for (i = 0; i < n; i++) {
 		switch (self->type) {
 			case POINTLESS_PRIM_VECTOR_TYPE_I8:
-				if (((int8_t*)a)[i] >= 0 && ((int8_t*)a)[i] == v)
+				if (((int8_t*)a)[i] >= 0 && (uint64_t)((int8_t*)a)[i] == v)
 					return i;
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_U8:
@@ -904,7 +955,7 @@ static size_t PyPointlessPrimVector_index_i_u(PyPointlessPrimVector* self, uint6
 					return i;
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_I16:
-				if (((int16_t*)a)[i] >= 0 && ((int16_t*)a)[i] == v)
+				if (((int16_t*)a)[i] >= 0 && (uint64_t)((int16_t*)a)[i] == v)
 					return i;
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_U16:
@@ -912,7 +963,7 @@ static size_t PyPointlessPrimVector_index_i_u(PyPointlessPrimVector* self, uint6
 					return i;
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_I32:
-				if (((int32_t*)a)[i] >= 0 && ((int32_t*)a)[i] == v)
+				if (((int32_t*)a)[i] >= 0 && (uint64_t)((int32_t*)a)[i] == v)
 					return i;
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_U32:
@@ -920,7 +971,7 @@ static size_t PyPointlessPrimVector_index_i_u(PyPointlessPrimVector* self, uint6
 					return i;
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_I64:
-				if (((int64_t*)a)[i] >= 0 && ((int64_t*)a)[i] == v)
+				if (((int64_t*)a)[i] >= 0 && (uint64_t)((int64_t*)a)[i] == v)
 					return i;
 				break;
 			case POINTLESS_PRIM_VECTOR_TYPE_U64:
@@ -974,7 +1025,11 @@ static PyObject* PyPointlessPrimVector_index(PyPointlessPrimVector* self, PyObje
 	if (i == (SIZE_MAX-1))
 		return 0;
 
+#if PY_MAJOR_VERSION < 3
 	return PyInt_FromSize_t(i);
+#else
+	return PyLong_FromSize_t(i);
+#endif
 }
 
 static PyObject* PyPointlessPrimVector_remove(PyPointlessPrimVector* self, PyObject* args)
@@ -1089,6 +1144,7 @@ static PyObject* PyPointlessPrimVector_clear(PyPointlessPrimVector* self)
 }
 
 
+#if PY_MAJOR_VERSION < 3
 static Py_ssize_t PointlessPrimVector_buffer_getreadbuf(PyPointlessPrimVector* self, Py_ssize_t index, const void** ptr)
 {
 	if (index != 0 ) {
@@ -1129,6 +1185,7 @@ static Py_ssize_t PointlessPrimVector_buffer_getcharbuf(PyPointlessPrimVector* s
 	*ptr = (void*)pointless_dynarray_buffer(&self->array);
 	return (Py_ssize_t)PyPointlessPrimVector_n_bytes(self);
 }
+#endif
 
 static int PointlessPrimVector_getbuffer(PyPointlessPrimVector* obj, Py_buffer* view, int flags)
 {
@@ -1155,10 +1212,12 @@ static void PointlessPrimVector_releasebuffer(PyPointlessPrimVector* obj, Py_buf
 }
 
 static PyBufferProcs PointlessPrimVector_as_buffer = {
+#if PY_MAJOR_VERSION < 3
 	(readbufferproc)PointlessPrimVector_buffer_getreadbuf,
 	(writebufferproc)PointlessPrimVector_buffer_getwritebuf,
 	(segcountproc)PointlessPrimVector_buffer_getsegcount,
 	(charbufferproc)PointlessPrimVector_buffer_getcharbuf,
+#endif
 	(getbufferproc)PointlessPrimVector_getbuffer,
 	(releasebufferproc)PointlessPrimVector_releasebuffer,
 };
@@ -1960,6 +2019,7 @@ static PyMappingMethods PyPointlessPrimVector_as_mapping = {
 	(objobjargproc)0
 };
 
+#if PY_MAJOR_VERSION < 3
 static PySequenceMethods PyPointlessPrimVector_as_sequence = {
 	(lenfunc)PyPointlessPrimVector_length,            /* sq_length */
 	0,                                                /* sq_concat */
@@ -1972,10 +2032,20 @@ static PySequenceMethods PyPointlessPrimVector_as_sequence = {
 	0,                                                /* sq_inplace_concat */
 	0,                                                /* sq_inplace_repeat */
 };
-
+#else
+static PySequenceMethods PyPointlessPrimVector_as_sequence = {
+	(lenfunc)PyPointlessPrimVector_length,            /* sq_length */
+	0,                                                /* sq_concat */
+	0,                                                /* sq_repeat */
+	(ssizeargfunc)PyPointlessPrimVector_item,         /* sq_item */
+	(ssizeobjargproc)PyPointlessPrimVector_ass_item,  /* sq_ass_item */
+	0,                                                /* sq_contains */
+	0,                                                /* sq_inplace_concat */
+	0,                                                /* sq_inplace_repeat */
+};
+#endif
 PyTypeObject PyPointlessPrimVectorType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                              /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessPrimVector",              /*tp_name*/
 	sizeof(PyPointlessPrimVector),                  /*tp_basicsize*/
 	0,                                              /*tp_itemsize*/
@@ -1994,7 +2064,11 @@ PyTypeObject PyPointlessPrimVectorType = {
 	PyObject_GenericGetAttr,                                              /*tp_getattro*/
 	0,                                              /*tp_setattro*/
 	&PointlessPrimVector_as_buffer,                 /*tp_as_buffer*/
+#if PY_MAJOR_VERSION < 3
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_NEWBUFFER, /*tp_flags*/
+#else
+	Py_TPFLAGS_DEFAULT,                             /*tp_flags*/
+#endif
 	"PyPointlessPrimVector wrapper",                /*tp_doc */
 	0,                                              /*tp_traverse */
 	0,                                              /*tp_clear */
@@ -2018,8 +2092,7 @@ PyTypeObject PyPointlessPrimVectorType = {
 
 
 PyTypeObject PyPointlessPrimVectorIterType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                                                /*ob_size*/
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessPrimVectorIter",            /*tp_name*/
 	sizeof(PyPointlessPrimVectorIter),                /*tp_basicsize*/
 	0,                                                /*tp_itemsize*/
@@ -2100,3 +2173,4 @@ PyPointlessPrimVector* PyPointlessPrimVector_from_buffer(void* buffer, size_t n_
 	pointless_dynarray_give_data(&a, buffer, n_buffer);
 	return PyPointlessPrimVector_from_T_vector(&a, POINTLESS_PRIM_VECTOR_TYPE_U8);
 }
+
