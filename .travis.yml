@@ -18,4 +18,4 @@ script:
   - ./a.out --unit-test-32
   - ./a.out --unit-test-64
   - cd ..
-  - trial tests.python_api
+  - PYTHONPATH=`pwd` trial tests.python_api
