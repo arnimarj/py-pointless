@@ -11,13 +11,7 @@ install:
   - cd tests
   - ./compile.sh
   - cd ..
-  - "pip install -r test-requirements.txt"
-
-  - /bin/sh ./sh_build
-  - gcc test.c -B./judy-1.0.5/src -Bstatic -lJudy
-  - cd ../..
-  - "pip install ."
-  - "pip install -r test-requirements.txt"
+  - pip install -r test-requirements.txt
 
 script:
   - cd tests
