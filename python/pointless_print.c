@@ -113,20 +113,20 @@ static int _pypointless_print_append_8_(_pypointless_print_state_t* state, const
 
 static int _pypointless_unicode_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state);
 static int _pypointless_string_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state);
-static int _pypointless_vector_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state, uint32_t slice_i, uint32_t slice_n);
+static int _pypointless_vector_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state, uint32_t slice_i, uint32_t slice_n, int vector_as_tuple);
 static int _pypointless_set_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state);
 static int _pypointless_map_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state);
 static int _pypointless_bitvector_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state);
 static int _pypointless_bitvector_str_buffer(void* buffer, uint32_t n_bits, _pypointless_print_state_t* state);
 
-static int _pypointless_str_rec(pointless_t* p, pointless_complete_value_t* v, _pypointless_print_state_t* state, uint32_t vector_slice_i, uint32_t vector_slice_n)
+static int _pypointless_str_rec(pointless_t* p, pointless_complete_value_t* v, _pypointless_print_state_t* state, uint32_t vector_slice_i, uint32_t vector_slice_n, int vector_as_tuple)
 {
 	// convert value
 	pointless_value_t _v = pointless_value_from_complete(v);
 
 	// both compressible types
 	if (pointless_is_vector_type(v->type))
-		return _pypointless_vector_str(p, &_v, state, vector_slice_i, vector_slice_n);
+		return _pypointless_vector_str(p, &_v, state, vector_slice_i, vector_slice_n, vector_as_tuple);
 
 	if (pointless_is_bitvector_type(v->type))
 		return _pypointless_bitvector_str(p, &_v, state);
@@ -235,15 +235,20 @@ static int _pypointless_string_str(pointless_t* p, pointless_value_t* v, _pypoin
 	return i;
 }
 
-static int _pypointless_vector_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state, uint32_t slice_i, uint32_t slice_n)
+static int _pypointless_vector_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state, uint32_t slice_i, uint32_t slice_n, int vector_as_tuple)
 {
 	uint32_t container_id = pointless_container_id(p, v);
 
 	if (print_state_has_container(state, container_id))
 		return _pypointless_print_append_8_(state, "[...]");
 
-	if (!_pypointless_print_append_8_(state, "["))
-		return 0;
+	if (vector_as_tuple) {
+		if (!_pypointless_print_append_8_(state, "("))
+			return 0;
+	} else {
+		if (!_pypointless_print_append_8_(state, "["))
+			return 0;
+	}
 
 	if (!print_state_push(state, container_id))
 		return 0;
@@ -261,7 +266,7 @@ static int _pypointless_vector_str(pointless_t* p, pointless_value_t* v, _pypoin
 			v_slice_n = pointless_reader_vector_n_items(p, &_value);
 		}
 
-		if (!_pypointless_str_rec(p, &value, state, v_slice_i, v_slice_n)) {
+		if (!_pypointless_str_rec(p, &value, state, v_slice_i, v_slice_n, vector_as_tuple)) {
 			print_state_pop(state);
 			return 0;
 		}
@@ -274,7 +279,15 @@ static int _pypointless_vector_str(pointless_t* p, pointless_value_t* v, _pypoin
 
 	print_state_pop(state);
 
-	return _pypointless_print_append_8_(state, "]");
+	if (vector_as_tuple) {
+		if (slice_n == 1) {
+			return _pypointless_print_append_8_(state, ",)");
+		} else {
+			return _pypointless_print_append_8_(state, ")");
+		}
+	} else {
+		return _pypointless_print_append_8_(state, "]");
+	}
 }
 
 static int _pypointless_set_str(pointless_t* p, pointless_value_t* v, _pypointless_print_state_t* state)
@@ -305,7 +318,7 @@ static int _pypointless_set_str(pointless_t* p, pointless_value_t* v, _pypointle
 
 		pointless_complete_value_t _value = pointless_value_to_complete(value);
 
-		if (!_pypointless_str_rec(p, &_value, state, v_slice_i, v_slice_n)) {
+		if (!_pypointless_str_rec(p, &_value, state, v_slice_i, v_slice_n, 1)) {
 			print_state_pop(state);
 			return 0;
 		}
@@ -360,7 +373,7 @@ static int _pypointless_map_str(pointless_t* p, pointless_value_t* v, _pypointle
 		pointless_complete_value_t _key = pointless_value_to_complete(key);
 		pointless_complete_value_t _value = pointless_value_to_complete(value);
 
-		if (!_pypointless_str_rec(p, &_key, state, v_slice_i_k, v_slice_n_k)) {
+		if (!_pypointless_str_rec(p, &_key, state, v_slice_i_k, v_slice_n_k, 1)) {
 			print_state_pop(state);
 			return 0;
 		}
@@ -370,7 +383,7 @@ static int _pypointless_map_str(pointless_t* p, pointless_value_t* v, _pypointle
 			return 0;
 		}
 
-		if (!_pypointless_str_rec(p, &_value, state, v_slice_i_v, v_slice_n_v)) {
+		if (!_pypointless_str_rec(p, &_value, state, v_slice_i_v, v_slice_n_v, 0)) {
 			print_state_pop(state);
 			return 0;
 		}
@@ -551,7 +564,7 @@ PyObject* PyPointless_str(PyObject* py_object)
 	}
 
 	pointless_complete_value_t _v = pointless_value_to_complete(v);
-	int i = _pypointless_str_rec(&pp->p, &_v, &state, vector_slice_i, vector_slice_n); 
+	int i = _pypointless_str_rec(&pp->p, &_v, &state, vector_slice_i, vector_slice_n, 0);
 	PyObject* s = 0;
 
 #if PY_MAJOR_VERSION < 3
