@@ -33,8 +33,6 @@ typedef struct {
 	float ff;
 } pypointless_cmp_int_float_bool_t;
 
-#if PY_MAJOR_VERSION < 3
-
 static const char* _type_name(uint32_t type)
 {
 	switch (type) {
@@ -81,6 +79,7 @@ static const char* _type_name(uint32_t type)
 
 	return "";
 }
+#if PY_MAJOR_VERSION < 3
 
 // stolen from https://github.com/python/cpython/blob/2.7/Objects/object.c
 static int
@@ -144,6 +143,14 @@ adapted_default_3way_compare(pypointless_cmp_value_t *v_, pypointless_cmp_value_
 	return -2;
 }
 #endif
+
+static const char* my_type_name(pypointless_cmp_value_t *v_)
+{
+	if (v_->is_pointless)
+		return _type_name(v_->value.pointless.v.type);
+	else
+		return v_->value.py_object->ob_type->tp_name;
+}
 
 static void pypointless_cmp_value_init_pointless(pypointless_cmp_value_t* cv, pointless_t* p, pointless_complete_value_t* v)
 {
@@ -566,7 +573,6 @@ static int32_t pypointless_cmp_none(pypointless_cmp_value_t* a, pypointless_cmp_
 static uint32_t pypointless_cmp_vector_n_items(pypointless_cmp_value_t* a)
 {
 	if (a->is_pointless) {
-		pointless_value_t _v = pointless_value_from_complete(&a->value.pointless.v);
 		return a->value.pointless.vector_slice_n;
 	}
 
@@ -716,6 +722,8 @@ static int32_t pypointless_cmp_rec(pypointless_cmp_value_t* a, pypointless_cmp_v
 			return 0;
 		}
 #else
+		printf("TYPE A: %s\n", my_type_name(a));
+		printf("TYPE B: %s\n", my_type_name(b));
 		state->error = "comparison not supported between these types";
 		state->depth -= 1;
 		return 0;
