@@ -7,7 +7,7 @@ python:
   - "3.6"
 
 install:
-  - ./build_judy.sh
+  - bash ./build_judy.sh
   - cd tests
   - ./compile.sh
   - cd ..
