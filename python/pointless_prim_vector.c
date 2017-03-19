@@ -618,16 +618,6 @@ static PyObject* PyPointlessPrimVector_subscript(PyPointlessPrimVector* self, Py
 	return PyPointlessPrimVector_subscript_priv(self, (uint32_t)i);
 }
 
-static PyObject* PyPointlessPrimVector_item(PyPointlessPrimVector* self, Py_ssize_t i)
-{
-	if (!(0 <= i && (size_t)i < pointless_dynarray_n_items(&self->array))) {
-		PyErr_SetString(PyExc_IndexError, "vector index out of range");
-		return 0;
-	}
-
-	return PyPointlessPrimVector_subscript_priv(self, (uint32_t)i);
-}
-
 static int PyPointlessPrimVector_ass_item(PyPointlessPrimVector* self, Py_ssize_t i, PyObject* v)
 {
 	if (!(0 <= i && i < PyPointlessPrimVector_length(self))) {
@@ -2031,38 +2021,12 @@ static PyObject* PyPointlessPrimVector_slice(PyPointlessPrimVector* self, Py_ssi
 	return (PyObject*)pv;
 }
 
-
 static PyMappingMethods PyPointlessPrimVector_as_mapping = {
 	(lenfunc)PyPointlessPrimVector_length,
 	(binaryfunc)PyPointlessPrimVector_subscript,
 	(objobjargproc)PyPointlessPrimVector_ass_subscript
 };
 
-#if PY_MAJOR_VERSION < 3
-static PySequenceMethods PyPointlessPrimVector_as_sequence = {
-	(lenfunc)PyPointlessPrimVector_length,            /* sq_length */
-	0,                                                /* sq_concat */
-	0,                                                /* sq_repeat */
-	(ssizeargfunc)PyPointlessPrimVector_item,         /* sq_item */
-	(ssizessizeargfunc)PyPointlessPrimVector_slice,   /* sq_slice */
-	(ssizeobjargproc)PyPointlessPrimVector_ass_item,  /* sq_ass_item */
-	0,                                                /* sq_ass_slice */
-	(objobjproc)0,                                    /* sq_contains */
-	0,                                                /* sq_inplace_concat */
-	0,                                                /* sq_inplace_repeat */
-};
-#else
-static PySequenceMethods PyPointlessPrimVector_as_sequence = {
-	(lenfunc)PyPointlessPrimVector_length,            /* sq_length */
-	0,                                                /* sq_concat */
-	0,                                                /* sq_repeat */
-	(ssizeargfunc)PyPointlessPrimVector_item,         /* sq_item */
-	(ssizeobjargproc)PyPointlessPrimVector_ass_item,  /* sq_ass_item */
-	0,                                                /* sq_contains */
-	0,                                                /* sq_inplace_concat */
-	0,                                                /* sq_inplace_repeat */
-};
-#endif
 PyTypeObject PyPointlessPrimVectorType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessPrimVector",              /*tp_name*/
@@ -2075,7 +2039,7 @@ PyTypeObject PyPointlessPrimVectorType = {
 	0,                                              /*tp_compare*/
 	(reprfunc)PyPointlessPrimVector_repr,           /*tp_repr*/
 	0,                                              /*tp_as_number*/
-	&PyPointlessPrimVector_as_sequence,             /*tp_as_sequence*/
+	0,                                              /*tp_as_sequence*/
 	&PyPointlessPrimVector_as_mapping,              /*tp_as_mapping*/
 	0,                                              /*tp_hash */
 	0,                                              /*tp_call*/
