@@ -33,7 +33,7 @@ def build_judy():
 	assert(sys.maxsize in (2**63-1, 2**31-1))
 
 	if is_clang or is_gcc_46:
-		if sys.maxint == 2**63-1:
+		if sys.maxsize == 2**63-1:
 			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing'
 		else:
 			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing'
