@@ -644,6 +644,25 @@ static int PyPointlessPrimVector_ass_item(PyPointlessPrimVector* self, Py_ssize_
 	return 0;
 }
 
+static int PyPointlessPrimVector_ass_subscript(PyPointlessPrimVector* self, PyObject* item, PyObject* value)
+{
+	if (PyIndex_Check(item)) {
+		Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
+
+		if (i == -1 && PyErr_Occurred())
+			return -1;
+
+		if (i < 0)
+			i += PyList_GET_SIZE(self);
+
+		return PyPointlessPrimVector_ass_item(self, i, value);
+	} else {
+		PyErr_Format(PyExc_TypeError, "indices must be integers %.200s", item->ob_type->tp_name);
+		return -1;
+	}
+}
+
+
 static PyObject* PyPointlessPrimVector_iter(PyObject* vector)
 {
 	if (!PyPointlessPrimVector_Check(vector)) {
@@ -2016,7 +2035,7 @@ static PyObject* PyPointlessPrimVector_slice(PyPointlessPrimVector* self, Py_ssi
 static PyMappingMethods PyPointlessPrimVector_as_mapping = {
 	(lenfunc)PyPointlessPrimVector_length,
 	(binaryfunc)PyPointlessPrimVector_subscript,
-	(objobjargproc)0
+	(objobjargproc)PyPointlessPrimVector_ass_subscript
 };
 
 #if PY_MAJOR_VERSION < 3
@@ -2087,7 +2106,7 @@ PyTypeObject PyPointlessPrimVectorType = {
 	(initproc)PyPointlessPrimVector_init,           /*tp_init */
 	PyType_GenericAlloc,                            /*tp_alloc */
 	PyType_GenericNew,                              /*tp_new */
-    PyObject_Del,                                   /* tp_free */
+	PyObject_Del,                                   /* tp_free */
 };
 
 
