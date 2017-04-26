@@ -21,6 +21,7 @@ static struct PyPointless_CAPI CAPI = {
 	pointless_dynarray_n_items,
 	pointless_dynarray_pop,
 	pointless_dynarray_push,
+	pointless_dynarray_push_bulk,
 	pointless_dynarray_clear,
 	pointless_dynarray_destroy,
 	pointless_dynarray_item_at,

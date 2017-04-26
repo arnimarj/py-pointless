@@ -184,8 +184,8 @@ extern PyTypeObject PyPointlessPrimVectorIterType;
 PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t* v, uint32_t t);
 PyPointlessPrimVector* PyPointlessPrimVector_from_buffer(void* buffer, size_t n_buffer);
 
-#define POINTLESS_API_MAGIC "pointless.pointless_CAPI 1.0"
-#define POINTLESS_MAGIC_CONTEXT 0x1ABEEFFE
+#define POINTLESS_API_MAGIC "pointless.pointless_CAPI 1.01"
+#define POINTLESS_MAGIC_CONTEXT 0x1ABEEFFF
 
 struct PyPointless_CAPI {
 	// version info
@@ -197,6 +197,7 @@ struct PyPointless_CAPI {
 	size_t(*primvector_n_items)(pointless_dynarray_t* a);
 	void(*primvector_pop)(pointless_dynarray_t* a);
 	int(*primvector_push)(pointless_dynarray_t* a, void* i);
+	int(*primvector_push_bulk)(pointless_dynarray_t* a, void* i, size_t n_items);
 	void(*primvector_clear)(pointless_dynarray_t* a);
 	void(*primvector_destroy)(pointless_dynarray_t* a);
 	void*(*primvector_item_at)(pointless_dynarray_t* a, size_t i);
