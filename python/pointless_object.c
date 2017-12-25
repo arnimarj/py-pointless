@@ -204,9 +204,11 @@ static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 
 		buf = pointless_dynarray_buffer(&vector->array);
 		buflen = pointless_dynarray_n_items(&vector->array);
-
+	} else if (PyByteArray_Check(fname_or_buffer)) {
+		buf = PyByteArray_AS_STRING(fname_or_buffer);
+		buflen = (size_t)PyByteArray_GET_SIZE(fname_or_buffer);
 	} else {
-		PyErr_SetString(PyExc_ValueError, "filename_or_buffer must be string/unicode/primvector-with-uint-8");
+		PyErr_SetString(PyExc_ValueError, "filename_or_buffer must be string/unicode/bytearray/primvector-with-uint-8");
 		return -1;
 	}
 

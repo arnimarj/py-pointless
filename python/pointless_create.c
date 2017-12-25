@@ -654,7 +654,8 @@ const char pointless_write_object_to_buffer_doc[] =
 "\n"
 "  object: the object\n"
 ;
-PyObject* pointless_write_object_to_buffer(PyObject* self, PyObject* args, PyObject* kwds)
+
+static PyObject* pointless_write_object_to(int buffer_type, PyObject* self, PyObject* args, PyObject* kwds)
 {
 	PyObject* object = 0;
 	PyObject* retval = 0;
@@ -696,7 +697,10 @@ PyObject* pointless_write_object_to_buffer(PyObject* self, PyObject* args, PyObj
 		goto cleanup;
 	}
 
-	retval = (PyObject*)PyPointlessPrimVector_from_buffer(buf, buflen);
+	if (buffer_type == 0)
+		retval = (PyObject*)PyPointlessPrimVector_from_buffer(buf, buflen);
+	else
+		retval = (PyObject*)PyByteArray_FromStringAndSize(buf, buflen);
 
 cleanup:
 
@@ -706,4 +710,14 @@ cleanup:
 	JudyLFreeArray(&state.objects_used, 0);
 
 	return retval;
+}
+
+PyObject* pointless_write_object_to_primvector(PyObject* self, PyObject* args, PyObject* kwds)
+{
+	return pointless_write_object_to(0, self, args, kwds);
+}
+
+PyObject* pointless_write_object_to_bytearray(PyObject* self, PyObject* args, PyObject* kwds)
+{
+	return pointless_write_object_to(1, self, args, kwds);
 }

@@ -1,4 +1,6 @@
 build/
+dist/
+pointless.egg-info/
 judy-1.0.5/Makefile
 judy-1.0.5/config.h
 judy-1.0.5/config.log
