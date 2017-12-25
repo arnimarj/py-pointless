@@ -70,7 +70,7 @@ static int32_t pointless_validate_vector_heap(pointless_validate_context_t* cont
 
 static int32_t pointless_validate_bitvector_heap(pointless_validate_context_t* context, pointless_value_t* v, const char** error)
 {
-	assert(v->data.data_u32 < context->p->header->n_vector);
+	assert(v->data.data_u32 < context->p->header->n_bitvector);
 	uint64_t offset = PC_OFFSET(context->p, bitvector_offsets, v->data.data_u32);
 
 	// uint32_t | bits
