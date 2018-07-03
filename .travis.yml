@@ -1,6 +1,7 @@
 language: python
 cache: pip
 dist: xenial
+sudo: true
 
 os:
   - linux
@@ -10,6 +11,7 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
+  - "3.7"
 
 install:
   - bash ./build_judy.sh
