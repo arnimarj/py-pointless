@@ -1,5 +1,6 @@
 build/
 dist/
+wheelhouse/
 pointless.egg-info/
 judy-1.0.5/Makefile
 judy-1.0.5/config.h
@@ -198,3 +199,4 @@ test/test.map
 test/tuple.map
 test/very_simple.map
 *.pyc
+*.so
