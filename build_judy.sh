@@ -2,7 +2,7 @@
 
 set -e
 
-basename="$(dirname $0)"
+basename="$(dirname "$0")"
 
 if [ -z CC ]; then
 	JUDYCC=$CC
@@ -15,7 +15,7 @@ if [ ! -z COPT ]; then
 fi
 
 
-if $JUDYCC -v 2>&1 >/dev/null | egrep "clang|gcc version 4.6"; then
+if $JUDYCC -v 2>&1 >/dev/null | grep -E "clang|gcc version 4.6"; then
 	COPT+=""
 else
 	COPT+=" -fno-aggressive-loop-optimizations"
