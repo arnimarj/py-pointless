@@ -1,17 +1,21 @@
 ---
 
-language: python
-cache: pip
-dist: bionic
+language: c
 
-os:
-  - linux
+services:
+  - docker
 
-python:
-  - "3.5"
-  - "3.6"
-  - "3.7"
-  - "3.8"
+jobs:
+  include:
+    - os: linux
+      dist: bionic
+    - os: osx
+      osx_image: xcode11.2
+    - os: osx
+      osx_image: xcode10.1
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; fi
 
 install:
   - bash ./build_judy.sh
