@@ -1,20 +1,13 @@
 ---
 
 language: python
-
-services:
-  - docker
-
-jobs:
-  include:
-    - os: linux
-      dist: bionic
-      language: python
-      python:
-        - "3.5"
-        - "3.6"
-        - "3.7"
-        - "3.8"
+os: linux
+dist: bionic
+python:
+  - "3.5"
+  - "3.6"
+  - "3.7"
+  - "3.8"
 
 install:
   - python -m pip install -U pip
