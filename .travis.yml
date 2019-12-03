@@ -36,13 +36,13 @@ jobs:
 
 
 install:
-  - if [[ "$RUNTESTS" == "1" ]]; python -m pip install -U pip; fi
-  - if [[ "$RUNTESTS" == "1" ]]; ./build_judy.sh; fi
-  - if [[ "$RUNTESTS" == "1" ]]; (cd tests && ./compile.sh); fi
-  - if [[ "$RUNTESTS" == "1" ]]; pip install -r test-requirements.txt; fi
-  - if [[ "$RUNTESTS" == "1" ]]; python setup.py install; fi
+  - if [[ "$RUNTESTS" == "1" ]]; then python -m pip install -U pip;             fi
+  - if [[ "$RUNTESTS" == "1" ]]; then ./build_judy.sh;                          fi
+  - if [[ "$RUNTESTS" == "1" ]]; then (cd tests && ./compile.sh);               fi
+  - if [[ "$RUNTESTS" == "1" ]]; then pip install -r test-requirements.txt;     fi
+  - if [[ "$RUNTESTS" == "1" ]]; then python setup.py install;                  fi
 
 script:
-  - if [[ "$RUNTESTS" == "1" ]]; (cd tests && ./a.out --unit-test-32); fi
-  - if [[ "$RUNTESTS" == "1" ]]; (cd tests && ./a.out --unit-test-64); fi
-  - if [[ "$RUNTESTS" == "1" ]]; PYTHONPATH=$(pwd) trial tests.python_api; fi
+  - if [[ "$RUNTESTS" == "1" ]]; then (cd tests && ./a.out --unit-test-32);     fi
+  - if [[ "$RUNTESTS" == "1" ]]; then (cd tests && ./a.out --unit-test-64);     fi
+  - if [[ "$RUNTESTS" == "1" ]]; then PYTHONPATH=$(pwd) trial tests.python_api; fi
