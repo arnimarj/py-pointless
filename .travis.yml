@@ -1,6 +1,6 @@
 ---
 
-language: c
+language: python
 
 services:
   - docker
@@ -15,29 +15,6 @@ jobs:
         - "3.6"
         - "3.7"
         - "3.8"
-    - os: osx
-      osx_image:
-        - xcode10.1
-        - xcode11.2
-      env:
-        - PYTHON=3.5
-        - PYTHON=3.6
-        - PYTHON=3.7
-        - PYTHON=3.8
-
-before_install: |
-  if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-    brew update
-    brew install openssl readline
-    brew outdated pyenv || brew upgrade pyenv
-    brew install pyenv-virtualenv
-    pyenv install $PYTHON
-    export PYENV_VERSION=$PYTHON
-    export PATH="/Users/travis/.pyenv/shims:${PATH}"
-    pyenv-virtualenv venv
-    source venv/bin/activate
-    python --version
-  fi
 
 install:
   - python -m pip install -U pip
