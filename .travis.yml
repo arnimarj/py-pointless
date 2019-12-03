@@ -14,14 +14,23 @@ jobs:
     - os: osx
       osx_image: xcode10.1
 
-before_install:
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; fi
+before_install: |
+  if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+    brew update
+    brew install openssl readline
+    brew outdated pyenv || brew upgrade pyenv
+    brew install pyenv-virtualenv
+    pyenv install $PYTHON
+    export PYENV_VERSION=$PYTHON
+    export PATH="/Users/travis/.pyenv/shims:${PATH}"
+    pyenv-virtualenv venv
+    source venv/bin/activate
+    python --version
+  fi
 
 install:
-  - bash ./build_judy.sh
-  - cd tests
-  - ./compile.sh
-  - cd ..
+  - ./build_judy.sh
+  - (cd tests && ./compile.sh)
   - pip install -r test-requirements.txt
   - python setup.py install
 
