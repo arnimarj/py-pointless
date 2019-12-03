@@ -9,10 +9,21 @@ jobs:
   include:
     - os: linux
       dist: bionic
+      language: python
+      python:
+        - "3.5"
+        - "3.6"
+        - "3.7"
+        - "3.8"
     - os: osx
-      osx_image: xcode11.2
-    - os: osx
-      osx_image: xcode10.1
+      osx_image:
+        - xcode10.1
+        - xcode11.2
+      env:
+        - PYTHON=3.5
+        - PYTHON=3.6
+        - PYTHON=3.7
+        - PYTHON=3.8
 
 before_install: |
   if [ "$TRAVIS_OS_NAME" == "osx" ]; then
@@ -29,6 +40,7 @@ before_install: |
   fi
 
 install:
+  - python -m pip install -U pip
   - ./build_judy.sh
   - (cd tests && ./compile.sh)
   - pip install -r test-requirements.txt
