@@ -1,5 +1,10 @@
+.pyenv/
 build/
 dist/
 judy-1.0.5/
 pointless.egg-info/
+venv-3.5.9/
+venv-3.6.9/
+venv-3.7.5/
+venv-3.8.0/
 wheelhouse/

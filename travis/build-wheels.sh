@@ -20,5 +20,7 @@ for PYBIN in /opt/python/*/bin; do
 done
 
 for whl in wheelhouse/*.whl; do
-	auditwheel repair "$whl" --plat "$PLAT" -w /io/wheelhouse/
+	auditwheel repair "$whl" --plat "$PLAT"
 done
+
+cp wheelhouse/*.whl /io/wheelhouse/
