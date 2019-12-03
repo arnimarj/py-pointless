@@ -3,7 +3,7 @@
 set -e
 
 basename="$(dirname "$0")"
-# git clone https://github.com/pyenv/pyenv.git "$basename/.pyenv"
+git clone https://github.com/pyenv/pyenv.git "$basename/.pyenv"
 
 mkdir -p "$basename/wheelhouse/"
 
