@@ -22,14 +22,14 @@ jobs:
         - RUNTESTS=0
 
     - name: "Build and Upload MacOS 10.14 Wheels"
-      os: macos
+      os: osx
       osx_image: xcode11.2
       language: c
       env:
         - RUNTESTS=0
 
     - name: "Build and Upload MacOS 10.13 Wheels"
-      os: macos
+      os: osx
       osx_image: xcode10.1
       env:
         - RUNTESTS=0
