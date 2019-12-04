@@ -49,5 +49,3 @@ script:
 
   - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "linux" ]]; then ./build-manylinux.sh; fi
   - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "macos" ]]; then ./build-macos.sh;     fi
-
-  - if [[ "$RUNTESTS" == "0" ]]; then ls -l ./wheelhouse; fi

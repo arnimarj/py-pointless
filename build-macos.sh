@@ -31,3 +31,5 @@ do
 	"./venv-$py/bin/python" setup.py bdist_wheel > /dev/null
 	cp dist/*.whl ./wheelhouse/
 done
+
+ls -l ./wheelhouse
