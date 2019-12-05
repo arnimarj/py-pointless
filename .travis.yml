@@ -16,7 +16,9 @@ jobs:
     - name: Build and Upload Linux Wheels
       os: linux
       dist: bionic
-      language: c
+      language: python
+      python:
+        - '3.7'
       env:
         - RUNTESTS=0
     - name: Build and Upload MacOS 10.14 Wheels
@@ -51,7 +53,7 @@ script:
       if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
         if [[ "$TRAVIS_BRANCH" == "master" ]]; then
           set -e
-          pip3 install twine
+          pip install twine
           twine upload --repository-url https://test.pypi.org/legacy/ ./wheelhouse/*
         fi
       fi
