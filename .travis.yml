@@ -48,5 +48,5 @@ script:
 deploy:
   provider: script
   script: twine upload --repository-url https://test.pypi.org/legacy/ ./wheelhouse/*
-  on:
+  "on":
     - branch: master
