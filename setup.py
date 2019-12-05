@@ -1,11 +1,9 @@
-import sys, subprocess, os, os.path
+import sys
+import subprocess
+import os
+import os.path
 from setuptools import setup, Extension
 
-if hasattr(subprocess, 'getstatusoutput'):
-	getstatusoutput = subprocess.getstatusoutput
-else:
-	import commands
-	getstatusoutput = commands.getstatusoutput
 
 def build_judy():
 	print('INFO: building judy static library...')
@@ -16,7 +14,7 @@ def build_judy():
 	is_gcc_46 = False
 
 	# test if CC is clang/gcc-4.6
-	exitcode, output = getstatusoutput('%s -v' % (CC,))
+	exitcode, output = subprocess.getstatusoutput('%s -v' % (CC,))
 
 	if exitcode != 0:
 		sys.exit(output)
@@ -30,25 +28,26 @@ def build_judy():
 
 	# adding last two flags because of compiler and/or code bugs
 	# see http://sourceforge.net/p/judy/mailman/message/32417284/
-	assert(sys.maxsize in (2**63-1, 2**31-1))
+	assert(sys.maxsize in (2**63 - 1, 2**31 - 1))
 
 	if is_clang or is_gcc_46:
-		if sys.maxsize == 2**63-1:
+		if sys.maxsize == 2**63 - 1:
 			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing'
 		else:
 			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing'
 	else:
-		if sys.maxsize == 2**63-1:
+		if sys.maxsize == 2**63 - 1:
 			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
 		else:
 			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
 
-	exitcode, output = getstatusoutput('(cd judy-1.0.5/src; CC=\'%s\' COPT=\'%s\' sh ./sh_build)' % (CC, CFLAGS))
+	exitcode, output = subprocess.getstatusoutput('(cd judy-1.0.5/src; CC=\'%s\' COPT=\'%s\' sh ./sh_build)' % (CC, CFLAGS))
 
 	if exitcode != 0:
 		sys.exit(output)
 
 	print(output)
+
 
 if not os.path.isfile('./judy-1.0.5/src/libJudy.a'):
 	build_judy()
@@ -68,13 +67,13 @@ extra_compile_args = [
 extra_link_args = ['-L./judy-1.0.5/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm']
 
 setup(
-	name = 'pointless',
-	version = '0.3.4',
-	maintainer = 'Arni Mar Jonsson',
-	maintainer_email = 'arnimarj@gmail.com',
-	url = 'https://github.com/arnimarj/py-pointless',
+	name='pointless',
+	version='0.3.5',
+	maintainer='Arni Mar Jonsson',
+	maintainer_email='arnimarj@gmail.com',
+	url='https://github.com/arnimarj/py-pointless',
 
-	classifiers = [
+	classifiers=[
 		'Development Status :: 5 - Production/Stable',
 		'Environment :: Other Environment',
 		'Intended Audience :: Developers',
@@ -82,25 +81,23 @@ setup(
 		'Operating System :: POSIX',
 		'Programming Language :: C',
 		'Programming Language :: Python',
-		'Programming Language :: Python :: 2',
-		'Programming Language :: Python :: 2.7',
 		'Programming Language :: Python :: 3',
 		'Programming Language :: Python :: 3.5',
 		'Programming Language :: Python :: 3.6',
 		'Programming Language :: Python :: 3.7',
+		'Programming Language :: Python :: 3.8',
 		'Topic :: Database',
 		'Topic :: Software Development :: Libraries'
 	],
 
-	download_url = 'https://github.com/arnimarj/py-pointless/archive/v0.2.8.2.tar.gz',
-	description = 'A read-only relocatable data structure for JSON like data, with C and Python APIs',
+	description='A read-only relocatable data structure for JSON like data, with C and Python APIs',
 
-	packages = ['pointless'],
-	package_dir = {'pointless': ''},
+	packages=['pointless'],
+	package_dir={'pointless': ''},
 
-	ext_modules = [
+	ext_modules=[
 		Extension('pointless',
-			sources = [
+			sources=[
 				# python stuff
 				'pointless_ext.c',
 
@@ -144,8 +141,8 @@ setup(
 				'src/pointless_eval.c'
 			],
 
-			extra_compile_args = extra_compile_args,
-			extra_link_args = extra_link_args
+			extra_compile_args=extra_compile_args,
+			extra_link_args=extra_link_args
 		)
 	]
 )
