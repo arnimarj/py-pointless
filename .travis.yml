@@ -46,8 +46,7 @@ script:
 
   - if [[ "$RUNTESTS" == "0" ]]; then ls -l ./wheelhouse; fi
 deploy:
-  provider: pypi
-  server: https://testpypi.python.org/pypi
-  user: arnimarj
-  "on":
+  provider: script
+  script: twine upload --repository-url https://test.pypi.org/legacy/ ./wheelhouse/*
+  on:
     - branch: master
