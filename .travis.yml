@@ -54,7 +54,7 @@ script:
         if [[ "$TRAVIS_BRANCH" == "master" ]]; then
           set -e
           pip3 install twine
-          python3 -m twine upload -u arnimarj --repository-url https://test.pypi.org/legacy/ ./wheelhouse/*
+          python3 -m twine upload -u arnimarj ./wheelhouse/*
         fi
       fi
     fi
