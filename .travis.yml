@@ -31,8 +31,8 @@ jobs:
       env:
         - RUNTESTS=0
 install:
-  - python3 -m pip install -U pip
-  - pip3 install -r test-requirements.txt
+  - if [[ "$RUNTESTS" == "1" ]]; then python3 -m pip install -U pip;            fi
+  - if [[ "$RUNTESTS" == "1" ]]; then pip3 install -r test-requirements.txt;    fi
 
   - if [[ "$RUNTESTS" == "1" ]]; then ./build_judy.sh;                          fi
   - if [[ "$RUNTESTS" == "1" ]]; then (cd tests && ./compile.sh);               fi
@@ -46,8 +46,13 @@ script:
   - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "osx"   ]]; then ./build-macos.sh;     fi
 
   - if [[ "$RUNTESTS" == "0" ]]; then ls -l ./wheelhouse; fi
-deploy:
-  provider: script
-  script: twine upload --repository-url https://test.pypi.org/legacy/ ./wheelhouse/*
-  "on":
-    branch: master
+after_success:
+  - |
+    if [[ "$RUNTESTS" == "0" ]]; then
+      if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
+        if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+          pip3 install twine
+          twine upload --repository-url https://test.pypi.org/legacy/ ./wheelhouse/*
+        fi
+      fi
+    fi
