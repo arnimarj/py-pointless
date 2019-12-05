@@ -2,14 +2,35 @@
 
 jobs:
   include:
-    - name: Unit Tests
+    - name: Unit Tests 3.5
       language: python
       os: linux
       dist: bionic
       python:
         - '3.5'
+      env:
+        - RUNTESTS=1
+    - name: Unit Tests 3.6
+      language: python
+      os: linux
+      dist: bionic
+      python:
         - '3.6'
+      env:
+        - RUNTESTS=1
+    - name: Unit Tests 3.7
+      language: python
+      os: linux
+      dist: bionic
+      python:
         - '3.7'
+      env:
+        - RUNTESTS=1
+    - name: Unit Tests 3.8
+      language: python
+      os: linux
+      dist: bionic
+      python:
         - '3.8'
       env:
         - RUNTESTS=1
