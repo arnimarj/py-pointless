@@ -40,9 +40,10 @@ script:
   - if [[ "$RUNTESTS" == "1" ]]; then (cd tests && ./a.out --unit-test-32);     fi
   - if [[ "$RUNTESTS" == "1" ]]; then (cd tests && ./a.out --unit-test-64);     fi
   - if [[ "$RUNTESTS" == "1" ]]; then PYTHONPATH=$(pwd) trial tests.python_api; fi
-  - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "linux" ]]; then ./build-manylinux.sh;
-    fi
+
+  - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "linux" ]]; then ./build-manylinux.sh; fi
   - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "osx"   ]]; then ./build-macos.sh;     fi
+
   - if [[ "$RUNTESTS" == "0" ]]; then ls -l ./wheelhouse; fi
 deploy:
   provider: pypi
