@@ -31,10 +31,11 @@ jobs:
       env:
         - RUNTESTS=0
 install:
-  - if [[ "$RUNTESTS" == "1" ]]; then python -m pip install -U pip;             fi
+  - python3 -m pip install -U pip
+  - pip3 install -r test-requirements.txt
+
   - if [[ "$RUNTESTS" == "1" ]]; then ./build_judy.sh;                          fi
   - if [[ "$RUNTESTS" == "1" ]]; then (cd tests && ./compile.sh);               fi
-  - if [[ "$RUNTESTS" == "1" ]]; then pip install -r test-requirements.txt;     fi
   - if [[ "$RUNTESTS" == "1" ]]; then python setup.py install;                  fi
 script:
   - if [[ "$RUNTESTS" == "1" ]]; then (cd tests && ./a.out --unit-test-32);     fi
