@@ -47,6 +47,7 @@ script:
   - if [[ "$RUNTESTS" == "0" ]]; then ls -l ./wheelhouse; fi
 deploy:
   provider: pypi
+  server: https://testpypi.python.org/pypi
   user: arnimarj
   "on":
     - branch: master
