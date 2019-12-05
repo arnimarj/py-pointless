@@ -68,7 +68,7 @@ extra_link_args = ['-L./judy-1.0.5/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm
 
 setup(
 	name='pointless',
-	version='0.3.6',
+	version='0.3.7',
 	maintainer='Arni Mar Jonsson',
 	maintainer_email='arnimarj@gmail.com',
 	url='https://github.com/arnimarj/py-pointless',
@@ -96,7 +96,8 @@ setup(
 	package_dir={'pointless': ''},
 
 	ext_modules=[
-		Extension('pointless',
+		Extension(
+			'pointless',
 			sources=[
 				# python stuff
 				'pointless_ext.c',
