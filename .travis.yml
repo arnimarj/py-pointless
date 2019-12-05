@@ -42,15 +42,15 @@ script:
   - if [[ "$RUNTESTS" == "1" ]]; then (cd tests && ./a.out --unit-test-64);     fi
   - if [[ "$RUNTESTS" == "1" ]]; then PYTHONPATH=$(pwd) trial tests.python_api; fi
 
-  - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "linux" ]]; then ./build-manylinux.sh; fi
-  - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "osx"   ]]; then ./build-macos.sh;     fi
+  - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "linux" ]]; then ./build-manylinux.sh || travis_terminate 1; fi
+  - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "osx"   ]]; then ./build-macos.sh     || travis_terminate 1; fi
 
-  - if [[ "$RUNTESTS" == "0" ]]; then ls -l ./wheelhouse; fi
-after_success:
   - |
     if [[ "$RUNTESTS" == "0" ]]; then
+      ls -l ./wheelhouse
       if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
         if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+          set -e
           pip3 install twine
           twine upload --repository-url https://test.pypi.org/legacy/ ./wheelhouse/*
         fi
