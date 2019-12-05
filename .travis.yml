@@ -53,8 +53,8 @@ script:
       if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
         if [[ "$TRAVIS_BRANCH" == "master" ]]; then
           set -e
-          pip install twine
-          twine upload --repository-url https://test.pypi.org/legacy/ ./wheelhouse/*
+          pip3 install twine
+          python3 -m twine upload --repository-url https://test.pypi.org/legacy/ ./wheelhouse/*
         fi
       fi
     fi
