@@ -17,21 +17,6 @@ typedef union {
 
 static int parse_pyobject_number(PyObject* v, int* is_signed, int64_t* i, uint64_t* u)
 {
-#if PY_MAJOR_VERSION < 3
-	// simple case
-	if (PyInt_Check(v)) {
-		long _v = PyInt_AS_LONG(v);
-		if (_v < 0) {
-			*is_signed = 1;
-			*i = (int64_t)_v;
-		} else {
-			*is_signed = 0;
-			*u = (uint64_t)_v;
-		}
-
-		return 1;
-	}
-#endif
 	// complicated case
 	if (!PyLong_Check(v)) {
 		PyErr_SetString(PyExc_TypeError, "expected an integer");
@@ -200,11 +185,7 @@ static int PyPointlessPrimVectorIter_traverse(PyPointlessPrimVectorIter* self, v
 PyObject* PyPointlessPrimVector_str(PyPointlessPrimVector* self)
 {
 	if (!self->allow_print) {
-#if PY_MAJOR_VERSION < 3
-		return PyString_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
-#else
 		return PyUnicode_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
-#endif
 	}
 
 	pointless_dynarray_t string;
@@ -285,11 +266,7 @@ PyObject* PyPointlessPrimVector_str(PyPointlessPrimVector* self)
 		goto error;
 	}
 
-#if PY_MAJOR_VERSION < 3
-	PyObject* v_s = PyString_FromString(pointless_dynarray_buffer(&string));
-#else
 	PyObject* v_s = PyUnicode_FromString(pointless_dynarray_buffer(&string));
-#endif
 
 	pointless_dynarray_destroy(&string);
 
@@ -547,36 +524,16 @@ static PyObject* PyPointlessPrimVector_subscript_priv(PyPointlessPrimVector* sel
 
 	switch (self->type) {
 		case POINTLESS_PRIM_VECTOR_TYPE_I8:
-#if PY_MAJOR_VERSION < 3
-			return PyInt_FromLong((long)(*((int8_t*)base_value)));
-#else
 			return PyLong_FromLong((long)(*((int8_t*)base_value)));
-#endif
 		case POINTLESS_PRIM_VECTOR_TYPE_U8:
-#if PY_MAJOR_VERSION < 3
-			return PyInt_FromLong((long)(*((uint8_t*)base_value)));
-#else
 			return PyLong_FromLong((long)(*((uint8_t*)base_value)));
-#endif
 		case POINTLESS_PRIM_VECTOR_TYPE_I16:
-#if PY_MAJOR_VERSION < 3
-			return PyInt_FromLong((long)(*((int16_t*)base_value)));
-#else
 			return PyLong_FromLong((long)(*((int16_t*)base_value)));
-#endif
 		case POINTLESS_PRIM_VECTOR_TYPE_U16:
-#if PY_MAJOR_VERSION < 3
-			return PyInt_FromLong((long)(*((uint16_t*)base_value)));
-#else
 			return PyLong_FromLong((long)(*((uint16_t*)base_value)));
-#endif
 
 		case POINTLESS_PRIM_VECTOR_TYPE_I32:
-#if PY_MAJOR_VERSION < 3
-			return PyInt_FromLong((long)(*((int32_t*)base_value)));
-#else
 			return PyLong_FromLong((long)(*((int32_t*)base_value)));
-#endif
 		case POINTLESS_PRIM_VECTOR_TYPE_U32:
 			return PyLong_FromUnsignedLong((unsigned long)(*((uint32_t*)base_value)));
 		case POINTLESS_PRIM_VECTOR_TYPE_I64:
@@ -1034,11 +991,7 @@ static PyObject* PyPointlessPrimVector_index(PyPointlessPrimVector* self, PyObje
 	if (i == (SIZE_MAX-1))
 		return 0;
 
-#if PY_MAJOR_VERSION < 3
-	return PyInt_FromSize_t(i);
-#else
 	return PyLong_FromSize_t(i);
-#endif
 }
 
 static PyObject* PyPointlessPrimVector_remove(PyPointlessPrimVector* self, PyObject* args)
@@ -1153,49 +1106,6 @@ static PyObject* PyPointlessPrimVector_clear(PyPointlessPrimVector* self)
 }
 
 
-#if PY_MAJOR_VERSION < 3
-static Py_ssize_t PointlessPrimVector_buffer_getreadbuf(PyPointlessPrimVector* self, Py_ssize_t index, const void** ptr)
-{
-	if (index != 0 ) {
-		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
-		return -1;
-	}
-
-	*ptr = (void*)pointless_dynarray_buffer(&self->array);
-	return (Py_ssize_t)PyPointlessPrimVector_n_bytes(self);
-}
-
-static Py_ssize_t PointlessPrimVector_buffer_getwritebuf(PyPointlessPrimVector* self, Py_ssize_t index, const void** ptr)
-{
-	if (index != 0) {
-		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
-		return -1;
-	}
-
-	*ptr = (void*)pointless_dynarray_buffer(&self->array);
-	return (Py_ssize_t)PyPointlessPrimVector_n_bytes(self);
-}
-
-static Py_ssize_t PointlessPrimVector_buffer_getsegcount(PyPointlessPrimVector* self, Py_ssize_t* lenp)
-{
-	if (lenp)
-		*lenp = (Py_ssize_t)PyPointlessPrimVector_n_bytes(self);
-
-	return 1;
-}
-
-static Py_ssize_t PointlessPrimVector_buffer_getcharbuf(PyPointlessPrimVector* self, Py_ssize_t index, const char** ptr)
-{
-	if (index != 0) {
-		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
-		return -1;
-	}
-
-	*ptr = (void*)pointless_dynarray_buffer(&self->array);
-	return (Py_ssize_t)PyPointlessPrimVector_n_bytes(self);
-}
-#endif
-
 static int PointlessPrimVector_getbuffer(PyPointlessPrimVector* obj, Py_buffer* view, int flags)
 {
 	int ret;
@@ -1221,12 +1131,6 @@ static void PointlessPrimVector_releasebuffer(PyPointlessPrimVector* obj, Py_buf
 }
 
 static PyBufferProcs PointlessPrimVector_as_buffer = {
-#if PY_MAJOR_VERSION < 3
-	(readbufferproc)PointlessPrimVector_buffer_getreadbuf,
-	(writebufferproc)PointlessPrimVector_buffer_getwritebuf,
-	(segcountproc)PointlessPrimVector_buffer_getsegcount,
-	(charbufferproc)PointlessPrimVector_buffer_getcharbuf,
-#endif
 	(getbufferproc)PointlessPrimVector_getbuffer,
 	(releasebufferproc)PointlessPrimVector_releasebuffer,
 };
@@ -2047,11 +1951,7 @@ PyTypeObject PyPointlessPrimVectorType = {
 	PyObject_GenericGetAttr,                                              /*tp_getattro*/
 	0,                                              /*tp_setattro*/
 	&PointlessPrimVector_as_buffer,                 /*tp_as_buffer*/
-#if PY_MAJOR_VERSION < 3
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_NEWBUFFER, /*tp_flags*/
-#else
 	Py_TPFLAGS_DEFAULT,                             /*tp_flags*/
-#endif
 	"PyPointlessPrimVector wrapper",                /*tp_doc */
 	0,                                              /*tp_traverse */
 	0,                                              /*tp_clear */

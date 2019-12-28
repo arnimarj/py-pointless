@@ -79,70 +79,6 @@ static const char* _type_name(uint32_t type)
 
 	return "";
 }
-#if PY_MAJOR_VERSION < 3
-
-// stolen from https://github.com/python/cpython/blob/2.7/Objects/object.c
-static int
-adapted_default_3way_compare(pypointless_cmp_value_t *v_, pypointless_cmp_value_t *w_)
-{
-	int c;
-	const char *vname, *wname;
-
-	if (!v_->is_pointless && !w_->is_pointless) {
-		if (v_->value.py_object->ob_type == w_->value.py_object->ob_type) {
-			/* When comparing these pointers, they must be cast to
-			 * integer types (i.e. Py_uintptr_t, our spelling of C9X's
-			 * uintptr_t).  ANSI specifies that pointer compares other
-			 * than == and != to non-related structures are undefined.
-			 */
-			Py_uintptr_t vv = (Py_uintptr_t)v_;
-			Py_uintptr_t ww = (Py_uintptr_t)w_;
-			return (vv < ww) ? -1 : (vv > ww) ? 1 : 0;
-		}
-	}
-
-	if (v_->is_pointless && v_->value.pointless.v.type == POINTLESS_NULL)
-		return -1;
-
-	if (!v_->is_pointless && v_->value.py_object == Py_None)
-		return -1;
-
-	if (w_->is_pointless && w_->value.pointless.v.type == POINTLESS_NULL)
-		return 1;
-
-	if (!w_->is_pointless && w_->value.py_object == Py_None)
-		return 1;
-
-	if (!v_->is_pointless) {
-		if (PyNumber_Check(v_->value.py_object))
-			vname = "";
-		else
-			vname = v_->value.py_object->ob_type->tp_name;
-	} else {
-		vname = (char*)_type_name(v_->value.pointless.v.type);
-	}
-
-	if (!w_->is_pointless) {
-		if (PyNumber_Check(w_->value.py_object))
-			wname = "";
-		else
-			wname = w_->value.py_object->ob_type->tp_name;
-	} else {
-		wname = (char*)_type_name(w_->value.pointless.v.type);
-	}
-
-	c = strcmp(vname, wname);
-
-	if (c < 0)
-		return -1;
-
-	if (c > 0)
-		return 1;
-
-	// give up
-	return -2;
-}
-#endif
 
 static const char* my_type_name(pypointless_cmp_value_t *v_)
 {
@@ -198,11 +134,7 @@ static void pypointless_cmp_value_init_python(pypointless_cmp_value_t* v, PyObje
 
 static int32_t pypointless_is_pylong_negative(PyObject* py_object, pypointless_cmp_state_t* state)
 {
-#if PY_MAJOR_VERSION < 3
-	PyObject* i = PyInt_FromLong(0);
-#else
 	PyObject* i = PyLong_FromLong(0);
-#endif
 
 	int32_t retval = 0;
 
@@ -278,17 +210,6 @@ static pypointless_cmp_cb pypointless_cmp_func(pypointless_cmp_value_t* v, uint3
 		// we need to check for every useful Python type
 		PyObject* py_object = v->value.py_object;
 
-#if PY_MAJOR_VERSION < 3
-		if (PyInt_Check(py_object)) {
-			if (PyInt_AS_LONG(py_object) < 0)
-				*type = POINTLESS_I32;
-			else
-				*type = POINTLESS_U32;
-
-			return pypointless_cmp_int_float_bool;
-		}
-#endif
-
 		if (PyLong_Check(py_object)) {
 			if (pypointless_is_pylong_negative(py_object, state))
 				*type = POINTLESS_I32;
@@ -312,13 +233,6 @@ static pypointless_cmp_cb pypointless_cmp_func(pypointless_cmp_value_t* v, uint3
 			*type = POINTLESS_NULL;
 			return pypointless_cmp_none;
 		}
-
-#if PY_MAJOR_VERSION < 3
-		if (PyString_Check(py_object)) {
-			*type = POINTLESS_STRING_;
-			return pypointless_cmp_string_unicode;
-		}
-#endif
 
 		if (PyUnicode_Check(py_object)) {
 			*type = POINTLESS_UNICODE_;
@@ -381,18 +295,8 @@ static _var_string_t pypointless_cmp_extract_string(pypointless_cmp_value_t* v, 
 			s.string.string_8 = pointless_reader_string_value_ascii(v->value.pointless.p, &v_);
 		}
 	} else {
-#if PY_MAJOR_VERSION < 3
-		assert(PyString_Check(v->value.py_object) || PyUnicode_Check(v->value.py_object));
-#else
 		assert(PyUnicode_Check(v->value.py_object));
-#endif
 
-#if PY_MAJOR_VERSION < 3
-		if (PyString_Check(v->value.py_object)) {
-			s.n_bits = 8;
-			s.string.string_8 = (uint8_t*)PyString_AS_STRING(v->value.py_object);
-		} else
-#endif
 		{
 
 #ifdef Py_UNICODE_WIDE
@@ -477,14 +381,6 @@ static pypointless_cmp_int_float_bool_t pypointless_cmp_int_float_bool_from_valu
 		}
 	} else {
 		PyObject* py_object = v->value.py_object;
-
-#if PY_MAJOR_VERSION < 3
-		if (PyInt_Check(py_object)) {
-			r.is_signed = 1;
-			r.ii = (int64_t)PyInt_AS_LONG(py_object);
-			return r;
-		}
-#endif
 
 		if (PyLong_Check(py_object)) {
 			PY_LONG_LONG v = PyLong_AsLongLong(py_object);
@@ -713,21 +609,11 @@ static int32_t pypointless_cmp_rec(pypointless_cmp_value_t* a, pypointless_cmp_v
 	state->depth += 1;
 
 	if (cmp_a == 0 || cmp_b == 0 || cmp_a != cmp_b) {
-#if PY_MAJOR_VERSION < 3
-		c = adapted_default_3way_compare(a, b);
-
-		if (c == -2) {
-			state->error = "comparison not supported between these types";
-			state->depth -= 1;
-			return 0;
-		}
-#else
 		printf("TYPE A: %s\n", my_type_name(a));
 		printf("TYPE B: %s\n", my_type_name(b));
 		state->error = "comparison not supported between these types";
 		state->depth -= 1;
 		return 0;
-#endif
 	} else {
 		c = (*cmp_a)(a, b, state);
 	}
@@ -794,11 +680,7 @@ PyObject* pointless_cmp(PyObject* self, PyObject* args)
 		return 0;
 	}
 
-#if PY_MAJOR_VERSION < 3
-	return PyInt_FromLong((long)c);
-#else
 	return PyLong_FromLong((long)c);
-#endif
 }
 
 const char pointless_is_eq_doc[] =

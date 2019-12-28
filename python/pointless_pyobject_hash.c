@@ -109,41 +109,10 @@ static uint32_t pyobject_hash_unicode_32(PyObject* py_object, pyobject_hash_stat
 	return hash;
 }
 
-#if PY_MAJOR_VERSION < 3
-static uint32_t pyobject_hash_string_32(PyObject* py_object, pyobject_hash_state_t* state)
-{
-	char* s = PyString_AS_STRING(py_object);
-	return pointless_hash_string_v1_32((uint8_t*)s);
-}
-#endif
-
 static uint32_t pyobject_hash_pypointlessbitvector_32(PyObject* py_object, pyobject_hash_state_t* state)
 {
 	return pointless_pybitvector_hash_32((PyPointlessBitvector*)py_object);
 }
-
-#if PY_MAJOR_VERSION < 3
-static uint32_t pyobject_hash_int_32(PyObject* py_object, pyobject_hash_state_t* state)
-{
-	long i = PyInt_AS_LONG(py_object);
-
-	if (i < 0) {
-		if (!(INT32_MIN <= i && i <= INT32_MAX)) {
-			*state->error = "hashing of integers exceeding 32-bits not supported";
-			return 0;
-		}
-
-		return pointless_hash_i32_32((int32_t)i);
-	}
-
-	if (!(i <= UINT32_MAX)) {
-		*state->error = "hashing of integers exceeding 32-bits not supported";
-		return 0;
-	}
-
-	return pointless_hash_u32_32((uint32_t)i);
-}
-#endif
 
 static uint32_t pyobject_hash_long_32(PyObject* py_object, pyobject_hash_state_t* state)
 {
@@ -234,11 +203,6 @@ static uint32_t pyobject_hash_rec_32(PyObject* py_object, pyobject_hash_state_t*
 		return pyobject_hash_primvector_32((PyPointlessPrimVector*)py_object, state);
 
 	// early checks for more common types
-#if PY_MAJOR_VERSION < 3
-	if (PyInt_Check(py_object))
-		return pyobject_hash_int_32(py_object, state);
-#endif
-
 	if (PyLong_Check(py_object))
 		return pyobject_hash_long_32(py_object, state);
 
@@ -247,11 +211,6 @@ static uint32_t pyobject_hash_rec_32(PyObject* py_object, pyobject_hash_state_t*
 
 	if (PyUnicode_Check(py_object))
 		return pyobject_hash_unicode_32(py_object, state);
-
-#if PY_MAJOR_VERSION < 3
-	if (PyString_Check(py_object))
-		return pyobject_hash_string_32(py_object, state);
-#endif
 
 	if (PyPointlessBitvector_Check(py_object))
 		return pyobject_hash_pypointlessbitvector_32(py_object, state);
@@ -306,11 +265,6 @@ PyObject* pointless_pyobject_hash_32(PyObject* self, PyObject* args)
 		PyErr_Format(PyExc_ValueError, "PyObject hashing error: %s", error);
 		return 0;
 	}
-
-#if PY_MAJOR_VERSION < 3
-	if (hash < LONG_MAX)
-		return PyInt_FromLong((long)hash);
-#endif
 
 	return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG)hash);
 }
