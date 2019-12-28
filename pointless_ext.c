@@ -7,12 +7,7 @@ struct pointless_module_state {
 //	PyObject *error;
 };
 
-#if PY_MAJOR_VERSION >= 3
 #define GETSTATE(m) ((struct pointless_module_state*)PyModule_GetState(m))
-#else
-#define GETSTATE(m) (&_state)
-static struct pointless_module_state _state;
-#endif
 
 static struct PyPointless_CAPI CAPI = {
 	POINTLESS_API_MAGIC,
@@ -72,8 +67,6 @@ static PyMethodDef pointless_module_methods[] =
 	{NULL, NULL},
 };
 
-#if PY_MAJOR_VERSION >= 3
-
 static int pointless_module_traverse(PyObject* m, visitproc visit, void* arg) {
 //	Py_VISIT(GETSTATE(m)->error);
 	return 0;
@@ -95,21 +88,11 @@ static struct PyModuleDef moduledef = {
 	pointless_module_clear,
 	NULL
 };
-#endif
 
-#if PY_MAJOR_VERSION >= 3
 #define MODULEINITERROR return NULL
 PyMODINIT_FUNC
-#else
-#define MODULEINITERROR return
-void
-#endif
 
-#if PY_MAJOR_VERSION >= 3
 PyInit_pointless(void)
-#else
-initpointless(void)
-#endif
 {
 	if (sizeof(Word_t) != sizeof(void*)) {
 		PyErr_SetString(PyExc_ValueError, "word size mismatch");
@@ -118,11 +101,7 @@ initpointless(void)
 
 	PyObject* module_pointless = 0;
 
-#if PY_MAJOR_VERSION >= 3
 	module_pointless = PyModule_Create(&moduledef);
-#else
-	module_pointless = Py_InitModule4("pointless", pointless_module_methods, "Pointless Python API", 0, PYTHON_API_VERSION);
-#endif
 
 	if (module_pointless == 0) {
 		MODULEINITERROR;
@@ -180,9 +159,7 @@ initpointless(void)
 		MODULEINITERROR;
 	}
 
-#if PY_MAJOR_VERSION >= 3
     return module_pointless;
-#endif
 }
 
 #undef MODULEINITERROR

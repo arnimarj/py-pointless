@@ -138,7 +138,7 @@ static PyObject* PyPointlessVector_subscript(PyPointlessVector* self, PyObject* 
 	if (PySlice_Check(item)) {
 		Py_ssize_t start, stop, step, slicelength;
 
-		if (PySlice_GetIndicesEx((PySliceObject*)item, (Py_ssize_t)self->slice_n, &start, &stop, &step, &slicelength) == -1)
+		if (PySlice_GetIndicesEx(item, (Py_ssize_t)self->slice_n, &start, &stop, &step, &slicelength) == -1)
 			return 0;
 
 		if (step != 1) {
@@ -443,43 +443,6 @@ static void* pointless_prim_vector_base_ptr(PyPointlessVector* self)
 	return 0;
 }
 
-#if PY_MAJOR_VERSION < 3
-static Py_ssize_t PyPointlessVector_buffer_getreadbuf(PyPointlessVector* self, Py_ssize_t index, const void **ptr)
-{
-	if (index != 0) {
-		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
-		return -1;
-	}
-
-	if (!pointless_is_prim_vector(self->v)) {
-		PyErr_SetString(PyExc_SystemError, "value vectors do not support buffer protocol");
-		return -1;
-	}
-
-	*ptr = pointless_prim_vector_base_ptr(self);
-	return pointless_vector_n_bytes(self);
-}
-
-static Py_ssize_t PyPointlessVector_buffer_getsegcount(PyPointlessVector* self, Py_ssize_t* lenp)
-{
-	if (lenp)
-		*lenp = pointless_vector_n_bytes(self);
-
-	return 1;
-}
-
-static Py_ssize_t PyPointlessVector_buffer_getcharbuf(PyPointlessVector* self, Py_ssize_t index, const char** ptr)
-{
-	if (index != 0) {
-		PyErr_SetString(PyExc_SystemError, "accessing non-existent bytes segment");
-		return -1;
-	}
-
-	*ptr = pointless_prim_vector_base_ptr(self);
-	return pointless_vector_n_bytes(self);
-}
-#endif
-
 static int PyPointlessVector_getbuffer(PyPointlessVector* self, Py_buffer* view, int flags)
 {
 	if (view == 0)
@@ -620,22 +583,6 @@ static PyObject* PyPointlessVector_min(PyPointlessVector* self)
 
 static int parse_pyobject_number(PyObject* v, int* is_signed, int64_t* i, uint64_t* u)
 {
-#if PY_MAJOR_VERSION < 3
-	// simple case
-	if (PyInt_Check(v)) {
-		long _v = PyInt_AS_LONG(v);
-		if (_v < 0) {
-			*is_signed = 1;
-			*i = (int64_t)_v;
-		} else {
-			*is_signed = 0;
-			*u = (uint64_t)_v;
-		}
-
-		return 1;
-	}
-#endif
-
 	// complicated case
 	if (!PyLong_Check(v)) {
 		PyErr_SetString(PyExc_TypeError, "expected an integer");
@@ -733,30 +680,10 @@ static PyMappingMethods PyPointlessVector_as_mapping = {
 };
 
 static PyBufferProcs PyPointlessVector_as_buffer = {
-#if PY_MAJOR_VERSION < 3
-	(readbufferproc)PyPointlessVector_buffer_getreadbuf,
-	(writebufferproc)0,
-	(segcountproc)PyPointlessVector_buffer_getsegcount,
-	(charbufferproc)PyPointlessVector_buffer_getcharbuf,
-#endif
 	(getbufferproc)PyPointlessVector_getbuffer,
 	(releasebufferproc)PyPointlessVector_releasebuffer
 };
 
-#if PY_MAJOR_VERSION < 3
-static PySequenceMethods PyPointlessVector_as_sequence = {
-	(lenfunc)PyPointlessVector_length,          /* sq_length */
-	0,                                          /* sq_concat */
-	0,                                          /* sq_repeat */
-	(ssizeargfunc)PyPointlessVector_item,       /* sq_item */
-    (ssizessizeargfunc)PyPointlessVector_slice, /* sq_slice */
-	0,                                          /* sq_ass_item */
-	0,                                          /* sq_ass_slice */
-	(objobjproc)PyPointlessVector_contains,     /* sq_contains */
-	0,                                          /* sq_inplace_concat */
-	0,                                          /* sq_inplace_repeat */
-};
-#else
 static PySequenceMethods PyPointlessVector_as_sequence = {
 	(lenfunc)PyPointlessVector_length,          /* sq_length */
 	0,                                          /* sq_concat */
@@ -769,7 +696,6 @@ static PySequenceMethods PyPointlessVector_as_sequence = {
 	0,                                          /* sq_inplace_concat */
 	0,                                          /* sq_inplace_repeat */
 };
-#endif
 
 
 PyTypeObject PyPointlessVectorType = {
@@ -792,11 +718,7 @@ PyTypeObject PyPointlessVectorType = {
 	0,                                              /*tp_getattro*/
 	0,                                              /*tp_setattro*/
 	&PyPointlessVector_as_buffer,                   /*tp_as_buffer*/
-#if PY_MAJOR_VERSION < 3
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_NEWBUFFER, /*tp_flags*/
-#else
 	Py_TPFLAGS_DEFAULT,                             /*tp_flags*/
-#endif
 	"PyPointlessVector wrapper",                    /*tp_doc */
 	0,                                              /*tp_traverse */
 	0,                                              /*tp_clear */

@@ -184,16 +184,8 @@ static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 		if (string_of_unicode == 0)
 			return -1;
 
-#if PY_MAJOR_VERSION < 3
-		fname_ = PyString_AS_STRING(string_of_unicode);
-#else
 		fname_ = PyBytes_AS_STRING(string_of_unicode);
-#endif
 
-#if PY_MAJOR_VERSION < 3
-	} else if (PyString_Check(fname_or_buffer)) {
-		fname_ = PyString_AS_STRING(fname_or_buffer);
-#endif
 	} else if (PyPointlessPrimVector_Check(fname_or_buffer)) {
 		vector = (PyPointlessPrimVector*)fname_or_buffer;
 

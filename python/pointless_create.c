@@ -53,35 +53,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			handle = pointless_create_boolean_false(&state->c);
 
 		RETURN_OOM_IF_FAIL(handle, state);
-	// integer
-#if PY_MAJOR_VERSION < 3
-	} else if (PyInt_Check(py_object)) {
-		long v = PyInt_AS_LONG(py_object);
-
-		// unsigned
-		if (v >= 0) {
-			if (v > UINT32_MAX) {
-				PyErr_Format(PyExc_ValueError, "integer too large for mere 32 bits");
-				state->is_error = 1;
-				state->error_line = __LINE__;
-				return POINTLESS_CREATE_VALUE_FAIL;
-			}
-
-			handle = pointless_create_u32(&state->c, (uint32_t)v);
-		// signed
-		} else {
-			if (!(INT32_MIN <= v && v <= INT32_MAX)) {
-				PyErr_Format(PyExc_ValueError, "integer too large for mere 32 bits with a sign");
-				state->is_error = 1;
-				state->error_line = __LINE__;
-				return POINTLESS_CREATE_VALUE_FAIL;
-			}
-
-			handle = pointless_create_i32(&state->c, (int32_t)v);
-		}
-
-		RETURN_OOM_IF_FAIL(handle, state);
-#endif
 	// long
 	} else if (PyLong_Check(py_object)) {
 		// this will raise an overflow error if number is outside the legal range of PY_LONG_LONG
@@ -298,19 +269,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 
 	// unicode object
 	} else if (PyUnicode_Check(py_object)) {
-#if PY_MAJOR_VERSION < 3
-		// get it from python
-		Py_UNICODE* python_buffer = PyUnicode_AS_UNICODE(py_object);
-
-		// string must not contain zero's
-		Py_ssize_t s_len_python = PyUnicode_GET_SIZE(py_object);
-
-		#if Py_UNICODE_SIZE == 4
-		uint32_t s_len_pointless = pointless_ucs4_len(python_buffer);
-		#else
-		uint32_t s_len_pointless = pointless_ucs2_len(python_buffer);
-		#endif
-#else
 		Py_ssize_t s_len_python = PyUnicode_GET_LENGTH(py_object);
 		Py_ssize_t s_len_pointless = 0;
 
@@ -337,8 +295,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 				return POINTLESS_CREATE_VALUE_FAIL;
 		}
 
-
-#endif
 		if (s_len_python < 0 || (int64_t)s_len_python != (int64_t)s_len_pointless) {
 			PyErr_SetString(PyExc_ValueError, "unicode string contains a zero, where it shouldn't");
 			state->error_line = __LINE__;
@@ -346,19 +302,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			return POINTLESS_CREATE_VALUE_FAIL;
 		}
 
-#if PY_MAJOR_VERSION < 3
-		#if Py_UNICODE_SIZE == 4
-			if (state->unwiden_strings && pointless_is_ucs4_ascii((uint32_t*)python_buffer))
-				handle = pointless_create_string_ucs4(&state->c, python_buffer);
-			else
-				handle = pointless_create_unicode_ucs4(&state->c, python_buffer);
-		#else
-			if (state->unwiden_strings && pointless_is_ucs2_ascii(python_buffer))
-				handle = pointless_create_string_ucs2(&state->c, python_buffer);
-			else
-				handle = pointless_create_unicode_ucs2(&state->c, python_buffer);
-		#endif
-#else
 		void* python_buffer = (void*)PyUnicode_DATA(py_object);
 
 		switch (PyUnicode_KIND(py_object)) {
@@ -387,37 +330,12 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 				break;
 		}
 
-#endif
 		RETURN_OOM_IF_FAIL(handle, state);
 
 		if (!pointless_export_set_seen(state, py_object, handle)) {
 			RETURN_OOM(state);
 		}
 
-#if PY_MAJOR_VERSION < 3
-	// string object
-	} else if (PyString_Check(py_object)) {
-		// get it from python
-		uint8_t* python_buffer = (uint8_t*)PyString_AS_STRING(py_object);
-
-		// string must not contain zero's
-		Py_ssize_t s_len_python = PyString_GET_SIZE(py_object);
-		uint32_t s_len_pointless = pointless_ascii_len(python_buffer);
-
-		if (s_len_python < 0 || (uint64_t)s_len_python != s_len_pointless) {
-			PyErr_SetString(PyExc_ValueError, "string contains a zero, where it shouldn't");
-			state->error_line = __LINE__;
-			state->is_error = 1;
-			return POINTLESS_CREATE_VALUE_FAIL;
-		}
-
-		handle = pointless_create_string_ascii(&state->c, python_buffer);
-		RETURN_OOM_IF_FAIL(handle, state);
-
-		if (!pointless_export_set_seen(state, py_object, handle)) {
-			RETURN_OOM(state);
-		}
-#endif
 	// dict object
 	} else if (PyDict_Check(py_object)) {
 		handle = pointless_create_map(&state->c);

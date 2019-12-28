@@ -108,10 +108,6 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 
 			if (PyErr_Occurred())
 				return -1;
-#if PY_MAJOR_VERSION < 3
-		} else if (PyInt_Check(size) || PyInt_CheckExact(size)) {
-			n_items = (Py_ssize_t)PyInt_AS_LONG(size);
-#endif
 		} else {
 			is_error = 1;
 		}
@@ -166,14 +162,6 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 					bm_set_(self->primitive_bits, i);
 					self->primitive_n_one += 1;
 				}
-			// 2) integer (must be 0 or 1)
-#if PY_MAJOR_VERSION < 3
-			} else if ((PyInt_Check(obj) || PyInt_CheckExact(obj)) && (PyInt_AS_LONG(obj) == 0 || PyInt_AS_LONG(obj) == 1)) {
-				if (PyInt_AS_LONG(obj) == 1) {
-					bm_set_(self->primitive_bits, i);
-					self->primitive_n_one += 1;
-				}
-#endif
 			// 3) long (must be 0 or 1)
 			} else if (PyLong_Check(obj) || PyLong_CheckExact(obj)) {
 				PY_LONG_LONG v = PyLong_AsLongLong(obj);
@@ -302,17 +290,6 @@ static int PyPointlessBitvector_ass_subscript(PyPointlessBitvector* self, PyObje
 		else if (v == 1)
 			i_value = 1;
 	}
-
-#if PY_MAJOR_VERSION < 3
-	if (PyInt_Check(value)) {
-		long v = PyInt_AS_LONG(value);
-
-		if (v == 0)
-			i_value = 0;
-		else if (v == 1)
-			i_value = 1;
-	}
-#endif
 
 	if (i_value == 0) {
 		bm_reset_(self->primitive_bits, i);
@@ -808,11 +785,7 @@ static long PyPointlessBitVector_hash(PyPointlessBitvector* self)
 PyObject* PyBitvector_repr(PyPointlessBitvector* self)
 {
 	if (!self->is_pointless && !self->allow_print) {
-#if PY_MAJOR_VERSION < 3
-		return PyString_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
-#else
 		return PyUnicode_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
-#endif
 	}
 
 	return PyPointless_repr((PyObject*)self);
@@ -821,11 +794,7 @@ PyObject* PyBitvector_repr(PyPointlessBitvector* self)
 PyObject* PyBitvector_str(PyPointlessBitvector* self)
 {
 	if (!self->is_pointless && !self->allow_print) {
-#if PY_MAJOR_VERSION < 3
-		return PyString_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
-#else
 		return PyUnicode_FromFormat("<%s object at %p>", Py_TYPE(self)->tp_name, (void*)self);
-#endif
 	}
 
 	return PyPointless_str((PyObject*)self);

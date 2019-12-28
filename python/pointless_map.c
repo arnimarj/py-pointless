@@ -234,7 +234,7 @@ static PyObject* PyPointlessMap_contains(PyPointlessMap* m, PyObject* k)
 	return PyBool_FromLong(i);
 }
 
-static PyObject* PyPointlessMap_iterkeys(PyPointlessMap* m)
+static PyObject* PyPointlessMap_keys(PyPointlessMap* m)
 {
 	PyPointlessMapKeyIter* iter = (PyPointlessMapKeyIter*)PyObject_New(PyPointlessMapKeyIter, &PyPointlessMapKeyIterType);
 
@@ -248,7 +248,7 @@ static PyObject* PyPointlessMap_iterkeys(PyPointlessMap* m)
 	return (PyObject*)iter;
 }
 
-static PyObject* PyPointlessMap_itervalues(PyPointlessMap* m)
+static PyObject* PyPointlessMap_values(PyPointlessMap* m)
 {
 	PyPointlessMapValueIter* iter = (PyPointlessMapValueIter*)PyObject_New(PyPointlessMapValueIter, &PyPointlessMapValueIterType);
 
@@ -262,7 +262,7 @@ static PyObject* PyPointlessMap_itervalues(PyPointlessMap* m)
 	return (PyObject*)iter;
 }
 
-static PyObject* PyPointlessMap_iteritems(PyPointlessMap* m)
+static PyObject* PyPointlessMap_items(PyPointlessMap* m)
 {
 	PyPointlessMapItemIter* iter = (PyPointlessMapItemIter*)PyObject_New(PyPointlessMapItemIter, &PyPointlessMapItemIterType);
 
@@ -349,82 +349,14 @@ static PyObject* PyPointlessMap_get(PyPointlessMap* m, PyObject* args)
 	return pypointless_value(m->pp, v);
 }
 
-#define PyPointlessMap_LIST_TYPE_KEYS 0
-#define PyPointlessMap_LIST_TYPE_VALUES 1
-#define PyPointlessMap_LIST_TYPE_ITEMS 2
-
-static PyObject* PyPointlessMap_to_list(PyPointlessMap* m, int list_type)
-{
-	uint32_t n_items = pointless_reader_map_n_items(&m->pp->p, m->v);
-	PyObject* retval = PyList_New(n_items);
-	Py_ssize_t i = 0;
-
-	if (retval == 0)
-		goto error;
-
-	uint32_t iter_state = 0;
-
-	pointless_value_t* k = 0;
-	pointless_value_t* v = 0;
-
-	while (pointless_reader_map_iter(&m->pp->p, m->v, &k, &v, &iter_state)) {
-		PyObject* item = 0;
-
-		switch (list_type) {
-			case PyPointlessMap_LIST_TYPE_KEYS:
-				item = pypointless_value(m->pp, k);
-				break;
-			case PyPointlessMap_LIST_TYPE_VALUES:
-				item = pypointless_value(m->pp, v);
-				break;
-			case PyPointlessMap_LIST_TYPE_ITEMS:
-				item = Py_BuildValue("(NN)", pypointless_value(m->pp, k), pypointless_value(m->pp, v));
-				break;
-			default:
-				PyErr_SetString(PyExc_ValueError, "PyPointlessMap_to_list(): internal error");
-				goto error;
-		}
-
-		if (item == 0)
-			goto error;
-
-		PyList_SET_ITEM(retval, i, item);
-		i += 1;
-	}
-
-	return retval;
-
-error:
-	Py_XDECREF(retval);
-
-	return 0;
-}
-
-static PyObject* PyPointlessMap_keys(PyPointlessMap* m)
-{
-	return PyPointlessMap_to_list(m, PyPointlessMap_LIST_TYPE_KEYS);
-}
-
-static PyObject* PyPointlessMap_values(PyPointlessMap* m)
-{
-	return PyPointlessMap_to_list(m, PyPointlessMap_LIST_TYPE_VALUES);
-}
-
-static PyObject* PyPointlessMap_items(PyPointlessMap* m)
-{
-	return PyPointlessMap_to_list(m, PyPointlessMap_LIST_TYPE_ITEMS);
-}
 
 static PyMethodDef PyPointlessMap_methods[] = {
 	{"__contains__", (PyCFunction)PyPointlessMap_contains,    METH_O | METH_COEXIST, ""},
 	{"__getitem__",  (PyCFunction)PyPointlessMap_subscript,   METH_O | METH_COEXIST, ""},
 	{"get",          (PyCFunction)PyPointlessMap_get,         METH_VARARGS, ""},
 	{"keys",         (PyCFunction)PyPointlessMap_keys,        METH_NOARGS, ""},
-	{"items",        (PyCFunction)PyPointlessMap_items,       METH_NOARGS, ""},
 	{"values",       (PyCFunction)PyPointlessMap_values,      METH_NOARGS, ""},
-	{"iterkeys",     (PyCFunction)PyPointlessMap_iterkeys,    METH_NOARGS, ""},
-	{"itervalues",   (PyCFunction)PyPointlessMap_itervalues,  METH_NOARGS, ""},
-	{"iteritems",    (PyCFunction)PyPointlessMap_iteritems,   METH_NOARGS, ""},
+	{"items",        (PyCFunction)PyPointlessMap_items,       METH_NOARGS, ""},
 	{NULL, NULL}
 };
 
