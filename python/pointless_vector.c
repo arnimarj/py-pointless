@@ -138,7 +138,7 @@ static PyObject* PyPointlessVector_subscript(PyPointlessVector* self, PyObject* 
 	if (PySlice_Check(item)) {
 		Py_ssize_t start, stop, step, slicelength;
 
-		if (PySlice_GetIndicesEx((PySliceObject*)item, (Py_ssize_t)self->slice_n, &start, &stop, &step, &slicelength) == -1)
+		if (PySlice_GetIndicesEx(item, (Py_ssize_t)self->slice_n, &start, &stop, &step, &slicelength) == -1)
 			return 0;
 
 		if (step != 1) {

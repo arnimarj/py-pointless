@@ -558,7 +558,7 @@ static PyObject* PyPointlessPrimVector_subscript(PyPointlessPrimVector* self, Py
 	if (PySlice_Check(item)) {
 		Py_ssize_t start, stop, step, slicelength;
 
-		if (PySlice_GetIndicesEx((PySliceObject*)item, (Py_ssize_t)pointless_dynarray_n_items(&self->array), &start, &stop, &step, &slicelength) == -1)
+		if (PySlice_GetIndicesEx(item, (Py_ssize_t)pointless_dynarray_n_items(&self->array), &start, &stop, &step, &slicelength) == -1)
 			return 0;
 
 		if (step != 1) {
