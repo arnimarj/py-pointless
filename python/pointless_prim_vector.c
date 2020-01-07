@@ -176,7 +176,22 @@ static void PyPointlessPrimVectorIter_dealloc(PyPointlessPrimVectorIter* self)
 	PyObject_GC_Del(self);
 }
 
+static void PyPointlessPrimVectorRevIter_dealloc(PyPointlessPrimVectorRevIter* self)
+{
+	PyObject_GC_UnTrack(self);
+	Py_XDECREF(self->vector);
+	self->vector = 0;
+	self->iter_state = 0;
+	PyObject_GC_Del(self);
+}
+
 static int PyPointlessPrimVectorIter_traverse(PyPointlessPrimVectorIter* self, visitproc visit, void* arg)
+{
+	Py_VISIT(self->vector);
+	return 0;
+}
+
+static int PyPointlessPrimVectorRevIter_traverse(PyPointlessPrimVectorRevIter* self, visitproc visit, void* arg)
 {
 	Py_VISIT(self->vector);
 	return 0;
@@ -575,6 +590,22 @@ static PyObject* PyPointlessPrimVector_subscript(PyPointlessPrimVector* self, Py
 	return PyPointlessPrimVector_subscript_priv(self, (uint32_t)i);
 }
 
+static PyObject* PyPointlessPrimVector_item(PyPointlessPrimVector* self, Py_ssize_t i)
+{
+	// if index is negative, it is relative to vector end
+	if (i < 0)
+		i += PyPointlessPrimVector_length(self);
+
+	// if it is out of bounds: throw an exception
+	if (!(0 <= i && i < PyPointlessPrimVector_length(self))) {
+		PyErr_SetString(PyExc_IndexError, "index is out of bounds");
+		return 0;
+	}
+
+	return PyPointlessPrimVector_subscript_priv(self, (uint32_t)i);
+}
+
+
 static int PyPointlessPrimVector_ass_item(PyPointlessPrimVector* self, Py_ssize_t i, PyObject* v)
 {
 	if (!(0 <= i && i < PyPointlessPrimVector_length(self))) {
@@ -630,6 +661,27 @@ static PyObject* PyPointlessPrimVector_iter(PyObject* vector)
 	return (PyObject*)iter;
 }
 
+
+static PyObject* PyPointlessPrimVector_rev_iter(PyObject* vector)
+{
+	if (!PyPointlessPrimVector_Check(vector)) {
+		PyErr_BadInternalCall();
+		return 0;
+	}
+
+	PyPointlessPrimVectorRevIter* iter = PyObject_GC_New(PyPointlessPrimVectorRevIter, &PyPointlessPrimVectorRevIterType);
+
+	if (iter == 0)
+		return 0;
+
+	Py_INCREF(vector);
+	iter->vector = (PyPointlessPrimVector*)vector;
+	iter->iter_state = 0;
+	PyObject_GC_Track(iter);
+
+	return (PyObject*)iter;
+}
+
 static PyObject* PyPointlessPrimVectorIter_iternext(PyPointlessPrimVectorIter* iter)
 {
 	// iterator already reached end
@@ -641,6 +693,28 @@ static PyObject* PyPointlessPrimVectorIter_iternext(PyPointlessPrimVectorIter* i
 
 	if (iter->iter_state < n_items) {
 		PyObject* item = PyPointlessPrimVector_subscript_priv(iter->vector, iter->iter_state);
+		iter->iter_state += 1;
+		return item;
+	}
+
+	// we reached end
+	Py_DECREF(iter->vector);
+	iter->vector = 0;
+	return 0;
+}
+
+
+static PyObject* PyPointlessPrimVectorRevIter_iternext(PyPointlessPrimVectorRevIter* iter)
+{
+	// iterator already reached end
+	if (iter->vector == 0)
+		return 0;
+
+	// see if we have any items left
+	uint32_t n_items = (uint32_t)PyPointlessPrimVector_length(iter->vector);
+
+	if (iter->iter_state < n_items) {
+		PyObject* item = PyPointlessPrimVector_subscript_priv(iter->vector, n_items - iter->iter_state - 1);
 		iter->iter_state += 1;
 		return item;
 	}
@@ -982,6 +1056,49 @@ static size_t PyPointlessPrimVector_index_(PyPointlessPrimVector* self, PyObject
 	}
 
 	return i;
+}
+
+static PyObject* PyPointlessPrimVector_count(PyPointlessPrimVector* self, PyObject* b)
+{
+	Py_ssize_t count = 0;
+	Py_ssize_t i;
+
+	for (i = 0; i < PyPointlessPrimVector_length(self); i++) {
+	}
+
+	return PyLong_FromSsize_t(count);
+}
+
+static int PyPointlessPrimVector_contains(PyPointlessPrimVector* self, PyObject* b)
+{
+	size_t i = SIZE_MAX;
+
+	if (self->type == POINTLESS_PRIM_VECTOR_TYPE_FLOAT) {
+		if (!PyFloat_Check(b))
+			return 0;
+
+		float ff = (float)PyFloat_AsDouble(b);
+		i = PyPointlessPrimVector_index_f(self, ff);
+	} else {
+		int is_signed = 0;
+		int64_t _ii = 0;
+		uint64_t _uu = 0;
+
+		if (!parse_pyobject_number(b, &is_signed, &_ii, &_uu)) {
+			PyErr_Clear();
+			return 0;
+		}
+
+		if (is_signed)
+			i = PyPointlessPrimVector_index_i_i(self, _ii);
+		else
+			i = PyPointlessPrimVector_index_i_u(self, _uu);
+	}
+
+	if (i == SIZE_MAX)
+		return 0;
+
+	return 1;
 }
 
 static PyObject* PyPointlessPrimVector_index(PyPointlessPrimVector* self, PyObject* args)
@@ -1879,10 +1996,12 @@ static PyMethodDef PyPointlessPrimVector_methods[] = {
 	{"sort",        (PyCFunction)PyPointlessPrimVector_sort,          METH_NOARGS,  ""},
 	{"sort_proj",   (PyCFunction)PyPointlessPrimVector_sort_proj,     METH_VARARGS, ""},
 	{"__sizeof__",  (PyCFunction)PyPointlessPrimVector_sizeof,        METH_NOARGS,  ""},
+	{"__reversed__",(PyCFunction)PyPointlessPrimVector_rev_iter,     METH_NOARGS,  ""},
 	{"clear",       (PyCFunction)PyPointlessPrimVector_clear,         METH_NOARGS,  ""},
 	{"FromRemap",   (PyCFunction)PyPointlessPrimVector_from_remap,    METH_VARARGS | METH_CLASS, ""},
 	{"max",         (PyCFunction)PyPointlessPrimVector_max,           METH_NOARGS, ""},
 	{"min",         (PyCFunction)PyPointlessPrimVector_min,           METH_NOARGS, ""},
+	{"count",         (PyCFunction)PyPointlessPrimVector_count,         METH_VARARGS, ""},
 	{NULL, NULL}
 };
 
@@ -1931,6 +2050,19 @@ static PyMappingMethods PyPointlessPrimVector_as_mapping = {
 	(objobjargproc)PyPointlessPrimVector_ass_subscript
 };
 
+static PySequenceMethods PyPointlessPrimVector_as_sequence = {
+	(lenfunc)PyPointlessPrimVector_length,          /* sq_length */
+	0,                                          /* sq_concat */
+	0,                                          /* sq_repeat */
+	(ssizeargfunc)PyPointlessPrimVector_item,       /* sq_item */
+    (ssizessizeargfunc)PyPointlessPrimVector_slice, /* sq_slice */
+	0,                                          /* sq_ass_item */
+    0,                                          /* sq_ass_slice */
+	(objobjproc)PyPointlessPrimVector_contains,     /* sq_contains */
+	0,                                          /* sq_inplace_concat */
+	0,                                          /* sq_inplace_repeat */
+};
+
 PyTypeObject PyPointlessPrimVectorType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessPrimVector",              /*tp_name*/
@@ -1943,7 +2075,7 @@ PyTypeObject PyPointlessPrimVectorType = {
 	0,                                              /*tp_compare*/
 	(reprfunc)PyPointlessPrimVector_repr,           /*tp_repr*/
 	0,                                              /*tp_as_number*/
-	0,                                              /*tp_as_sequence*/
+	&PyPointlessPrimVector_as_sequence,             /*tp_as_sequence*/
 	&PyPointlessPrimVector_as_mapping,              /*tp_as_mapping*/
 	0,                                              /*tp_hash */
 	0,                                              /*tp_call*/
@@ -2005,6 +2137,36 @@ PyTypeObject PyPointlessPrimVectorIterType = {
 	0,                                                /*tp_methods */
 };
 
+PyTypeObject PyPointlessPrimVectorRevIterType = {
+	PyVarObject_HEAD_INIT(NULL, 0)
+	"pointless.PyPointlessPrimVectorRevIter",            /*tp_name*/
+	sizeof(PyPointlessPrimVectorRevIter),                /*tp_basicsize*/
+	0,                                                /*tp_itemsize*/
+	(destructor)PyPointlessPrimVectorRevIter_dealloc,    /*tp_dealloc*/
+	0,                                                /*tp_print*/
+	0,                                                /*tp_getattr*/
+	0,                                                /*tp_setattr*/
+	0,                                                /*tp_compare*/
+	0,                                                /*tp_repr*/
+	0,                                                /*tp_as_number*/
+	0,                                                /*tp_as_sequence*/
+	0,                                                /*tp_as_mapping*/
+	0,                                                /*tp_hash */
+	0,                                                /*tp_call*/
+	0,                                                /*tp_str*/
+	PyObject_GenericGetAttr,                          /*tp_getattro*/
+	0,                                                /*tp_setattro*/
+	0,                                                /*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,          /*tp_flags*/
+	"PyPointlessPrimVectorRevIter",                      /*tp_doc */
+	(traverseproc)PyPointlessPrimVectorRevIter_traverse, /*tp_traverse */
+	0,                                                /*tp_clear */
+	0,                                                /*tp_richcompare */
+	0,                                                /*tp_weaklistoffset */
+	PyObject_SelfIter,                                /*tp_iter */
+	(iternextfunc)PyPointlessPrimVectorRevIter_iternext, /*tp_iternext */
+	0,                                                /*tp_methods */
+};
 
 PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t* v, uint32_t t)
 {

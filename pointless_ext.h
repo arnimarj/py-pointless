@@ -53,6 +53,12 @@ typedef struct {
 
 typedef struct {
 	PyObject_HEAD
+	PyPointlessVector* vector;
+	uint32_t iter_state;
+} PyPointlessVectorRevIter;
+
+typedef struct {
+	PyObject_HEAD
 	int is_pointless;
 	int allow_print;
 
@@ -136,6 +142,12 @@ typedef struct {
 	uint32_t iter_state;
 } PyPointlessPrimVectorIter;
 
+typedef struct {
+	PyObject_HEAD
+	PyPointlessPrimVector* vector;
+	uint32_t iter_state;
+} PyPointlessPrimVectorRevIter;
+
 PyPointlessVector* PyPointlessVector_New(PyPointless* pp, pointless_value_t* v, uint32_t slice_i, uint32_t slice_n);
 PyPointlessBitvector* PyPointlessBitvector_New(PyPointless* pp, pointless_value_t* v);
 
@@ -162,6 +174,7 @@ uint32_t pointless_pybitvector_hash_32(PyPointlessBitvector* bitvector);
 extern PyTypeObject PyPointlessType;
 extern PyTypeObject PyPointlessVectorType;
 extern PyTypeObject PyPointlessVectorIterType;
+extern PyTypeObject PyPointlessVectorRevIterType;
 extern PyTypeObject PyPointlessBitvectorType;
 extern PyTypeObject PyPointlessBitvectorIterType;
 extern PyTypeObject PyPointlessSetType;
@@ -172,6 +185,7 @@ extern PyTypeObject PyPointlessMapValueIterType;
 extern PyTypeObject PyPointlessMapItemIterType;
 extern PyTypeObject PyPointlessPrimVectorType;
 extern PyTypeObject PyPointlessPrimVectorIterType;
+extern PyTypeObject PyPointlessPrimVectorRevIterType;
 
 #define PyPointless_Check(op) PyObject_TypeCheck(op, &PyPointlessType)
 #define PyPointlessVector_Check(op) PyObject_TypeCheck(op, &PyPointlessVectorType)
