@@ -8,3 +8,7 @@ venv-3.6.9/
 venv-3.7.5/
 venv-3.8.0/
 wheelhouse/
+*.map
+file.pointless
+__pycache__/
+.mypy_cache/

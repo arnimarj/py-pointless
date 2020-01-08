@@ -6,11 +6,11 @@ A fast and efficient read-only relocatable data structure for JSON like data, wi
 ```python
 import pointless
 
-pointless.serialize({1:2,3:4}, 'file.pointless')
+pointless.serialize({1: 2, 3: 4}, 'file.pointless')
 
-object = pointless.Pointless('file.pointless').GetRoot()
-print object, type(object)
+root = pointless.Pointless('file.pointless').GetRoot()
+print(root, repr(root))
 
-for k, v in object.iteritems():
-  print k, '->', v
+for k, v in root.items():
+  print(k, '->', v)
 ```
