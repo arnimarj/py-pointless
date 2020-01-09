@@ -609,8 +609,6 @@ static int32_t pypointless_cmp_rec(pypointless_cmp_value_t* a, pypointless_cmp_v
 	state->depth += 1;
 
 	if (cmp_a == 0 || cmp_b == 0 || cmp_a != cmp_b) {
-		printf("TYPE A: %s\n", my_type_name(a));
-		printf("TYPE B: %s\n", my_type_name(b));
 		state->error = "comparison not supported between these types";
 		state->depth -= 1;
 		return 0;
