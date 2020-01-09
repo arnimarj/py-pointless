@@ -110,25 +110,27 @@ PyInit_pointless(void)
 	struct {
 		PyTypeObject* type;
 		const char* name;
-	} types[13] = {
-		{&PyPointlessType,               "Pointless"               },
-		{&PyPointlessVectorType,         "PointlessVector"         },
-		{&PyPointlessVectorIterType,     "PointlessVectorIter"     },
-		{&PyPointlessBitvectorType,      "PointlessBitvector"      },
-		{&PyPointlessBitvectorIterType,  "PointlessBitvectorIter"  },
-		{&PyPointlessSetType,            "PointlessSet"            },
-		{&PyPointlessSetIterType,        "PointlessSetIter"        },
-		{&PyPointlessMapType,            "PointlessMap"            },
-		{&PyPointlessMapKeyIterType,     "PointlessMapKeyIter"     },
-		{&PyPointlessMapValueIterType,   "PointlessMapValueIter"   },
-		{&PyPointlessMapItemIterType,    "PointlessMapItemIter"    },
-		{&PyPointlessPrimVectorType,     "PointlessPrimVector"     },
-		{&PyPointlessPrimVectorIterType, "PointlessPrimVectorIter" }
+	} types[15] = {
+		{&PyPointlessType,                  "Pointless"                  },
+		{&PyPointlessVectorType,            "PointlessVector"            },
+		{&PyPointlessVectorIterType,        "PointlessVectorIter"        },
+		{&PyPointlessVectorRevIterType,     "PointlessVectorRevIter"     },
+		{&PyPointlessBitvectorType,         "PointlessBitvector"         },
+		{&PyPointlessBitvectorIterType,     "PointlessBitvectorIter"     },
+		{&PyPointlessSetType,               "PointlessSet"               },
+		{&PyPointlessSetIterType,           "PointlessSetIter"           },
+		{&PyPointlessMapType,               "PointlessMap"               },
+		{&PyPointlessMapKeyIterType,        "PointlessMapKeyIter"        },
+		{&PyPointlessMapValueIterType,      "PointlessMapValueIter"      },
+		{&PyPointlessMapItemIterType,       "PointlessMapItemIter"       },
+		{&PyPointlessPrimVectorType,        "PointlessPrimVector"        },
+		{&PyPointlessPrimVectorIterType,    "PointlessPrimVectorIter"    },
+		{&PyPointlessPrimVectorRevIterType, "PointlessPrimVectorRevIter" },
 	};
 
 	int i;
 
-	for (i = 0; i < 13; i++) {
+	for (i = 0; i < 15; i++) {
 		if (PyType_Ready(types[i].type) < 0) {
 			Py_DECREF(module_pointless);
 			MODULEINITERROR;
