@@ -1,1 +1,2 @@
 recursive-include . *.h
+recursive-include ./judy-1.0.5 *
