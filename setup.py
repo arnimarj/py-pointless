@@ -98,6 +98,9 @@ setup(
 	ext_modules=[
 		Extension(
 			'pointless',
+			include_dirs=[
+				'./include',
+			],
 			sources=[
 				# python stuff
 				'pointless_ext.c',
