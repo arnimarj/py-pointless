@@ -34,7 +34,7 @@ jobs:
         - '3.8'
       env:
         - RUNTESTS=1
-    - name: Build and Upload Linux Wheels
+    - name: Build and Upload Linux Wheels and sdist
       os: linux
       dist: bionic
       language: python
@@ -66,6 +66,7 @@ script:
   - if [[ "$RUNTESTS" == "1" ]]; then PYTHONPATH=$(pwd) trial tests.python_api; fi
 
   - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "linux" ]]; then ./build-manylinux.sh || travis_terminate 1; fi
+  - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "linux" ]]; then ./build-sdist.sh     || travis_terminate 1; fi
   - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "osx"   ]]; then ./build-macos.sh     || travis_terminate 1; fi
 
   - |
