@@ -11,5 +11,5 @@ docker run --rm -e PLAT=manylinux2010_x86_64 -v "$(pwd):/io" pypywheels/manylinu
 
 ls -l ./wheelhouse
 
-# make sure we clean up ./build since it gets root permision
-sudo rm -rf ./build/
+# make sure we clean up since all this gets run as root
+sudo rm -rf ./build/ ./pointless.egg-info/ ./dist/
