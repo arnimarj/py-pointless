@@ -71,9 +71,9 @@ script:
   - if [[ "$RUNTESTS" == "1" ]]; then (cd tests && ./a.out --unit-test-64);     fi
   - if [[ "$RUNTESTS" == "1" ]]; then PYTHONPATH=$(pwd) trial tests.python_api; fi
 
-  - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "linux" ]]; then rm -rf ./build/ && ./build-manylinux.sh || travis_terminate 1; fi
-  - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "linux" ]]; then rm -rf ./build/ && ./build-sdist.sh     || travis_terminate 1; fi
-  - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "osx"   ]]; then rm -rf ./build/ && ./build-macos.sh     || travis_terminate 1; fi
+  - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "linux" ]]; then ./build-manylinux.sh || travis_terminate 1; fi
+  - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "linux" ]]; then ./build-sdist.sh     || travis_terminate 1; fi
+  - if [[ "$RUNTESTS" == "0" && "$TRAVIS_OS_NAME" == "osx"   ]]; then ./build-macos.sh     || travis_terminate 1; fi
 
   - |
     if [[ "$RUNTESTS" == "0" ]]; then
