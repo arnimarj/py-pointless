@@ -1,58 +1,79 @@
 #!/usr/bin/python
 
-import random, unittest, pointless, six
+import random
+import unittest
+import pointless
+
+
+def limit_precision(f):
+	# a hack to limit the precision, since we need a number which is accurately repsrented as both 32 and 64 bit floats
+	return float(str(f)[:8])
+
 
 def RandomPrimVector(n, tc):
 	ranges = {
-		'i8':  [-128, 127],
-		'u8':  [   0, 255],
+		'i8': [-128, 127],
+		'u8': [0, 255],
 		'i16': [-600, 600],
-		'u16': [   0, 1200],
-		'i32': [  -2**31, 2**31-1],
-		'u32': [   0, 2**32-1],
-		'i64': [  -2**63, 2**63-1],
-		'u64': [  0, 2**64-1],
-		'f':   [None, None]
+		'u16': [0, 1200],
+		'i32': [-2**31, 2**31 - 1],
+		'u32': [0, 2**32 - 1],
+		'i64': [-2**63, 2**63 - 1],
+		'u64': [0, 2**64 - 1],
+		'f': [None, None]
 	}
 
-	if tc == None:
+	if tc is None:
 		tc = random.choice(list(ranges.keys()))
 
 	i_min, i_max = ranges[tc]
 
 	if tc == 'f':
-		return pointless.PointlessPrimVector(tc, sequence = (random.uniform(-10000.0, 10000.0) for i in six.moves.range(n)))
+		return pointless.PointlessPrimVector(tc, sequence=map(limit_precision, (random.uniform(-10000.0, 10000.0) for i in range(n))))
 
-	return pointless.PointlessPrimVector(tc, sequence = (random.randint(i_min, i_max) for i in six.moves.range(n)))
+	return pointless.PointlessPrimVector(tc, sequence=(random.randint(i_min, i_max) for i in range(n)))
+
 
 class TestPrimVector(unittest.TestCase):
 	def testIndex(self):
-		for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
-			for i in six.moves.range(100):
-				v = RandomPrimVector(i, tc)
-				w = list(v)
+		for s in range(175, 10000):
+			print('S', s)
+			random.seed(s)
 
-				for i in six.moves.range(len(w)):
-					self.assertTrue(w.index(w[i]) == v.index(w[i]))
-					self.assertTrue(w.index(v[i]) == v.index(v[i]))
+			for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
+				for i in range(100):
+					v = RandomPrimVector(i, tc)
+					w = list(v)
 
-				for i in six.moves.range(1000):
-					if len(w) > 0:
-						self.assertTrue((i in w) == (i in v))
+					if tc != 'f':
+						continue
 
-						if i in w:
+					for i in range(len(w)):
+						self.assertEqual(w.index(w[i]), v.index(w[i]))
+						self.assertEqual(w.index(v[i]), v.index(v[i]))
+
+					for i in range(-1000, 1000):
+						if i != 131:
 							continue
+						if len(w) > 0:
+							print('I', tc, i, i in w, i in v)
+							print(v)
+							print(w)
+							self.assertEqual((i in w), (i in v))
 
-						self.assertRaises(ValueError, w.index, i)
-						self.assertRaises(ValueError, v.index, i)
+							if i in w:
+								continue
+
+							self.assertRaises(ValueError, w.index, i)
+							self.assertRaises(ValueError, v.index, i)
 
 	def testRemove(self):
 		for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
-			for i in six.moves.range(100):
+			for i in range(100):
 				v = RandomPrimVector(i, tc)
 				w = list(v)
 
-				for i in six.moves.range(100):
+				for _ in range(100):
 					if len(w) > 0:
 						V = random.choice(v)
 
@@ -68,17 +89,17 @@ class TestPrimVector(unittest.TestCase):
 
 	def testFastRemove(self):
 		for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
-			for i in six.moves.range(100):
+			for i in range(100):
 				v = RandomPrimVector(i, tc)
 				w = list(v)
 
-				for i in six.moves.range(100):
+				for _ in range(100):
 					if len(w) > 0:
 						V = random.choice(v)
 
 						w.remove(V)
 						v.fast_remove(V)
-						assert(sorted(w) == sorted(v))
+						self.assertListEqual(sorted(w), sorted(v))
 
 						V = random.randint(0, 1000)
 
@@ -90,15 +111,15 @@ class TestPrimVector(unittest.TestCase):
 		w = pointless.PointlessPrimVector('u32')
 		self.assertRaises(IndexError, w.pop)
 
-		w = pointless.PointlessPrimVector('u32', sequence = six.moves.range(1000))
+		w = pointless.PointlessPrimVector('u32', sequence=range(1000))
 
-		self.assertTrue(len(w) == 1000)
+		self.assertEqual(len(w), 1000)
 
-		for i in six.moves.range(1000):
+		for i in range(1000):
 			n = w.pop()
-			self.assertTrue(n == 1000 - i - 1)
+			self.assertEqual(n, 1000 - i - 1)
 
-		self.assertTrue(len(w) == 0)
+		self.assertEqual(len(w), 0)
 		self.assertRaises(IndexError, w.pop)
 
 	def testTypeCode(self):
@@ -106,18 +127,18 @@ class TestPrimVector(unittest.TestCase):
 
 		for tc in t:
 			r = range(0, 10) if tc != 'f' else [0.0, 1.0, 2.0, 3.0]
-			v = pointless.PointlessPrimVector(tc, sequence = r)
-			self.assertTrue(v.typecode == tc)
+			v = pointless.PointlessPrimVector(tc, sequence=r)
+			self.assertEqual(v.typecode, tc)
 
 	def testPrimVector(self):
 		# integer types, and their ranges
 		int_info = [
-			['i8', -2**7, 2**7-1],
-			['u8', 0, 2**8-1],
-			['i16', -2**15, 2**15-1],
-			['u16', 0, 2**16-1],
-			['i32', -2**31, 2**31-1],
-			['u32', 0, 2**32-1]
+			['i8', -2**7, 2**7 - 1],
+			['u8', 0, 2**8 - 1],
+			['i16', -2**15, 2**15 - 1],
+			['u16', 0, 2**16 - 1],
+			['i32', -2**31, 2**31 - 1],
+			['u32', 0, 2**32 - 1]
 		]
 
 		# legal values, and their output, plus an iterator based creation, and item-by-item comparison
@@ -129,18 +150,22 @@ class TestPrimVector(unittest.TestCase):
 
 			a, b, c = v
 
-			self.assertTrue(a == v_min and b == 0 and c == v_max)
+			self.assertEqual(a, v_min)
+			self.assertEqual(b, 0)
+			self.assertEqual(c, v_max)
 
-			vv = pointless.PointlessPrimVector(v_type, sequence = v)
+			vv = pointless.PointlessPrimVector(v_type, sequence=v)
 
-			self.assertTrue(len(v) == len(vv))
+			self.assertEqual(len(v), len(vv))
 
 			a, b, c = vv
 
-			self.assertTrue(a == v_min and b == 0 and c == v_max)
+			self.assertEqual(a, v_min)
+			self.assertEqual(b, 0)
+			self.assertEqual(c, v_max)
 
-			for aa, bb in six.moves.zip(v, vv):
-				self.assertTrue(aa == bb)
+			for aa, bb in zip(v, vv):
+				self.assertEqual(aa, bb)
 
 		# illegal values, which must fail
 		for v_type, v_min, v_max in int_info:
@@ -158,12 +183,12 @@ class TestPrimVector(unittest.TestCase):
 			v.append(+100.0)
 			v.append(+0.5)
 
-			vv = pointless.PointlessPrimVector('f', sequence = v)
+			vv = pointless.PointlessPrimVector('f', sequence=v)
 
-			self.assertTrue(len(v) == len(vv))
+			self.assertEqual(len(v), len(vv))
 
-			for aa, bb in six.moves.zip(v, vv):
-				self.assertTrue(aa == bb)
+			for aa, bb in zip(v, vv):
+				self.assertEqual(aa, bb)
 
 			v = pointless.PointlessPrimVector('f')
 
@@ -173,54 +198,57 @@ class TestPrimVector(unittest.TestCase):
 		random.seed(0)
 
 		i_limits = [
-			('i8',  -128, 127),
-			('u8',     0, 255),
+			('i8', -128, 127),
+			('u8', 0, 255),
 			('i16', -600, 600),
-			('u16',    0, 1200),
-			('i32',   -1, 33000),
-			('u32',    0, 66000),
-			('i64',   -2**63, 2**63-1),
-			('u64',    0, 2**64-1),
+			('u16', 0, 1200),
+			('i32', -1, 33000),
+			('u32', 0, 66000),
+			('i64', -2**63, 2**63 - 1),
+			('u64', 0, 2**64 - 1),
 		]
 
 		def close_enough(v_a, v_b):
 			return (abs(v_a - v_b) < 0.001)
 
-		for i in six.moves.range(100):
+		for i in range(100):
 			for tc, i_min, i_max in i_limits:
 				for n_min in [0, 1000, 10000, 10000]:
 					n = random.randint(0, n_min)
 					py_v = [i_min, i_max]
-					py_v += [random.randint(i_min, i_max) for i in six.moves.range(n)]
+					py_v += [random.randint(i_min, i_max) for i in range(n)]
 					random.shuffle(py_v)
 
-					pr_v = pointless.PointlessPrimVector(tc, sequence = py_v)
+					pr_v = pointless.PointlessPrimVector(tc, sequence=py_v)
 
 					py_v.sort()
 					pr_v.sort()
 
-					self.assertTrue(len(py_v) == len(pr_v))
-					self.assertTrue(all(a == b for a, b in six.moves.zip(py_v, pr_v)))
+					self.assertEqual(len(py_v), len(pr_v))
 
-					py_v = [random.uniform(-10000.0, +10000.0) for i in six.moves.range(n)]
+					for a, b in zip(py_v, pr_v):
+						self.assertEqual(a, b)
+
+					py_v = [random.uniform(-10000.0, +10000.0) for i in range(n)]
 					random.shuffle(py_v)
-					pr_v = pointless.PointlessPrimVector('f', sequence = py_v)
+					pr_v = pointless.PointlessPrimVector('f', sequence=py_v)
 
 					py_v.sort()
 					pr_v.sort()
 
-					self.assertTrue(len(py_v) == len(pr_v))
-					self.assertTrue(all(close_enough(a, b) for a, b in six.moves.zip(py_v, pr_v)))
+					self.assertEqual(len(py_v), len(pr_v))
+					for a, b in zip(py_v, pr_v):
+						self.assertTrue(close_enough(a, b))
 
 	def testProjSort(self):
 		# pure python projection sort
 		def my_proj_sort(proj, v):
-			proj.sort(key = lambda i: tuple(v[index][i] for index in six.moves.range(len(v))))
+			proj.sort(key=lambda i: tuple(v[index][i] for index in range(len(v))))
 
 		random.seed(0)
 
 		# run some number of iterations
-		for i in six.moves.range(10):
+		for i in range(10):
 			# generate projection with indices in the range [i_min, i_max[
 			i_min = random.randint(0, 1000)
 			i_max = random.randint(i_min, i_min + 60000)
@@ -244,23 +272,23 @@ class TestPrimVector(unittest.TestCase):
 			# create an equivalent primary vector projection, using any of the possible primitive range types
 			# since it is important to test them all
 			tc = random.choice(tc)
-			pp_proj = pointless.PointlessPrimVector(tc, sequence = py_proj)
+			pp_proj = pointless.PointlessPrimVector(tc, sequence=py_proj)
 
 			# create 1 to 16 value vectors
 			n_attributes = random.randint(1, 16)
-			pp_vv = [RandomPrimVector(i_max, None) for i in six.moves.range(n_attributes)]
-			py_vv = [list(pp_vv[i]) for i in six.moves.range(n_attributes)]
+			pp_vv = [RandomPrimVector(i_max, None) for i in range(n_attributes)]
+			py_vv = [list(pp_vv[i]) for i in range(n_attributes)]
 
 			# run both python and pointless projection sorts
 			my_proj_sort(py_proj, py_vv)
 			pp_proj.sort_proj(*pp_vv)
 
-			self.assertTrue(len(py_proj) == len(pp_proj))
+			self.assertEqual(len(py_proj), len(pp_proj))
 
-			for a, b in six.moves.zip(py_proj, pp_proj):
+			for a, b in zip(py_proj, pp_proj):
 				if a != b:
-					t_a = [pp_vv[i][a] for i in six.moves.range(n_attributes)]
-					t_b = [py_vv[i][b] for i in six.moves.range(n_attributes)]
+					t_a = [pp_vv[i][a] for i in range(n_attributes)]
+					t_b = [py_vv[i][b] for i in range(n_attributes)]
 
 					# since the pointless sort is not stable, we have to account for equivalence
 					if t_a == t_b:
@@ -276,7 +304,7 @@ class TestPrimVector(unittest.TestCase):
 		for tc in tcs:
 			n_random = list(range(100))
 
-			for i in six.moves.range(100):
+			for _ in range(100):
 				n_random.append(random.randint(101, 10000))
 
 			for n in n_random:
@@ -284,22 +312,23 @@ class TestPrimVector(unittest.TestCase):
 				buffer = v_in.serialize()
 				v_out = pointless.PointlessPrimVector(buffer = buffer)
 
-				self.assertTrue(v_in.typecode == v_out.typecode)
-				self.assertTrue(len(v_in) == len(v_out))
-				self.assertTrue(a == b for a, b in six.moves.zip(v_in, v_out))
+				self.assertEqual(v_in.typecode, v_out.typecode)
+				self.assertEqual(len(v_in), len(v_out))
+				for a, b in zip(v_in, v_out):
+					self.assertEqual(a, b)
 
 	def testSlice(self):
 		# vector types, and their ranges
 		v_info = [
-			['i8',   -2**7,   2**7 - 1],
-			['u8',       0,   2**8 - 1],
-			['i16', -2**15,  2**15 - 1],
-			['u16',      0,  2**16 - 1],
-			['i32', -2**31,  2**31 - 1],
-			['u32',      0,  2**32 - 1],
-			['i64', -2**63,  2**63 - 1],
-			['u64',      0,  2**64 - 1],
-			['f',     None,       None]
+			['i8', -2**7, 2**7 - 1],
+			['u8', 0, 2**8 - 1],
+			['i16', -2**15, 2**15 - 1],
+			['u16', 0, 2**16 - 1],
+			['i32', -2**31, 2**31 - 1],
+			['u32', 0, 2**32 - 1],
+			['i64', -2**63, 2**63 - 1],
+			['u64', 0, 2**64 - 1],
+			['f', None, None]
 		]
 
 		random.seed(0)
@@ -308,7 +337,7 @@ class TestPrimVector(unittest.TestCase):
 			if len(v_a) != len(v_b):
 				return False
 
-			for a, b in six.moves.zip(v_a, v_b):
+			for a, b in zip(v_a, v_b):
 				if isinstance(a, float) and isinstance(b, float):
 					if not (abs(a - b) < 0.001):
 						return False
@@ -318,16 +347,16 @@ class TestPrimVector(unittest.TestCase):
 			return True
 
 		# we do multiple iterations
-		for i in six.moves.range(100):
+		for _ in range(100):
 			# select type and range
 			v_type, v_min, v_max = random.choice(v_info)
 
 			n = random.randint(0, 1000)
 
 			v_a = pointless.PointlessPrimVector(v_type)
-			v_b = [ ]
+			v_b = []
 
-			for j in six.moves.range(n):
+			for _ in range(n):
 				if v_type == 'f':
 					v = random.uniform(-10000.0, 10000.0)
 				else:
@@ -336,9 +365,9 @@ class TestPrimVector(unittest.TestCase):
 				v_a.append(v)
 				v_b.append(v)
 
-			for j in six.moves.range(100):
+			for _ in range(100):
 				i_min = random.randint(-1000, 1000)
-				i_max = random.randint( 1000, 1000)
+				i_max = random.randint(1000, 1000)
 
 				s_a = v_a[:]
 				s_b = v_b[:]
@@ -370,8 +399,8 @@ class TestPrimVector(unittest.TestCase):
 				except IndexError:
 					s_b = None
 
-				self.assertTrue((s_a == None) == (s_b == None))
-				self.assertTrue(s_a == None or v_eq(s_a, s_b))
+				self.assertEqual((s_a is None), (s_b is None))
+				self.assertTrue(s_a is None or v_eq(s_a, s_b))
 
 				try:
 					s_a = [v_a[i_max]]
@@ -383,5 +412,5 @@ class TestPrimVector(unittest.TestCase):
 				except IndexError:
 					s_b = None
 
-				self.assertTrue((s_a == None) == (s_b == None))
-				self.assertTrue(s_a == None or v_eq(s_a, s_b))
+				self.assertEqual((s_a is None), (s_b is None))
+				self.assertTrue(s_a is None or v_eq(s_a, s_b))
