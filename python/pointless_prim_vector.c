@@ -953,7 +953,7 @@ static size_t PyPointlessPrimVector_index_f(PyPointlessPrimVector* self, float v
 static size_t PyPointlessPrimVector_index_i_i(PyPointlessPrimVector* self, int64_t v)
 {
 	uint32_t i, n = pointless_dynarray_n_items(&self->array);
-	void* a = (float*)(self->array._data);
+	void* a = self->array._data;
 
 	for (i = 0; i < n; i++) {
 		switch (self->type) {
