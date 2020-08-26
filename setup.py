@@ -1,8 +1,9 @@
-import sys
-import subprocess
 import os
 import os.path
-from setuptools import setup, Extension
+import subprocess
+import sys
+
+from setuptools import Extension, setup
 
 
 def build_judy():
@@ -15,7 +16,7 @@ def build_judy():
 	assert(sys.maxsize == 2**63 - 1)
 
 	CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
-	exitcode, output = subprocess.getstatusoutput(f'(cd judy-1.0.5/src; CC=\'{CC}\' COPT=\'{CFLAGS}\' sh ./sh_build)')
+	exitcode, output = subprocess.getstatusoutput('(cd judy-1.0.5/src; CC=\'{}\' COPT=\'{}\' sh ./sh_build)'.format(CC, CFLAGS))
 
 	if exitcode != 0:
 		sys.exit(output)
