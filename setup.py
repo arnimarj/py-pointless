@@ -12,7 +12,7 @@ def build_judy():
 
 	# adding last two flags because of compiler and/or code bugs
 	# see http://sourceforge.net/p/judy/mailman/message/32417284/
-	assert(sys.maxsize == 2**63)
+	assert(sys.maxsize == 2**63 - 1)
 
 	CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
 	exitcode, output = subprocess.getstatusoutput(f'(cd judy-1.0.5/src; CC=\'{CC}\' COPT=\'{CFLAGS}\' sh ./sh_build)')
