@@ -10,38 +10,12 @@ def build_judy():
 
 	CC = os.environ.get('CC', 'cc')
 
-	is_clang = False
-	is_gcc_46 = False
-
-	# test if CC is clang/gcc-4.6
-	exitcode, output = subprocess.getstatusoutput('%s -v' % (CC,))
-
-	if exitcode != 0:
-		sys.exit(output)
-
-	if 'clang' in output:
-		print('INFO: compiler is Clang')
-		is_clang = True
-	elif 'gcc version 4.6' in output:
-		print('INFO: compiler is GCC 4.6')
-		is_gcc_46 = True
-
 	# adding last two flags because of compiler and/or code bugs
 	# see http://sourceforge.net/p/judy/mailman/message/32417284/
-	assert(sys.maxsize in (2**63 - 1, 2**31 - 1))
+	assert(sys.maxsize == 2**63)
 
-	if is_clang or is_gcc_46:
-		if sys.maxsize == 2**63 - 1:
-			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing'
-		else:
-			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing'
-	else:
-		if sys.maxsize == 2**63 - 1:
-			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
-		else:
-			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
-
-	exitcode, output = subprocess.getstatusoutput('(cd judy-1.0.5/src; CC=\'%s\' COPT=\'%s\' sh ./sh_build)' % (CC, CFLAGS))
+	CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
+	exitcode, output = subprocess.getstatusoutput(f'(cd judy-1.0.5/src; CC=\'{CC}\' COPT=\'{CFLAGS}\' sh ./sh_build)')
 
 	if exitcode != 0:
 		sys.exit(output)
@@ -68,7 +42,7 @@ extra_link_args = ['-L./judy-1.0.5/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm
 
 setup(
 	name='pointless',
-	version='1.0.4',
+	version='1.0.5',
 	maintainer='Arni Mar Jonsson',
 	maintainer_email='arnimarj@gmail.com',
 	url='https://github.com/arnimarj/py-pointless',
