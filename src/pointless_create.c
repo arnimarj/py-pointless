@@ -1271,7 +1271,7 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 
 	if (f == 0) {
 		*error = "error attaching to temporary file";
-		return 0;
+		goto cleanup;
 	}
 
 	pointless_create_cb_t cb;
@@ -1325,6 +1325,9 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 	return 1;
 
 cleanup:
+
+	pointless_free(temp_fname);
+	temp_fname = 0;
 
 	pointless_create_end(c);
 
