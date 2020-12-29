@@ -1,11 +1,12 @@
-import sys
-import subprocess
 import os
 import os.path
-from setuptools import setup, Extension
+import subprocess
+import sys
+
+from setuptools import Extension, setup
 
 
-def build_judy():
+def build_judy() -> None:
 	print('INFO: building judy static library...')
 
 	CC = os.environ.get('CC', 'cc')
@@ -68,7 +69,7 @@ extra_link_args = ['-L./judy-1.0.5/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm
 
 setup(
 	name='pointless',
-	version='1.0.5',
+	version='1.0.6',
 	maintainer='Arni Mar Jonsson',
 	maintainer_email='arnimarj@gmail.com',
 	url='https://github.com/arnimarj/py-pointless',
