@@ -50,7 +50,7 @@ jobs:
         - RUNTESTS=0
       cache:
         directories:
-          - $HOME/.pyenv/versions/3.8.6
+          - $HOME/.pyenv/versions/3.6.12
           - $HOME/.pyenv/versions/3.7.9
           - $HOME/.pyenv/versions/3.8.6
           - $HOME/.pyenv/versions/3.9.1
@@ -62,7 +62,7 @@ jobs:
         - RUNTESTS=0
       cache:
         directories:
-          - $HOME/.pyenv/versions/3.8.6
+          - $HOME/.pyenv/versions/3.6.12
           - $HOME/.pyenv/versions/3.7.9
           - $HOME/.pyenv/versions/3.8.6
           - $HOME/.pyenv/versions/3.9.1
@@ -73,7 +73,7 @@ jobs:
         - RUNTESTS=0
       cache:
         directories:
-          - $HOME/.pyenv/versions/3.8.6
+          - $HOME/.pyenv/versions/3.6.12
           - $HOME/.pyenv/versions/3.7.9
           - $HOME/.pyenv/versions/3.8.6
           - $HOME/.pyenv/versions/3.9.1
