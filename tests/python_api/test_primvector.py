@@ -37,6 +37,10 @@ def RandomPrimVector(n, tc):
 class TestPrimVector(unittest.TestCase):
 	def testIndex(self):
 		for s in range(175, 10000):
+			# make test fast
+			if s not in (175, 176):
+				continue
+
 			random.seed(s)
 
 			for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
@@ -52,9 +56,6 @@ class TestPrimVector(unittest.TestCase):
 						self.assertEqual(w.index(v[i]), v.index(v[i]))
 
 					for i in range(-1000, 1000):
-						if i != 131:
-							continue
-
 						if len(w) > 0:
 							self.assertEqual((i in w), (i in v))
 

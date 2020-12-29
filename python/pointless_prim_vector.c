@@ -1058,17 +1058,6 @@ static size_t PyPointlessPrimVector_index_(PyPointlessPrimVector* self, PyObject
 	return i;
 }
 
-static PyObject* PyPointlessPrimVector_count(PyPointlessPrimVector* self, PyObject* b)
-{
-	Py_ssize_t count = 0;
-	Py_ssize_t i;
-
-	for (i = 0; i < PyPointlessPrimVector_length(self); i++) {
-	}
-
-	return PyLong_FromSsize_t(count);
-}
-
 static int PyPointlessPrimVector_contains(PyPointlessPrimVector* self, PyObject* b)
 {
 	size_t i = SIZE_MAX;
@@ -2001,7 +1990,6 @@ static PyMethodDef PyPointlessPrimVector_methods[] = {
 	{"FromRemap",   (PyCFunction)PyPointlessPrimVector_from_remap,    METH_VARARGS | METH_CLASS, ""},
 	{"max",         (PyCFunction)PyPointlessPrimVector_max,           METH_NOARGS, ""},
 	{"min",         (PyCFunction)PyPointlessPrimVector_min,           METH_NOARGS, ""},
-	{"count",         (PyCFunction)PyPointlessPrimVector_count,         METH_VARARGS, ""},
 	{NULL, NULL}
 };
 
