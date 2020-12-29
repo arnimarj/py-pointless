@@ -732,11 +732,13 @@ static PyObject* PyPointlessPrimVector_append_item(PyPointlessPrimVector* self, 
 
 	pypointless_number_t number;
 
-	if (!pypointless_parse_number(item, &number, self->type))
+	if (!pypointless_parse_number(item, &number, self->type)) {
 		return 0;
+	}
 
-	if (!pointless_dynarray_push(&self->array, &number))
+	if (!pointless_dynarray_push(&self->array, &number)){
 		return PyErr_NoMemory();
+	}
 
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -751,8 +753,9 @@ static PyObject* PyPointlessPrimVector_append(PyPointlessPrimVector* self, PyObj
 		return 0;
 	}
 
-	if (!PyPointlessPrimVector_can_resize(self))
+	if (!PyPointlessPrimVector_can_resize(self)) {
 		return 0;
+	}
 
 	return PyPointlessPrimVector_append_item(self, obj);
 }
@@ -943,8 +946,9 @@ static size_t PyPointlessPrimVector_index_f(PyPointlessPrimVector* self, float v
 	float* a = (float*)(self->array._data);
 
 	for (i = 0; i < n; i++) {
-		if (a[i] == v)
+		if (a[i] == v) {
 			return i;
+		}
 	}
 
 	return SIZE_MAX;
@@ -1061,18 +1065,31 @@ static size_t PyPointlessPrimVector_index_(PyPointlessPrimVector* self, PyObject
 static int PyPointlessPrimVector_contains(PyPointlessPrimVector* self, PyObject* b)
 {
 	size_t i = SIZE_MAX;
+	int is_signed = 0;
+	int64_t _ii = 0;
+	uint64_t _uu = 0;
 
 	if (self->type == POINTLESS_PRIM_VECTOR_TYPE_FLOAT) {
-		if (!PyFloat_Check(b))
-			return 0;
 
-		float ff = (float)PyFloat_AsDouble(b);
+		float ff = 0.0;
+
+		if (PyFloat_Check(b)) {
+			ff = (float)PyFloat_AsDouble(b);
+		} else {
+			if (!parse_pyobject_number(b, &is_signed, &_ii, &_uu)) {
+				PyErr_Clear();
+				return 0;
+			}
+
+			if (is_signed) {
+				ff = (float)_ii;
+			} else {
+				ff = (float)_uu;
+			}
+		}
+
 		i = PyPointlessPrimVector_index_f(self, ff);
 	} else {
-		int is_signed = 0;
-		int64_t _ii = 0;
-		uint64_t _uu = 0;
-
 		if (!parse_pyobject_number(b, &is_signed, &_ii, &_uu)) {
 			PyErr_Clear();
 			return 0;
@@ -1084,8 +1101,9 @@ static int PyPointlessPrimVector_contains(PyPointlessPrimVector* self, PyObject*
 			i = PyPointlessPrimVector_index_i_u(self, _uu);
 	}
 
-	if (i == SIZE_MAX)
+	if (i == SIZE_MAX) {
 		return 0;
+	}
 
 	return 1;
 }

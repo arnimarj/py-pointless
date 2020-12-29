@@ -1,7 +1,6 @@
-#!/usr/bin/python
-
 import random
 import unittest
+
 import pointless
 
 
@@ -37,23 +36,27 @@ def RandomPrimVector(n, tc):
 class TestPrimVector(unittest.TestCase):
 	def testIndex(self):
 		for s in range(175, 10000):
-			# make test fast
-			if s not in (175, 176):
+			# for speed, increase for more thorough tests
+			if s != 176:
 				continue
 
 			random.seed(s)
 
-			for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
-				for i in range(100):
-					v = RandomPrimVector(i, tc)
+			for tc in ['f', 'i8', 'u8', 'i16', 'u16', 'i32', 'u32']:
+				for i in range(1, 100):
+					v = RandomPrimVector(i - 1, tc)
+
+					# make sure one element is an integer, to test int-float comparison
+					if tc == 'f':
+						v.append(1.0)
+					else:
+						v.append(1)
+
 					w = list(v)
 
-					if tc != 'f':
-						continue
-
-					for i in range(len(w)):
-						self.assertEqual(w.index(w[i]), v.index(w[i]))
-						self.assertEqual(w.index(v[i]), v.index(v[i]))
+					for j in range(len(w)):
+						self.assertEqual(w.index(w[j]), v.index(w[j]))
+						self.assertEqual(w.index(v[j]), v.index(v[j]))
 
 					for i in range(-1000, 1000):
 						if len(w) > 0:
@@ -67,8 +70,14 @@ class TestPrimVector(unittest.TestCase):
 
 	def testRemove(self):
 		for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
-			for i in range(100):
-				v = RandomPrimVector(i, tc)
+			for i in range(1, 100):
+				v = RandomPrimVector(i - 1, tc)
+
+				if tc == 'f':
+					v.append(1.0)
+				else:
+					v.append(1)
+
 				w = list(v)
 
 				for _ in range(100):
@@ -87,8 +96,15 @@ class TestPrimVector(unittest.TestCase):
 
 	def testFastRemove(self):
 		for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
-			for i in range(100):
-				v = RandomPrimVector(i, tc)
+			for i in range(1, 100):
+				v = RandomPrimVector(i - 1, tc)
+
+				# make sure one element is an integer, to test int-float comparison
+				if tc == 'f':
+					v.append(1.0)
+				else:
+					v.append(1)
+
 				w = list(v)
 
 				for _ in range(100):
