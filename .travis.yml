@@ -39,7 +39,7 @@ jobs:
       os: linux
       dist: focal
       python:
-        - '3.10'
+        - '3.10-dev'
       env:
         - RUNTESTS=1
     - name: Build and Upload Linux Wheels and sdist

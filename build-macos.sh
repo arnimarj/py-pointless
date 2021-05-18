@@ -12,7 +12,7 @@ mkdir -p "$basename/wheelhouse/"
 export PYENV_ROOT="$basename/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 
-eval "$(pyenv init -)"
+eval "$(pyenv init --path)"
 
 declare -a pythons=("3.6.13" "3.7.10" "3.8.9" "3.9.5" "3.10.b1")
 
