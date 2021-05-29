@@ -62,7 +62,7 @@ jobs:
           - $HOME/.pyenv/versions/3.7.9
           - $HOME/.pyenv/versions/3.8.9
           - $HOME/.pyenv/versions/3.9.5
-          - $HOME/.pyenv/versions/3.10.b1
+          - $HOME/.pyenv/versions/3.10.0b1
     - name: Build and Upload MacOS 10.14 Wheels
       os: osx
       osx_image: xcode11.3
@@ -75,7 +75,7 @@ jobs:
           - $HOME/.pyenv/versions/3.7.9
           - $HOME/.pyenv/versions/3.8.9
           - $HOME/.pyenv/versions/3.9.5
-          - $HOME/.pyenv/versions/3.10.b1
+          - $HOME/.pyenv/versions/3.10.0b1
     - name: Build and Upload MacOS 10.13 Wheels
       os: osx
       osx_image: xcode10.1
@@ -87,7 +87,7 @@ jobs:
           - $HOME/.pyenv/versions/3.7.9
           - $HOME/.pyenv/versions/3.8.9
           - $HOME/.pyenv/versions/3.9.5
-          - $HOME/.pyenv/versions/3.10.b1
+          - $HOME/.pyenv/versions/3.10.0b1
 install:
   - if [[ "$RUNTESTS" == "1" ]]; then python3 -m pip install -U pip;            fi
   - if [[ "$RUNTESTS" == "1" ]]; then pip3 install -r test-requirements.txt;    fi
