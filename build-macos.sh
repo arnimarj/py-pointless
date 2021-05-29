@@ -20,9 +20,13 @@ for py in "${pythons[@]}"
 do
 	echo "installing $py"
 	pyenv install -s "$py"
-	pyenv shell "$py"
-	pip install -U virtualenv > /dev/null
-	python -m virtualenv -q "venv-$py"
+
+	#pyenv shell "$py"
+	#python -m virtualenv -q "venv-$py"
+
+	"./pyenv/versions/$py/bin/pip" install -U virtualenv pip > /dev/null
+	"./pyenv/versions/$py/bin/python3" -m virtualenv -q "venv-$py"
+
 	echo " ..version installed" "$(./venv-"$py"/bin/python --version)"
 
 	"./venv-$py/bin/pip" install -U pip setuptools wheel > /dev/null
