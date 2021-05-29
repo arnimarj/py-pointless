@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -xe
 
 mkdir -p ./wheelhouse
 
