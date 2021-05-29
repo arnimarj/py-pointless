@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -xe
 
 mkdir ./wheelhouse
 
@@ -12,17 +12,23 @@ mkdir -p "$basename/wheelhouse/"
 export PYENV_ROOT="$basename/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 
-eval "$(pyenv init -)"
+eval "$(pyenv init --path)"
 
-declare -a pythons=("3.6.12" "3.7.9" "3.8.6" "3.9.1")
+declare -a pythons=("3.6.13" "3.7.10" "3.8.9" "3.9.5" "3.10.0b1")
+
+pyenv install --list
 
 for py in "${pythons[@]}"
 do
 	echo "installing $py"
 	pyenv install -s "$py"
-	pyenv shell "$py"
-	pip install -U virtualenv > /dev/null
-	python -m virtualenv -q "venv-$py"
+
+	#pyenv shell "$py"
+	#python -m virtualenv -q "venv-$py"
+
+	"$basename/.pyenv/versions/$py/bin/pip" install -U virtualenv pip > /dev/null
+	"$basename/.pyenv/versions/$py/bin/python3" -m virtualenv -q "venv-$py"
+
 	echo " ..version installed" "$(./venv-"$py"/bin/python --version)"
 
 	"./venv-$py/bin/pip" install -U pip setuptools wheel > /dev/null

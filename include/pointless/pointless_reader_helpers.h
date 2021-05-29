@@ -24,6 +24,9 @@ int pointless_get_mapping_string_to_vector_i16(pointless_t* p, pointless_value_t
 int pointless_get_mapping_string_to_vector_u16(pointless_t* p, pointless_value_t* map, char* key, uint16_t** value, uint32_t* n_items);
 int pointless_get_mapping_string_to_vector_i32(pointless_t* p, pointless_value_t* map, char* key, int32_t** value, uint32_t* n_items);
 int pointless_get_mapping_string_to_vector_u32(pointless_t* p, pointless_value_t* map, char* key, uint32_t** value, uint32_t* n_items);
+int pointless_get_mapping_string_to_vector_i64(pointless_t* p, pointless_value_t* map, char* key, int64_t** value, uint32_t* n_items);
+int pointless_get_mapping_string_to_vector_u64(pointless_t* p, pointless_value_t* map, char* key, uint64_t** value, uint32_t* n_items);
+
 int pointless_get_mapping_string_to_vector_float(pointless_t* p, pointless_value_t* map, char* key, float** value, uint32_t* n_items);
 int pointless_get_mapping_string_to_vector_value(pointless_t* p, pointless_value_t* map, char* key, pointless_value_t** value, uint32_t* n_items);
 
