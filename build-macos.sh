@@ -24,8 +24,8 @@ do
 	#pyenv shell "$py"
 	#python -m virtualenv -q "venv-$py"
 
-	"./pyenv/versions/$py/bin/pip" install -U virtualenv pip > /dev/null
-	"./pyenv/versions/$py/bin/python3" -m virtualenv -q "venv-$py"
+	"$basename/.pyenv/versions/$py/bin/pip" install -U virtualenv pip > /dev/null
+	"$basename/.pyenv/versions/$py/bin/python3" -m virtualenv -q "venv-$py"
 
 	echo " ..version installed" "$(./venv-"$py"/bin/python --version)"
 
