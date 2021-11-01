@@ -62,14 +62,14 @@ extra_compile_args = [
 	'-D_GNU_SOURCE',
 	'-O2',
 	'-DNDEBUG',
-	'-std=c99'
+	'-std=c99',
 ]
 
 extra_link_args = ['-L./judy-1.0.5/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm']
 
 setup(
 	name='pointless',
-	version='1.0.7',
+	version='1.0.8',
 	maintainer='Arni Mar Jonsson',
 	maintainer_email='arnimarj@gmail.com',
 	url='https://github.com/arnimarj/py-pointless',
