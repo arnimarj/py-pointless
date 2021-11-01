@@ -49,40 +49,15 @@ PyObject* pypointless_float(PyPointless* p, float f)
 
 PyObject* pypointless_value_unicode(pointless_t* p, pointless_value_t* v)
 {
-	Py_ssize_t unicode_len = 0;
-
-#ifdef Py_UNICODE_WIDE
-	uint32_t* unicode_ucs4 = 0;
-#else
-	uint16_t* unicode_ucs2 = 0;
-	PyObject* unicode_obj = 0;
-#endif
-	unicode_len = (Py_ssize_t)pointless_reader_unicode_len(p, v);
-
-	// UCS-4 is simple, just pass the pointer
-#ifdef Py_UNICODE_WIDE
-	unicode_ucs4 = pointless_reader_unicode_value_ucs4(p, v);
-	return PyUnicode_FromUnicode((const Py_UNICODE *)unicode_ucs4, unicode_len);
-#else
-	const char* error = 0;
-	unicode_ucs2 = pointless_reader_unicode_value_ucs2_alloc(p, v, &error);
-
-	if (unicode_ucs2 == 0) {
-		PyErr_SetString(PyExc_ValueError, error);
-		return 0;
-	}
-
-	unicode_obj = PyUnicode_FromUnicode((const Py_UNICODE *)unicode_ucs2, unicode_len);
-	free(unicode_ucs2);
-
-	return unicode_obj;
-#endif
+	Py_ssize_t unicode_len = (Py_ssize_t)pointless_reader_unicode_len(p, v);
+	uint32_t* unicode_ucs4 = pointless_reader_unicode_value_ucs4(p, v);
+	return PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, (uint32_t*)unicode_ucs4, unicode_len);
 }
 
 PyObject* pypointless_value_string(pointless_t* p, pointless_value_t* v)
 {
 	uint8_t* string_ascii = pointless_reader_string_value_ascii(p, v);
-	return PyUnicode_DecodeLatin1((const char*)string_ascii, strlen((const char*)string_ascii), 0);
+	return PyUnicode_FromKindAndData(PyUnicode_1BYTE_KIND , (const char*)string_ascii, strlen((const char*)string_ascii));
 }
 
 PyObject* pypointless_value(PyPointless* p, pointless_value_t* v)

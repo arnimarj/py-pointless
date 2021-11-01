@@ -89,20 +89,57 @@ static uint32_t pyobject_hash_primvector_32(PyPointlessPrimVector* v, pyobject_h
 
 static uint32_t pyobject_hash_unicode_32(PyObject* py_object, pyobject_hash_state_t* state)
 {
-	Py_UNICODE* s = PyUnicode_AS_UNICODE(py_object);
+	if (PyUnicode_READY(py_object) != 0) {
+		state->error = "PyUnicode_READY failed";
+		PyErr_Clear();
+		return 0;
+
+	}
+
 	uint32_t hash = 0;
 
 	switch (state->version) {
 		#ifdef Py_UNICODE_WIDE
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_unicode_ucs4_v1_32((uint32_t*)s);
+			switch (PyUnicode_KIND(py_object)) {
+				case PyUnicode_WCHAR_KIND:
+					hash = pointless_hash_unicode_ucs4_v1_32((uint32_t*)PyUnicode_AS_UNICODE(py_object));
+					break;
+				case PyUnicode_1BYTE_KIND:
+					hash = pointless_hash_string_v1_32((uint8_t*)PyUnicode_1BYTE_DATA(py_object));
+					break;
+				case PyUnicode_2BYTE_KIND:
+					hash = pointless_hash_unicode_ucs2_v1_32((uint16_t*)PyUnicode_2BYTE_DATA(py_object));
+					break;
+				case PyUnicode_4BYTE_KIND:
+					hash = pointless_hash_unicode_ucs4_v1_32((uint32_t*)PyUnicode_4BYTE_DATA(py_object));
+					break;
+				default:
+					state->error = "hash statement fallthrough";
+					break;
+			}
 			break;
 		#else
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			hash = pointless_hash_unicode_ucs2_v1_32((uint16_t*)s);
-			break;
+			switch (PyUnicode_KIND(py_object)) {
+				case PyUnicode_WCHAR_KIND:
+					hash = pointless_hash_unicode_ucs2_v1_32((uint16_t*)PyUnicode_AS_UNICODE(py_object));
+					break;
+				case PyUnicode_1BYTE_KIND:
+					hash = pointless_hash_string_v1_32((uint8_t*)PyUnicode_1BYTE_DATA(py_object));
+					break;
+				case PyUnicode_2BYTE_KIND:
+					hash = pointless_hash_unicode_ucs2_v1_32((uint16_t*)PyUnicode_2BYTE_DATA(py_object));
+					break;
+				case PyUnicode_4BYTE_KIND:
+					hash = pointless_hash_unicode_ucs4_v1_32((uint32_t*)PyUnicode_4BYTE_DATA(py_object));
+					break;
+				default:
+					state->error = "hash statement fallthrough";
+					break;
+			}
 		#endif
 	}
 
@@ -167,6 +204,17 @@ static uint32_t pyobject_hash_rec_32(PyObject* py_object, pyobject_hash_state_t*
 		return 0;
 	}
 
+	// early checks for more common types
+	if (PyLong_Check(py_object))
+		return pyobject_hash_long_32(py_object, state);
+
+	if (PyUnicode_Check(py_object)) {
+		return pyobject_hash_unicode_32(py_object, state);
+	}
+
+	if (PyTuple_Check(py_object))
+		return pyobject_hash_tuple_32(py_object, state);
+
 	// pointless types
 	pointless_t* p = 0;
 	pointless_value_t* v = 0;
@@ -201,16 +249,6 @@ static uint32_t pyobject_hash_rec_32(PyObject* py_object, pyobject_hash_state_t*
 	// prim-vector
 	if (PyPointlessPrimVector_Check(py_object))
 		return pyobject_hash_primvector_32((PyPointlessPrimVector*)py_object, state);
-
-	// early checks for more common types
-	if (PyLong_Check(py_object))
-		return pyobject_hash_long_32(py_object, state);
-
-	if (PyTuple_Check(py_object))
-		return pyobject_hash_tuple_32(py_object, state);
-
-	if (PyUnicode_Check(py_object))
-		return pyobject_hash_unicode_32(py_object, state);
 
 	if (PyPointlessBitvector_Check(py_object))
 		return pyobject_hash_pypointlessbitvector_32(py_object, state);
