@@ -2,9 +2,10 @@
 
 name: Python Packaging
 on:
-  # the 1st condition
   workflow_run:
     workflows: ['validate']
+    types:
+      - completed
 
 jobs:
   install:
