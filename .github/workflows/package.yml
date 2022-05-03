@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-10.15, ubuntu-latest]
-        python-version: ['3.9']
+        python-version: ['3.10']
 
     steps:
       - name: Setup python
@@ -28,12 +28,12 @@ jobs:
           submodules: true
 
       - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.2.2
+        run: python -m pip install cibuildwheel==2.5.0
 
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_BUILD: pp* cp36-* cp37-* cp38-* cp39-* cp310-*
+          CIBW_BUILD: pp* cp37-* cp38-* cp39-* cp310-*
           CIBW_ARCHS: "auto64"
 
       - name: Build sdist
