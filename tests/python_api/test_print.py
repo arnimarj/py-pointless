@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import itertools, pointless, six
+import itertools, pointless, io
 
 from twisted.trial import unittest
 
@@ -18,17 +18,15 @@ def PythonPrint(v, out, stack = None):
 	elif isinstance(v, pointless.PointlessBitvector):
 		out.write('')
 
-		for i in six.moves.range(len(v) - 1, -1, -1):
+		for i in range(len(v) - 1, -1, -1):
 			b = v[i]
 			assert(isinstance(b, bool))
 			out.write('1' if b else '0')
 
 		out.write('b')
-	elif six.PY2 and isinstance(v, unicode):
-		out.write(repr(v))
 	elif isinstance(v, float):
 		out.write('%f' % (v,))
-	elif isinstance(v, six.integer_types):
+	elif isinstance(v, int):
 		out.write('%i' % (v,))
 	elif isinstance(v, pointless.PointlessVector):
 		out.write('[')
@@ -79,11 +77,11 @@ class TestPrint(unittest.TestCase):
 			root = pointless.Pointless(fname).GetRoot()
 
 			# do a Python version of print
-			s_python = six.StringIO()
+			s_python = io.StringIO()
 			PythonPrint(root, s_python)
 
 			# and the Pointless version
-			s_root = six.StringIO()
+			s_root = io.StringIO()
 			s_root.write(str(root))
 
 			self.assertEqual(s_root.getvalue(), s_python.getvalue())

@@ -1,18 +1,17 @@
 #!/usr/bin/python
 
-import itertools, pointless, os, six
+import itertools, pointless, os
 
 from twisted.trial import unittest
 
 from .test_serialize import AllBitvectorTestCases
 from .common import VectorSlices
 
-if six.PY3:
-	def cmp(a, b):
-		if a is None and b is None:
-			return 0
+def cmp(a, b):
+	if a is None and b is None:
+		return 0
 
-		return (a > b) - (a < b)
+	return (a > b) - (a < b)
 
 def sign(i):
 	return min(max(-1, i), +1)
@@ -34,9 +33,9 @@ class TestCmp(unittest.TestCase):
 			try:
 				py_cmp = sign(cmp(v_a, v_b))
 			except TypeError as e:
-				if six.PY3 and 'not supported between instances of ' in str(e):
+				if 'not supported between instances of ' in str(e):
 					cmp_failure = True
-				elif six.PY3 and 'unorderable types' in str(e):
+				elif 'unorderable types' in str(e):
 					cmp_failure = True
 				else:
 					raise

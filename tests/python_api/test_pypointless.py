@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import operator, pointless, random, six
+import operator, pointless, random
 
 from twisted.trial import unittest
 
@@ -88,7 +88,7 @@ class TestPointless(unittest.TestCase):
 			self.assertEquals(len(v_b), 3)
 
 			for a, b in zip(v_a, v_b):
-				if isinstance(a, six.integer_types) and isinstance(b, six.integer_types):
+				if isinstance(a, int) and isinstance(b, int):
 					self.assertEquals(a, b)
 				else:
 					self.assertApproximates(a, b, 0.001)
