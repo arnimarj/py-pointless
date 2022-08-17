@@ -3,11 +3,6 @@
 
 #include <Python.h>
 
-// PyPy 5.6 hack
-#ifndef PyFrozenSet_Check
-#define PyFrozenSet_Check(ob) (Py_TYPE(ob) == &PyPyFrozenSet_Type || PyType_IsSubtype(Py_TYPE(ob), &PyPyFrozenSet_Type))
-#endif
-
 #include "structmember.h"
 
 #include <stdio.h>
