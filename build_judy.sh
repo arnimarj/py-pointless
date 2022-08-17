@@ -4,14 +4,14 @@ set -e
 
 basename="$(dirname "$0")"
 
-if [ -z CC ]; then
-	JUDYCC=$CC
+if [[ -v CC ]]; then
+	echo JUDYCC="$CC"
 else
-	JUDYCC=cc
+	echo JUDYCC=cc
 fi
 
-if [ ! -z COPT ]; then
-	COPT="-DJU_64BIT -O0 -fPIC -fno-strict-aliasing"
+if [[ ! -v ${COPT} ]]; then
+	echo COPT="-DJU_64BIT -O0 -fPIC -fno-strict-aliasing"
 fi
 
 
@@ -21,4 +21,4 @@ else
 	COPT+=" -fno-aggressive-loop-optimizations"
 fi
 
-(cd $basename; cd judy-1.0.5/src; CC=$JUDYCC COPT="$COPT" sh ./sh_build)
+(cd "$basename"; cd judy-1.0.5/src; CC="$JUDYCC" COPT="$COPT" sh ./sh_build)
