@@ -9,7 +9,7 @@ def SimpleSerializeTestCases():
 	yield [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
 
 	# 2) vector of vectors
-	yield [list(range(10 + 1)) for i in six.moves.range(10)]
+	yield [list(range(10 + 1)) for i in range(10)]
 
 	# 3) randomized bitvector
 	random.seed(0)

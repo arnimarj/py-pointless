@@ -46,18 +46,6 @@ PyObject* PyPointlessSetIter_new(PyTypeObject* type, PyObject* args, PyObject* k
 	return (PyObject*)self;
 }
 
-static int PyPointlessSet_init(PyPointlessSet* self, PyObject* args)
-{
-	PyErr_SetString(PyExc_TypeError, "unable to instantiate PyPointlessSet directly");
-	return -1;
-}
-
-static int PyPointlessSetIter_init(PyPointlessSet* self, PyObject* args)
-{
-	PyErr_SetString(PyExc_TypeError, "unable to instantiate PyPointlessSetIter directly");
-	return -1;
-}
-
 static Py_ssize_t PyPointlessSet_length(PyPointlessSet* self)
 {
 	return (Py_ssize_t)pointless_reader_set_n_items(&self->pp->p, self->v);
@@ -183,7 +171,7 @@ PyTypeObject PyPointlessSetType = {
 	0,                                   /*tp_descr_get */
 	0,                                   /*tp_descr_set */
 	0,                                   /*tp_dictoffset */
-	(initproc)PyPointlessSet_init,       /*tp_init */
+	0,       /*tp_init */
 	0,                                   /*tp_alloc */
 	PyPointlessSet_new,                  /*tp_new */
 };
@@ -224,7 +212,7 @@ PyTypeObject PyPointlessSetIterType = {
 	0,                                         /*tp_descr_get */
 	0,                                         /*tp_descr_set */
 	0,                                         /*tp_dictoffset */
-	(initproc)PyPointlessSetIter_init,         /*tp_init */
+	0,         /*tp_init */
 	0,                                         /*tp_alloc */
 	PyPointlessSetIter_new,                    /*tp_new */
 };

@@ -7,14 +7,14 @@ from twisted.trial import unittest
 from .test_serialize import SimpleSerializeTestCases, AllBitvectorTestCases
 
 # generic print implementation, should match C implementation
-def PythonPrint(v, out, stack = None):
-	if stack == None:
+def PythonPrint(v, out, stack=None):
+	if stack is None:
 		stack = []
 
 	if v is None:
 		out.write('None')
 	elif isinstance(v, bool):
-		out.write('True' if v == True else 'False')
+		out.write('True' if v is True else 'False')
 	elif isinstance(v, pointless.PointlessBitvector):
 		out.write('')
 
@@ -70,6 +70,7 @@ class TestPrint(unittest.TestCase):
 
 		# for each simple test case
 		for v in itertools.chain(SimpleSerializeTestCases(), AllBitvectorTestCases()):
+
 			# serialize it
 			pointless.serialize(v, fname)
 

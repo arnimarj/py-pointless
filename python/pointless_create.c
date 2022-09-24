@@ -410,7 +410,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			state->error_line = __LINE__;
 			return POINTLESS_CREATE_VALUE_FAIL;
 		}
-
 	// bitvector
 	} else if (PyPointlessBitvector_Check(py_object)) {
 		PyPointlessBitvector* bitvector = (PyPointlessBitvector*)py_object;

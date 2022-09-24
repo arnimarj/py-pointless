@@ -80,14 +80,6 @@ static const char* _type_name(uint32_t type)
 	return "";
 }
 
-static const char* my_type_name(pypointless_cmp_value_t *v_)
-{
-	if (v_->is_pointless)
-		return _type_name(v_->value.pointless.v.type);
-	else
-		return v_->value.py_object->ob_type->tp_name;
-}
-
 static void pypointless_cmp_value_init_pointless(pypointless_cmp_value_t* cv, pointless_t* p, pointless_complete_value_t* v)
 {
 	cv->is_pointless = 1;
