@@ -33,7 +33,7 @@ def build_judy() -> None:
 
 	if is_clang or is_gcc_46:
 		if sys.maxsize == 2**63 - 1:
-			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -Wall -D_REENTRANT -D_GNU_SOURCE  -g -fsanitize-trap -fsanitize=address -fno-omit-frame-pointer -g'
+			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -Wall -D_REENTRANT -D_GNU_SOURCE  -g'
 		else:
 			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing'
 	else:
