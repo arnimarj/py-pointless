@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import six, pointless
+import pointless
 
 from twisted.trial import unittest
 
@@ -16,7 +16,7 @@ class TestSetMap(unittest.TestCase):
 		pointless.serialize(v, fname)
 		vv = pointless.Pointless(fname).GetRoot()
 
-		for a, b in six.iteritems(v):
+		for a, b in v.items():
 			self.assert_(a in vv)
 			bb = vv[a]
 			self.assertEquals(b, bb)
@@ -88,7 +88,7 @@ class TestSetMap(unittest.TestCase):
 			pointless.serialize(m, fname)
 			root_a = pointless.Pointless(fname).GetRoot()
 
-			for k in six.iterkeys(m):
+			for k in m:
 				self.assert_(k in root_a)
 
 				v_m = m[k]

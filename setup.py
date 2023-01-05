@@ -9,7 +9,7 @@ from setuptools import Extension, setup
 def build_judy() -> None:
 	print('INFO: building judy static library...')
 
-	CC = os.environ.get('CC', 'cc')
+	CC = os.environ.get('CC', 'clang')
 
 	is_clang = False
 	is_gcc_46 = False
@@ -33,7 +33,7 @@ def build_judy() -> None:
 
 	if is_clang or is_gcc_46:
 		if sys.maxsize == 2**63 - 1:
-			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing'
+			CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -Wall -D_REENTRANT -D_GNU_SOURCE  -g'
 		else:
 			CFLAGS = '           -O0 -fPIC -fno-strict-aliasing'
 	else:
@@ -69,7 +69,7 @@ extra_link_args = ['-L./judy-1.0.5/src', '-Bstatic', '-lJudy', '-Bdynamic', '-lm
 
 setup(
 	name='pointless',
-	version='1.0.10',
+	version='1.0.11',
 	maintainer='Arni Mar Jonsson',
 	maintainer_email='arnimarj@gmail.com',
 	url='https://github.com/arnimarj/py-pointless',
@@ -87,6 +87,7 @@ setup(
 		'Programming Language :: Python :: 3.8',
 		'Programming Language :: Python :: 3.9',
 		'Programming Language :: Python :: 3.10',
+		'Programming Language :: Python :: 3.11',
 		'Topic :: Database',
 		'Topic :: Software Development :: Libraries'
 	],
@@ -147,7 +148,8 @@ setup(
 			],
 
 			extra_compile_args=extra_compile_args,
-			extra_link_args=extra_link_args
+			extra_link_args=extra_link_args,
+			py_limited_api=True,
 		)
 	]
 )

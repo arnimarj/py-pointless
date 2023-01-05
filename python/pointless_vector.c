@@ -1,52 +1,32 @@
 #include "../pointless_ext.h"
 
+
 static void PyPointlessVector_dealloc(PyPointlessVector* self)
 {
+	PyTypeObject* tp = Py_TYPE(self);
+
 	if (self->pp) {
 		self->pp->n_vector_refs -= 1;
 		Py_DECREF(self->pp);
 	}
 
-	self->pp = 0;
-	self->v = 0;
-	self->container_id = 0;
-	self->is_hashable = 0;
-	self->slice_i = 0;
-	self->slice_n = 0;
-	Py_TYPE(self)->tp_free(self);
+    Py_TYPE(self)->tp_free((PyObject*) self);
 }
+
 
 static void PyPointlessVectorIter_dealloc(PyPointlessVectorIter* self)
 {
-	PyObject_GC_UnTrack(self);
-	Py_XDECREF(self->vector);
-	self->vector = 0;
-	self->iter_state = 0;
-	PyObject_GC_Del(self);
-}
-
-static int PyPointlessVectorIter_traverse(PyPointlessVectorIter* self, visitproc visit, void* arg)
-{
-	Py_VISIT(self->vector);
-	return 0;
+    Py_XDECREF(self->vector);
+    Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
 static void PyPointlessVectorRevIter_dealloc(PyPointlessVectorRevIter* self)
 {
-	PyObject_GC_UnTrack(self);
-	Py_XDECREF(self->vector);
-	self->vector = 0;
-	self->iter_state = 0;
-	PyObject_GC_Del(self);
+    Py_XDECREF(self->vector);
+    Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
-static int PyPointlessVectorRevIter_traverse(PyPointlessVectorRevIter* self, visitproc visit, void* arg)
-{
-	Py_VISIT(self->vector);
-	return 0;
-}
-
-PyObject* PyPointlessVector_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
+static PyObject* PyPointlessVector_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
 	PyPointlessVector* self = (PyPointlessVector*)type->tp_alloc(type, 0);
 
@@ -62,7 +42,8 @@ PyObject* PyPointlessVector_new(PyTypeObject* type, PyObject* args, PyObject* kw
 	return (PyObject*)self;
 }
 
-PyObject* PyPointlessVectorIter_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
+
+static PyObject* PyPointlessVectorIter_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
 	PyPointlessVectorIter* self = (PyPointlessVectorIter*)type->tp_alloc(type, 0);
 
@@ -74,7 +55,7 @@ PyObject* PyPointlessVectorIter_new(PyTypeObject* type, PyObject* args, PyObject
 	return (PyObject*)self;
 }
 
-PyObject* PyPointlessVectorRevIter_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
+static PyObject* PyPointlessVectorRevIter_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
 	PyPointlessVectorRevIter* self = (PyPointlessVectorRevIter*)type->tp_alloc(type, 0);
 
@@ -86,23 +67,6 @@ PyObject* PyPointlessVectorRevIter_new(PyTypeObject* type, PyObject* args, PyObj
 	return (PyObject*)self;
 }
 
-static int PyPointlessVector_init(PyPointlessVector* self, PyObject* args)
-{
-	PyErr_SetString(PyExc_TypeError, "unable to instantiate PyPointlessVector directly");
-	return -1;
-}
-
-static int PyPointlessVectorIter_init(PyPointlessVector* self, PyObject* args)
-{
-	PyErr_SetString(PyExc_TypeError, "unable to instantiate PyPointlessVectorIter directly");
-	return -1;
-}
-
-static int PyPointlessVectorRevIter_init(PyPointlessVector* self, PyObject* args)
-{
-	PyErr_SetString(PyExc_TypeError, "unable to instantiate PyPointlessVectorRevIter directly");
-	return -1;
-}
 
 static Py_ssize_t PyPointlessVector_length(PyPointlessVector* self)
 {
@@ -255,7 +219,7 @@ static PyObject* PyPointlessVector_iter(PyObject* vector)
 		return 0;
 	}
 
-	PyPointlessVectorIter* iter = PyObject_GC_New(PyPointlessVectorIter, &PyPointlessVectorIterType);
+	PyPointlessVectorIter* iter = PyObject_New(PyPointlessVectorIter, &PyPointlessVectorIterType);
 
 	if (iter == 0)
 		return 0;
@@ -264,8 +228,6 @@ static PyObject* PyPointlessVector_iter(PyObject* vector)
 
 	iter->vector = (PyPointlessVector*)vector;
 	iter->iter_state = 0;
-
-	PyObject_GC_Track(iter);
 
 	return (PyObject*)iter;
 }
@@ -277,7 +239,7 @@ static PyObject* PyPointlessVector_rev_iter(PyObject* vector)
 		return 0;
 	}
 
-	PyPointlessVectorRevIter* iter = PyObject_GC_New(PyPointlessVectorRevIter, &PyPointlessVectorRevIterType);
+	PyPointlessVectorRevIter* iter = PyObject_New(PyPointlessVectorRevIter, &PyPointlessVectorRevIterType);
 
 	if (iter == 0)
 		return 0;
@@ -286,8 +248,6 @@ static PyObject* PyPointlessVector_rev_iter(PyObject* vector)
 
 	iter->vector = (PyPointlessVector*)vector;
 	iter->iter_state = 0;
-
-	PyObject_GC_Track(iter);
 
 	return (PyObject*)iter;
 }
@@ -366,8 +326,8 @@ static PyObject* PyPointlessVector_richcompare(PyObject* a, PyObject* b, int op)
 
 		int k = PyObject_RichCompareBool(obj_a, obj_b, Py_EQ);
 
-		Py_DECREF(obj_a);
 		Py_DECREF(obj_b);
+		Py_DECREF(obj_a);
 
 		obj_a = obj_b = 0;
 
@@ -784,137 +744,78 @@ static PySequenceMethods PyPointlessVector_as_sequence = {
 };
 
 
-PyTypeObject PyPointlessVectorType = {
-	PyVarObject_HEAD_INIT(NULL, 0)
-	"pointless.PyPointlessVector",                  /*tp_name*/
-	sizeof(PyPointlessVector),                      /*tp_basicsize*/
-	0,                                              /*tp_itemsize*/
-	(destructor)PyPointlessVector_dealloc,          /*tp_dealloc*/
-	0,                                              /*tp_print*/
-	0,                                              /*tp_getattr*/
-	0,                                              /*tp_setattr*/
-	0,                                              /*tp_compare*/
-	PyPointless_repr,                               /*tp_repr*/
-	0,                                              /*tp_as_number*/
-	&PyPointlessVector_as_sequence,                 /*tp_as_sequence*/
-	&PyPointlessVector_as_mapping,                  /*tp_as_mapping*/
-	0,                                              /*tp_hash */
-	0,                                              /*tp_call*/
-	PyPointless_str,                                /*tp_str*/
-	0,                                              /*tp_getattro*/
-	0,                                              /*tp_setattro*/
-	&PyPointlessVector_as_buffer,                   /*tp_as_buffer*/
-	Py_TPFLAGS_DEFAULT,                             /*tp_flags*/
-	"PyPointlessVector wrapper",                    /*tp_doc */
-	0,                                              /*tp_traverse */
-	0,                                              /*tp_clear */
-	PyPointlessVector_richcompare,                  /*tp_richcompare */
-	0,                                              /*tp_weaklistoffset */
-	PyPointlessVector_iter,                         /*tp_iter */
-	0,                                              /*tp_iternext */
-	PyPointlessVector_methods,                      /*tp_methods */
-	PyPointlessVector_memberlist,                   /*tp_members */
-	PyPointlessVector_getsets,                      /*tp_getset */
-	0,                                              /*tp_base */
-	0,                                              /*tp_dict */
-	0,                                              /*tp_descr_get */
-	0,                                              /*tp_descr_set */
-	0,                                              /*tp_dictoffset */
-	(initproc)PyPointlessVector_init,               /*tp_init */
-	0,                                              /*tp_alloc */
-	PyPointlessVector_new,                          /*tp_new */
-};
-
 PyTypeObject PyPointlessVectorIterType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
-	"pointless.PyPointlessVectorIter",            /*tp_name*/
-	sizeof(PyPointlessVectorIter),                /*tp_basicsize*/
-	0,                                            /*tp_itemsize*/
-	(destructor)PyPointlessVectorIter_dealloc,    /*tp_dealloc*/
-	0,                                            /*tp_print*/
-	0,                                            /*tp_getattr*/
-	0,                                            /*tp_setattr*/
-	0,                                            /*tp_compare*/
-	0,                                            /*tp_repr*/
-	0,                                            /*tp_as_number*/
-	0,                                            /*tp_as_sequence*/
-	0,                                            /*tp_as_mapping*/
-	0,                                            /*tp_hash */
-	0,                                            /*tp_call*/
-	0,                                            /*tp_str*/
-	0,                                            /*tp_getattro*/
-	0,                                            /*tp_setattro*/
-	0,                                            /*tp_as_buffer*/
-	Py_TPFLAGS_DEFAULT,                           /*tp_flags*/
-	"PyPointlessVectorIter",                      /*tp_doc */
-	(traverseproc)PyPointlessVectorIter_traverse, /*tp_traverse */
-	0,                                            /*tp_clear */
-	0,                                            /*tp_richcompare */
-	0,                                            /*tp_weaklistoffset */
-	PyObject_SelfIter,                            /*tp_iter */
-	(iternextfunc)PyPointlessVectorIter_iternext, /*tp_iternext */
-	0,                                            /*tp_methods */
-	0,                                            /*tp_members */
-	0,                                            /*tp_getset */
-	0,                                            /*tp_base */
-	0,                                            /*tp_dict */
-	0,                                            /*tp_descr_get */
-	0,                                            /*tp_descr_set */
-	0,                                            /*tp_dictoffset */
-	(initproc)PyPointlessVectorIter_init,         /*tp_init */
-	0,                                            /*tp_alloc */
-	PyPointlessVectorIter_new,                    /*tp_new */
+	.tp_name = "pointless.PyPointlessVectorIter",
+	.tp_basicsize = sizeof(PyPointlessVectorIter),
+	.tp_itemsize = 0,
+	.tp_dealloc = (destructor)PyPointlessVectorIter_dealloc, 
+	.tp_getattro = PyObject_GenericGetAttr,
+	.tp_flags = Py_TPFLAGS_DEFAULT,
+	.tp_iter = PyObject_SelfIter, 
+	.tp_iternext = (iternextfunc)PyPointlessVectorIter_iternext, 
+	.tp_new = PyPointlessVectorIter_new, 
+	.tp_alloc = PyType_GenericAlloc,
+	.tp_free = PyObject_Del,
 };
+
 
 PyTypeObject PyPointlessVectorRevIterType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
-	"pointless.PyPointlessVectorRevIter",         /*tp_name*/
-	sizeof(PyPointlessVectorRevIter),             /*tp_basicsize*/
-	0,                                            /*tp_itemsize*/
-	(destructor)PyPointlessVectorRevIter_dealloc, /*tp_dealloc*/
-	0,                                            /*tp_print*/
-	0,                                            /*tp_getattr*/
-	0,                                            /*tp_setattr*/
-	0,                                            /*tp_compare*/
-	0,                                            /*tp_repr*/
-	0,                                            /*tp_as_number*/
-	0,                                            /*tp_as_sequence*/
-	0,                                            /*tp_as_mapping*/
-	0,                                            /*tp_hash */
-	0,                                            /*tp_call*/
-	0,                                            /*tp_str*/
-	0,                                            /*tp_getattro*/
-	0,                                            /*tp_setattro*/
-	0,                                            /*tp_as_buffer*/
-	Py_TPFLAGS_DEFAULT,                           /*tp_flags*/
-	"PyPointlessVectorRevIter",                   /*tp_doc */
-	(traverseproc)PyPointlessVectorRevIter_traverse, /*tp_traverse */
-	0,                                            /*tp_clear */
-	0,                                            /*tp_richcompare */
-	0,                                            /*tp_weaklistoffset */
-	PyObject_SelfIter,                            /*tp_iter */
-	(iternextfunc)PyPointlessVectorRevIter_iternext, /*tp_iternext */
-	0,                                            /*tp_methods */
-	0,                                            /*tp_members */
-	0,                                            /*tp_getset */
-	0,                                            /*tp_base */
-	0,                                            /*tp_dict */
-	0,                                            /*tp_descr_get */
-	0,                                            /*tp_descr_set */
-	0,                                            /*tp_dictoffset */
-	(initproc)PyPointlessVectorRevIter_init,      /*tp_init */
-	0,                                            /*tp_alloc */
-	PyPointlessVectorRevIter_new,                 /*tp_new */
+	.tp_name = "pointless.PyPointlessVectorRevIter",
+	.tp_basicsize = sizeof(PyPointlessVectorRevIter),
+	.tp_itemsize = 0,
+	.tp_dealloc = (destructor)PyPointlessVectorRevIter_dealloc,
+	.tp_getattro = PyObject_GenericGetAttr,
+	.tp_flags = Py_TPFLAGS_DEFAULT,
+	.tp_iter = PyObject_SelfIter,
+	.tp_iternext = (iternextfunc)PyPointlessVectorRevIter_iternext,
+	.tp_new = PyPointlessVectorRevIter_new,
+	.tp_alloc = PyType_GenericAlloc,
+	.tp_free = PyObject_Del,
 };
 
-PyPointlessVector* PyPointlessVector_New(PyPointless* pp, pointless_value_t* v, uint32_t slice_i, uint32_t slice_n)
+
+PyTypeObject PyPointlessVectorType = {
+	PyVarObject_HEAD_INIT(NULL, 0)
+	.tp_name = "pointless.PyPointlessVector",
+	.tp_basicsize = sizeof(PyPointlessVector),
+	.tp_itemsize = 0,
+	.tp_repr = PyPointless_repr,
+	.tp_as_sequence = &PyPointlessVector_as_sequence,
+	.tp_as_mapping = &PyPointlessVector_as_mapping,
+	.tp_str = PyPointless_str,
+	.tp_getattro = PyObject_GenericGetAttr,
+	.tp_as_buffer = &PyPointlessVector_as_buffer,
+	.tp_flags = Py_TPFLAGS_DEFAULT,
+	.tp_doc = "PyPointlessVector wrapper",
+	.tp_richcompare = PyPointlessVector_richcompare,
+	.tp_iter = PyPointlessVector_iter,
+	.tp_methods = PyPointlessVector_methods,
+	.tp_alloc = PyType_GenericAlloc,
+	.tp_new = PyPointlessVector_new,
+	.tp_free = PyObject_Del,
+
+	.tp_dealloc = (destructor)PyPointlessVector_dealloc,
+	.tp_members = PyPointlessVector_memberlist,
+	.tp_getset = PyPointlessVector_getsets,
+	//.tp_init = (initproc)PyPointlessVector_init,
+};
+
+
+PyPointlessVector* PyPointlessVector_New(
+	PyPointless* pp,
+	pointless_value_t* v,
+	uint32_t slice_i,
+	uint32_t slice_n
+)
 {
 	if (!(slice_i + slice_n <= pointless_reader_vector_n_items(&pp->p, v))) {
 		PyErr_SetString(PyExc_ValueError, "slice invariant error when creating PyPointlessVector");
 		return 0;
 	}
 
-	PyPointlessVector* pv = PyObject_New(PyPointlessVector, &PyPointlessVectorType);
+	PyPointlessVector* pv = (PyPointlessVector*)PyPointlessVectorType.tp_alloc(&PyPointlessVectorType, 0);
 
 	if (pv == 0)
 		return 0;

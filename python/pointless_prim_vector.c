@@ -169,32 +169,14 @@ static void PyPointlessPrimVector_dealloc(PyPointlessPrimVector* self)
 
 static void PyPointlessPrimVectorIter_dealloc(PyPointlessPrimVectorIter* self)
 {
-	PyObject_GC_UnTrack(self);
 	Py_XDECREF(self->vector);
-	self->vector = 0;
-	self->iter_state = 0;
-	PyObject_GC_Del(self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 static void PyPointlessPrimVectorRevIter_dealloc(PyPointlessPrimVectorRevIter* self)
 {
-	PyObject_GC_UnTrack(self);
 	Py_XDECREF(self->vector);
-	self->vector = 0;
-	self->iter_state = 0;
-	PyObject_GC_Del(self);
-}
-
-static int PyPointlessPrimVectorIter_traverse(PyPointlessPrimVectorIter* self, visitproc visit, void* arg)
-{
-	Py_VISIT(self->vector);
-	return 0;
-}
-
-static int PyPointlessPrimVectorRevIter_traverse(PyPointlessPrimVectorRevIter* self, visitproc visit, void* arg)
-{
-	Py_VISIT(self->vector);
-	return 0;
+	Py_TYPE(self)->tp_free(self);
 }
 
 PyObject* PyPointlessPrimVector_str(PyPointlessPrimVector* self)
@@ -648,7 +630,7 @@ static PyObject* PyPointlessPrimVector_iter(PyObject* vector)
 		return 0;
 	}
 
-	PyPointlessPrimVectorIter* iter = PyObject_GC_New(PyPointlessPrimVectorIter, &PyPointlessPrimVectorIterType);
+	PyPointlessPrimVectorIter* iter = PyObject_New(PyPointlessPrimVectorIter, &PyPointlessPrimVectorIterType);
 
 	if (iter == 0)
 		return 0;
@@ -656,7 +638,6 @@ static PyObject* PyPointlessPrimVector_iter(PyObject* vector)
 	Py_INCREF(vector);
 	iter->vector = (PyPointlessPrimVector*)vector;
 	iter->iter_state = 0;
-	PyObject_GC_Track(iter);
 
 	return (PyObject*)iter;
 }
@@ -669,7 +650,7 @@ static PyObject* PyPointlessPrimVector_rev_iter(PyObject* vector)
 		return 0;
 	}
 
-	PyPointlessPrimVectorRevIter* iter = PyObject_GC_New(PyPointlessPrimVectorRevIter, &PyPointlessPrimVectorRevIterType);
+	PyPointlessPrimVectorRevIter* iter = PyObject_New(PyPointlessPrimVectorRevIter, &PyPointlessPrimVectorRevIterType);
 
 	if (iter == 0)
 		return 0;
@@ -677,7 +658,6 @@ static PyObject* PyPointlessPrimVector_rev_iter(PyObject* vector)
 	Py_INCREF(vector);
 	iter->vector = (PyPointlessPrimVector*)vector;
 	iter->iter_state = 0;
-	PyObject_GC_Track(iter);
 
 	return (PyObject*)iter;
 }
@@ -2132,9 +2112,9 @@ PyTypeObject PyPointlessPrimVectorIterType = {
 	PyObject_GenericGetAttr,                          /*tp_getattro*/
 	0,                                                /*tp_setattro*/
 	0,                                                /*tp_as_buffer*/
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,          /*tp_flags*/
+	Py_TPFLAGS_DEFAULT,          /*tp_flags*/
 	"PyPointlessPrimVectorIter",                      /*tp_doc */
-	(traverseproc)PyPointlessPrimVectorIter_traverse, /*tp_traverse */
+	0, /*tp_traverse */
 	0,                                                /*tp_clear */
 	0,                                                /*tp_richcompare */
 	0,                                                /*tp_weaklistoffset */
@@ -2163,9 +2143,9 @@ PyTypeObject PyPointlessPrimVectorRevIterType = {
 	PyObject_GenericGetAttr,                          /*tp_getattro*/
 	0,                                                /*tp_setattro*/
 	0,                                                /*tp_as_buffer*/
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,          /*tp_flags*/
+	Py_TPFLAGS_DEFAULT,          /*tp_flags*/
 	"PyPointlessPrimVectorRevIter",                      /*tp_doc */
-	(traverseproc)PyPointlessPrimVectorRevIter_traverse, /*tp_traverse */
+	0, /*tp_traverse */
 	0,                                                /*tp_clear */
 	0,                                                /*tp_richcompare */
 	0,                                                /*tp_weaklistoffset */

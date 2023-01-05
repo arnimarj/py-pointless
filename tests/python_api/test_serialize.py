@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import random, six, pointless
+import random, pointless
 
 from twisted.trial import unittest
 
@@ -9,13 +9,13 @@ def SimpleSerializeTestCases():
 	yield [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
 
 	# 2) vector of vectors
-	yield [list(range(10 + 1)) for i in six.moves.range(10)]
+	yield [list(range(10 + 1)) for i in range(10)]
 
 	# 3) randomized bitvector
 	random.seed(0)
 	v = pointless.PointlessBitvector(100)
 
-	for i in six.moves.range(40):
+	for i in range(40):
 		v[random.randint(0, 100 - 1)] = 1
 
 	yield v
@@ -72,7 +72,7 @@ class TestSerialize(unittest.TestCase):
 
 	def testString(self):
 		fname = 'test_string.map'
-		v = ['string', 'value', u'string', six.unichr(1000)]
+		v = ['string', 'value', chr(1000)]
 		pointless.serialize(v, fname)
 		p = pointless.Pointless(fname)
 		v_ = p.GetRoot()

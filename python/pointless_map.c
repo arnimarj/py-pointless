@@ -10,7 +10,7 @@ static void PyPointlessMap_dealloc(PyPointlessMap* self)
 	self->pp = 0;
 	self->v = 0;
 	self->container_id = 0;
-	PyObject_Del(self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 static void PyPointlessMapKeyIter_dealloc(PyPointlessMapKeyIter* self)
