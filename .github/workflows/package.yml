@@ -31,7 +31,7 @@ jobs:
         run: python -m pip install cibuildwheel==2.11.4
 
       - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse
+        run: cibuildwheel --config-file pyproject.toml --output-dir wheelhouse
         env:
           CIBW_BUILD: pp* cp37-* cp38-* cp39-* cp310-* cp311-*
           CIBW_ARCHS: auto64
