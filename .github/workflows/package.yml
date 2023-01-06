@@ -1,11 +1,11 @@
 ---
 
 name: Python Packaging
-on:
-  workflow_run:
-    workflows: ['Validate']
-    types:
-      - completed
+#on:
+#  workflow_run:
+#    workflows: ['Validate']
+#    types:
+#      - completed
 
 jobs:
   install:
