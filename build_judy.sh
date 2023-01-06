@@ -4,13 +4,13 @@ set -e
 
 basename="$(dirname "$0")"
 
-if [[ -v CC ]]; then
+if [ -v CC ]; then
 	JUDYCC="$CC"
 else
 	JUDYCC=cc
 fi
 
-if [[ ! -v ${COPT} ]]; then
+if [ ! -v ${COPT} ]; then
 	COPT="-DJU_64BIT -O0 -fPIC -fno-strict-aliasing"
 fi
 
