@@ -1,6 +1,5 @@
 [tool.cibuildwheel.linux]
-before-all = "yum install -y clang && unset CC"
-environment = "CC=clang"
+environment = "CC=gcc"
 
 [[tool.cibuildwheel.overrides]]
 select = "*-musllinux*"
