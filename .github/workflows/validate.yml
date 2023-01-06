@@ -1,8 +1,8 @@
-#---
-#
-#name: Validate
-#on: push
-#
+---
+
+name: Validate
+on: push
+
 #jobs:
 #  validate:
 #    name: Syntax check all code in repository
