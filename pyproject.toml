@@ -1,0 +1,7 @@
+[tool.cibuildwheel.linux]
+before-all = "yum install -y clang"
+test-command = "which clang"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-musllinux*"
+before-all = "export CC=gcc"
