@@ -1,8 +1,7 @@
 [tool.cibuildwheel.linux]
 before-all = "yum install -y clang && unset CC"
-test-command = "which clang"
+test-command = "CC=clang ./build_judy.sh"
 
 [[tool.cibuildwheel.overrides]]
 select = "*-musllinux*"
-before-all = "export CC=gcc"
-test-command = "if [[ ! -v CC ]]; then false; fi"
+test-command = "CC=gcc ./build_judy.sh"
