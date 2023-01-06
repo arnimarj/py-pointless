@@ -1,0 +1,6 @@
+[tool.cibuildwheel.linux]
+environment = "CC=gcc"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-musllinux*"
+environment = "CC=gcc"
