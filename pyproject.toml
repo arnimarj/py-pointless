@@ -1,7 +1,7 @@
 [tool.cibuildwheel.linux]
 before-all = "yum install -y clang && unset CC"
-test-command = "CC=clang ./build_judy.sh"
+environment = "CC=clang"
 
 [[tool.cibuildwheel.overrides]]
 select = "*-musllinux*"
-test-command = "CC=gcc ./build_judy.sh"
+environment = "CC=gcc"
