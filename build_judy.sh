@@ -1,16 +1,18 @@
 #!/bin/bash
 
-set -e
+bash --version
+
+set -xe
 
 basename="$(dirname "$0")"
 
-if [[ -v CC ]]; then
+if [[ ${CC} ]]; then
 	JUDYCC="$CC"
 else
-	JUDYCC=cc
+	JUDYCC=gcc
 fi
 
-if [[ ! -v ${COPT} ]]; then
+if [[ ! ${COPT} ]]; then
 	COPT="-DJU_64BIT -O0 -fPIC -fno-strict-aliasing"
 fi
 
