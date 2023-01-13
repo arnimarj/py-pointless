@@ -1,5 +1,7 @@
 #!/bin/bash
 
+bash --version
+
 set -xe
 
 basename="$(dirname "$0")"
