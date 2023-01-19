@@ -34,7 +34,7 @@ jobs:
 
           ./build_judy.sh
           (cd tests && ./compile.sh)
-          python setup.py install
+          pip install .
 
           (cd tests && ./a.out --unit-test-32)
           (cd tests && ./a.out --unit-test-64)
