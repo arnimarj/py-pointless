@@ -29,8 +29,8 @@ jobs:
 
       - name: Test
         run: |
-          python3 -m pip install -U pip
-          pip3 install -r test-requirements.txt
+          python -m pip install -U pip
+          pip install -r test-requirements.txt
 
           ./build_judy.sh
           (cd tests && ./compile.sh)
