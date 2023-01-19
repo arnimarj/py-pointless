@@ -26,12 +26,10 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = [ "pointless" ]
-py-modules = ["_custom_build"]
 package-dir = { pointless =  "" }
 
-[tool.setuptools.cmdclass]
-build_py = "_custom_build.build_py"
+[tool.setuptools.packages.find]
+where = [ "" ]
 
 [project]
 name = "pointless"
