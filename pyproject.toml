@@ -25,12 +25,6 @@ environment = "CC=gcc"
 requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-package-dir = { pointless =  "" }
-
-[tool.setuptools.packages.find]
-where = [ "" ]
-
 [project]
 name = "pointless"
 version = "1.0.12"

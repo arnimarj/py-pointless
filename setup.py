@@ -3,8 +3,7 @@ import os.path
 import subprocess
 import sys
 
-from setuptools import Extension
-from setuptools.command.build_py import build_py as _build_py
+from setuptools import Extension, setup
 
 
 def build_judy() -> None:
@@ -49,84 +48,76 @@ if not os.path.isfile('./judy-1.0.5/src/libJudy.a'):
 	build_judy()
 
 
-class build_py(_build_py):
-    def run(self):
-        self.run_command('build_ext')
-        return super().run()
+setup(
+	ext_modules=[
+		Extension(
+			'pointless',
+			include_dirs=[
+				'./include',
+			],
+			sources=[
+				# python stuff
+				'pointless_ext.c',
 
-    def initialize_options(self):
-        super().initialize_options()
-        if self.distribution.ext_modules is None:
-            self.distribution.ext_modules = []
+				# pypointless
+				'python/pointless_create.c',
+				'python/pointless_vector.c',
+				'python/pointless_bitvector.c',
+				'python/pointless_set.c',
+				'python/pointless_map.c',
+				'python/pointless_object.c',
+				'python/pointless_instance_dispatch.c',
+				'python/pointless_pyobject_hash.c',
+				'python/pointless_pyobject_cmp.c',
+				'python/pointless_print.c',
+				'python/pointless_prim_vector.c',
 
-        self.distribution.ext_modules.append(
-			Extension(
-				'pointless',
-				include_dirs=[
-					'./include',
-				],
-				sources=[
-					# python stuff
-					'pointless_ext.c',
+				# libpointless
+				'src/custom_sort.c',
+				'src/bitutils.c',
+				'src/pointless_reader.c',
+				'src/pointless_reader_helpers.c',
+				'src/pointless_create.c',
+				'src/pointless_create_cache.c',
+				'src/pointless_dynarray.c',
+				'src/pointless_value.c',
+				'src/pointless_unicode_utils.c',
+				'src/pointless_hash.c',
+				'src/pointless_cmp.c',
+				'src/pointless_hash_table.c',
+				'src/pointless_bitvector.c',
+				'src/pointless_walk.c',
+				'src/pointless_cycle_marker.c',
+				'src/pointless_cycle_marker_wrappers.c',
+				'src/pointless_validate.c',
+				'src/pointless_validate_heap_ref.c',
+				'src/pointless_validate_heap.c',
+				'src/pointless_validate_hash_table.c',
+				'src/pointless_malloc.c',
+				'src/pointless_int_ops.c',
+				'src/pointless_recreate.c',
+				'src/pointless_eval.c'
+			],
 
-					# pypointless
-					'python/pointless_create.c',
-					'python/pointless_vector.c',
-					'python/pointless_bitvector.c',
-					'python/pointless_set.c',
-					'python/pointless_map.c',
-					'python/pointless_object.c',
-					'python/pointless_instance_dispatch.c',
-					'python/pointless_pyobject_hash.c',
-					'python/pointless_pyobject_cmp.c',
-					'python/pointless_print.c',
-					'python/pointless_prim_vector.c',
+			extra_compile_args=[
+				'-I./include',
+				'-I./judy-1.0.5/src',
+				'-Wall',
+				'-Wno-strict-prototypes',
+				'-g',
+				'-D_GNU_SOURCE',
+				'-O2',
+				'-DNDEBUG',
+				'-std=c99',
+			],
 
-					# libpointless
-					'src/custom_sort.c',
-					'src/bitutils.c',
-					'src/pointless_reader.c',
-					'src/pointless_reader_helpers.c',
-					'src/pointless_create.c',
-					'src/pointless_create_cache.c',
-					'src/pointless_dynarray.c',
-					'src/pointless_value.c',
-					'src/pointless_unicode_utils.c',
-					'src/pointless_hash.c',
-					'src/pointless_cmp.c',
-					'src/pointless_hash_table.c',
-					'src/pointless_bitvector.c',
-					'src/pointless_walk.c',
-					'src/pointless_cycle_marker.c',
-					'src/pointless_cycle_marker_wrappers.c',
-					'src/pointless_validate.c',
-					'src/pointless_validate_heap_ref.c',
-					'src/pointless_validate_heap.c',
-					'src/pointless_validate_hash_table.c',
-					'src/pointless_malloc.c',
-					'src/pointless_int_ops.c',
-					'src/pointless_recreate.c',
-					'src/pointless_eval.c'
-				],
-
-				extra_compile_args=[
-					'-I./include',
-					'-I./judy-1.0.5/src',
-					'-Wall',
-					'-Wno-strict-prototypes',
-					'-g',
-					'-D_GNU_SOURCE',
-					'-O2',
-					'-DNDEBUG',
-					'-std=c99',
-				],
-
-				extra_link_args=[
-					'-L./judy-1.0.5/src',
-					'-Bstatic',
-					'-lJudy',
-					'-Bdynamic',
-					'-lm',
-				],
-			)
-        )
+			extra_link_args=[
+				'-L./judy-1.0.5/src',
+				'-Bstatic',
+				'-lJudy',
+				'-Bdynamic',
+				'-lm',
+			],
+		),
+	],
+)
