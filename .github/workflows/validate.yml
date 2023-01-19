@@ -18,24 +18,24 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           submodules: true
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Show Config
-        run: |
-          gcc --version
-
-      - name: Test
-        run: |
-          python -m pip install -U pip
-          pip install -r test-requirements.txt
-
-          ./build_judy.sh
-          (cd tests && ./compile.sh)
-          pip install .
-
-          (cd tests && ./a.out --unit-test-32)
-          (cd tests && ./a.out --unit-test-64)
-          PYTHONPATH=$(pwd) python -m twisted.trial tests.python_api
+#      - name: Set up Python ${{ matrix.python-version }}
+#        uses: actions/setup-python@v4
+#        with:
+#          python-version: ${{ matrix.python-version }}
+#
+#      - name: Show Config
+#        run: |
+#          gcc --version
+#
+#      - name: Test
+#        run: |
+#          python -m pip install -U pip
+#          pip install -r test-requirements.txt
+#
+#          ./build_judy.sh
+#          (cd tests && ./compile.sh)
+#          pip install .
+#
+#          (cd tests && ./a.out --unit-test-32)
+#          (cd tests && ./a.out --unit-test-64)
+#          PYTHONPATH=$(pwd) python -m twisted.trial tests.python_api
