@@ -1,6 +1,57 @@
+[tool.cibuildwheel]
+test-command = [
+    "python {package}/sanity-check.py",
+    "python -m pip install -U pip",
+    "pip install -r {package}/test-requirements.txt",
+    "{package}/build_judy.sh",
+    "(cd {package}/tests && ./compile.sh)",
+    "(cd {package}/tests && ./a.out --unit-test-32)",
+    "(cd {package}/tests && ./a.out --unit-test-64)",
+    "(cd {package} && PYTHONPATH=$(pwd) python -m twisted.trial tests.python_api)",
+]
+
 [tool.cibuildwheel.linux]
 environment = "CC=gcc"
 
 [[tool.cibuildwheel.overrides]]
 select = "*-musllinux*"
 environment = "CC=gcc"
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [ "pointless" ]
+py-modules = ["_custom_build"]
+package-dir = { pointless =  "" }
+
+[tool.setuptools.cmdclass]
+build_py = "_custom_build.build_py"
+
+[project]
+name = "pointless"
+version = "1.0.12"
+description = "A read-only relocatable data structure for JSON like data, with C and Python APIs"
+authors = [{ name = "Arni Mar Jonsson", email = "arnimarj@gmail.com" }]
+requires-python = ">=3.7"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Other Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
+    "Operating System :: POSIX",
+    "Programming Language :: C",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries"
+]
+
+[project.urls]
+"Source Code" = "https://github.com/arnimarj/py-pointless"

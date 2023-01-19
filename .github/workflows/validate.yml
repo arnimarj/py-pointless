@@ -6,10 +6,10 @@ on: push
 jobs:
   validate:
     name: Syntax check all code in repository
-    runs-on: ubuntu-latest
-
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [macos-11, macos-12, ubuntu-latest]
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
 
     steps:
@@ -23,14 +23,18 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Show Config
+        run: |
+          gcc --version
+
       - name: Test
         run: |
-          python3 -m pip install -U pip
-          pip3 install -r test-requirements.txt
+          python -m pip install -U pip
+          pip install -r test-requirements.txt
 
           ./build_judy.sh
           (cd tests && ./compile.sh)
-          python setup.py install
+          pip install .
 
           (cd tests && ./a.out --unit-test-32)
           (cd tests && ./a.out --unit-test-64)
