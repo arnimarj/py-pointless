@@ -19,7 +19,7 @@ build-verbosity = 1
 [tool.cibuildwheel.linux]
 environment = "CC=gcc"
 
-[tool.cibuildwheel.linux]
+[tool.cibuildwheel.macos]
 environment = "CC=clang"
 
 [[tool.cibuildwheel.overrides]]
