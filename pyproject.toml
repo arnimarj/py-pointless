@@ -1,6 +1,13 @@
 [tool.cibuildwheel]
 test-command = [
   "python {package}/sanity-check.py",
+  "python -m pip install -U pip",
+  "pip install -r {package}/test-requirements.txt",
+  "{package}/build_judy.sh",
+  "(cd {package}/tests && ./compile.sh)",
+  "(cd {package}/tests && ./a.out --unit-test-32)",
+  "(cd {package}/tests && ./a.out --unit-test-64)",
+  "(cd {package} && PYTHONPATH=$(pwd) python -m twisted.trial tests.python_api)",
 ]
 
 [tool.cibuildwheel.linux]
