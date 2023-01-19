@@ -1,3 +1,8 @@
+[tool.cibuildwheel]
+test-command = [
+  "python {package}/sanity-check.py",
+]
+
 [tool.cibuildwheel.linux]
 environment = "CC=gcc"
 
