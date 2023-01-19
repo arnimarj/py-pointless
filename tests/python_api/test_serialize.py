@@ -72,9 +72,11 @@ class TestSerialize(unittest.TestCase):
 
 	def testString(self):
 		fname = 'test_string.map'
+		# TBD: this test fails on pypy
 		v = ['string', 'value', chr(1000)]
 		pointless.serialize(v, fname)
 		p = pointless.Pointless(fname)
-		v_ = p.GetRoot()
-		str(v)
-		str(v_)
+		a, b, c = p.GetRoot()
+		self.assertEqual(v[0], a)
+		self.assertEqual(v[1], b)
+		self.assertEqual(v[2], c)
