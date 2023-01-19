@@ -24,9 +24,7 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = [ "pointless" ]
 py-modules = ["_custom_build"]
-
-[tool.setuptools.package-dir]
-pointless = ""
+package-dir = { pointless =  "" }
 
 [tool.setuptools.cmdclass]
 build_py = "_custom_build.build_py"
