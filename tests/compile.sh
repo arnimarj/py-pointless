@@ -11,4 +11,10 @@ SOURCE="../src/*.c ./c_api/*.c  ../judy-1.0.5/src/libJudy.a"
 LDFLAGS="-lpthread -ldl"
 #-liconv"
 
-clang $FLAGS $INCLUDE $SOURCE $LDFLAGS0
+if [[ ${CC} ]]; then
+	CC="$CC"
+else
+	CC=gcc
+fi
+
+$CC $FLAGS $INCLUDE $SOURCE $LDFLAGS0

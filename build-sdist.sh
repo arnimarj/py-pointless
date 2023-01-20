@@ -4,7 +4,9 @@ set -xe
 
 mkdir -p ./wheelhouse
 
-python3 -m build 
+python setup.py sdist --dist-dir ./wheelhouse
 
-mv ./dist/*.gz ./wheelhouse/
-ls -l ./wheelhouse
+# test it
+pip install -U pip virtualenv
+python -m virtualenv venv
+./venv/bin/pip install ./wheelhouse/*.gz
