@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <assert.h>
+#include <fcntl.h>
 
 #ifndef __cplusplus
 	#include <limits.h>
