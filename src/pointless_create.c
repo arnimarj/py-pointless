@@ -1288,6 +1288,14 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 		goto cleanup;
 	}
 
+#ifdef __APPLE__
+	// use fcntl on MacOS
+	if (fcntl(fd, F_FULLFSYNC) != 0) {
+		*error = "fcntl F_FULLFSYNC failure";
+		goto cleanup;
+	}
+#endif
+
 	// fsync
 	if (fsync(fd) != 0) {
 		*error = "fsync failure";
