@@ -1302,14 +1302,6 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 
 	fd = -1;
 
-	// rename
-	if (rename(temp_fname, fname) != 0) {
-		*error = "error renaming file";
-		goto cleanup;
-	}
-
-	unlink_fname = fname;
-
 	// fclose
 	if (fclose(f) == EOF) {
 		f = 0;
@@ -1318,6 +1310,14 @@ int pointless_create_output_and_end_f(pointless_create_t* c, const char* fname, 
 	}
 
 	f = 0;
+
+	// rename
+	if (rename(temp_fname, fname) != 0) {
+		*error = "error renaming file";
+		goto cleanup;
+	}
+
+	unlink_fname = fname;
 
 	pointless_free(temp_fname);
 	temp_fname = 0;
