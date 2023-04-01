@@ -19,7 +19,6 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 			*error = "32-bit offset files no longer supported";
 			break;
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			p->is_64_offset = 1;
 			break;
 		default:
 			*error = "file version not supported";

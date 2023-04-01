@@ -12,12 +12,6 @@ static size_t align_next_4_size_t(size_t v)
 	return v + lookup[v%4];
 }
 
-static uint32_t align_next_4_32(uint32_t v)
-{
-	static uint32_t lookup[4] = {0, 3, 2, 1};
-	return v + lookup[v%4];
-}
-
 static uint64_t align_next_4_64(uint64_t v)
 {
 	static uint64_t lookup[4] = {0, 3, 2, 1};
@@ -698,7 +692,6 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 			*error = "unsupported version";
 			return 0;
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			is_64_offset = 1;
 			break;
 		default:
 			*error = "unsupported version";
@@ -902,7 +895,7 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 	// write out offset vectors, first unicodes
 	debug_n_string_unicode = 0;
 
-	#define PC_WRITE_OFFSET() if (is_64_offset && !(*cb->write)(&current_offset_64, sizeof(current_offset_64), cb->user, error)) {goto error_cleanup;}
+	#define PC_WRITE_OFFSET() if (!(*cb->write)(&current_offset_64, sizeof(current_offset_64), cb->user, error)) {goto error_cleanup;}
 	#define PC_INCREMENT_OFFSET(f) {current_offset_64 += (f);}
 	#define PC_ALIGN_OFFSET() {current_offset_64 = align_next_4_64(current_offset_64);}
 
