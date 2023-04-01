@@ -692,15 +692,11 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 	// return value
 	int retval = 1;
 
-	// different version of offset
-	int is_32_offset = 0;
-	int is_64_offset = 0;
-
 	switch (c->version) {
 		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
-			is_32_offset = 1;
-			break;
+			*error = "unsupported version";
+			return 0;
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
 			is_64_offset = 1;
 			break;
@@ -713,7 +709,6 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 	uint32_t n_priv_vectors, n_outside_vectors, n_sets, n_maps;
 	uint32_t i, n_values;
 
-	uint32_t current_offset_32;
 	uint64_t current_offset_64;
 
 	pointless_dynarray_t temp;
@@ -902,15 +897,14 @@ static int pointless_create_output_and_end_(pointless_create_t* c, pointless_cre
 		goto error_cleanup;
 
 	// current offset value, refs are relative to heap base
-	current_offset_32 = 0;
 	current_offset_64 = 0;
 
 	// write out offset vectors, first unicodes
 	debug_n_string_unicode = 0;
 
-	#define PC_WRITE_OFFSET() if (is_32_offset && !(*cb->write)(&current_offset_32, sizeof(current_offset_32), cb->user, error)) {goto error_cleanup;} if (is_64_offset && !(*cb->write)(&current_offset_64, sizeof(current_offset_64), cb->user, error)) {goto error_cleanup;}
-	#define PC_INCREMENT_OFFSET(f) {current_offset_32 += (f); current_offset_64 += (f);}
-	#define PC_ALIGN_OFFSET() {current_offset_32 = align_next_4_32(current_offset_32); current_offset_64 = align_next_4_64(current_offset_64);}
+	#define PC_WRITE_OFFSET() if (is_64_offset && !(*cb->write)(&current_offset_64, sizeof(current_offset_64), cb->user, error)) {goto error_cleanup;}
+	#define PC_INCREMENT_OFFSET(f) {current_offset_64 += (f);}
+	#define PC_ALIGN_OFFSET() {current_offset_64 = align_next_4_64(current_offset_64);}
 
 	for (i = 0; i < n_values; i++) {
 		if (cv_value_type(i) == POINTLESS_UNICODE_) {
