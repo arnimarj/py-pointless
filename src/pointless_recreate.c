@@ -329,7 +329,7 @@ error:
 	return handle;
 }
 
-static int pointless_recreate_(const char* fname_in, const char* fname_out, const char** error, int n_bits)
+int pointless_recreate(const char* fname_in, const char* fname_out, const char** error)
 {
 	// open source
 	pointless_t p;
@@ -363,14 +363,4 @@ static int pointless_recreate_(const char* fname_in, const char* fname_out, cons
 
 	pointless_close(&p);
 	return 1;
-}
-
-int pointless_recreate_32(const char* fname_in, const char* fname_out, const char** error)
-{
-	return pointless_recreate_(fname_in, fname_out, error, 32);
-}
-
-int pointless_recreate_64(const char* fname_in, const char* fname_out, const char** error)
-{
-	return pointless_recreate_(fname_in, fname_out, error, 64);
 }
