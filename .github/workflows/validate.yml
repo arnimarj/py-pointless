@@ -36,6 +36,5 @@ jobs:
           (cd tests && ./compile.sh)
           pip install .
 
-          (cd tests && ./a.out --unit-test-32)
-          (cd tests && ./a.out --unit-test-64)
+          (cd tests && ./a.out --unit-test)
           PYTHONPATH=$(pwd) python -m twisted.trial tests.python_api
