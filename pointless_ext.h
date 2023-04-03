@@ -261,7 +261,7 @@ static struct PyPointless_CAPI* PyPointless_IMPORT_CAPI(void)
 
 		if (context != (void*)POINTLESS_MAGIC_CONTEXT) {
 			Py_DECREF(c);
-			PyErr_Format(PyExc_ImportError, "invalid capsule context, was %ld, expected %ld", (long)context, (long)POINTLESS_MAGIC_CONTEXT);
+			PyErr_Format(PyExc_ImportError, "invalid capsule context, was %x, expected %x", (int)context, (int)POINTLESS_MAGIC_CONTEXT);
 			return 0;
 		}
 
