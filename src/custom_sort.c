@@ -25,7 +25,7 @@ static int med3(int a, int b, int c, qsort_cmp_ cmp, void* user)
 	return v;
 }
 
-static int bentley_qsort_priv(int a, int n, qsort_cmp_ cmp_x, qsort_swap_ swap, void* user)
+static int bentley_qsort_priv(int a, int n, qsort_cmp_ cmp, qsort_swap_ swap, void* user)
 {
 	int pm, pl, pn, pa, pb, pc, pd, i, d, r, presorted, is_error;
 
@@ -34,7 +34,7 @@ loop:
 
 	if (n < 7) {
 		for (pm = a + 1; pm < a + n; pm += 1) {
-			for (pl = pm; pl > a && cmp_adapter(pl - 1, pl, cmp_x, user, &is_error) > 0; pl -= 1) {
+			for (pl = pm; pl > a && cmp_adapter(pl - 1, pl, cmp, user, &is_error) > 0; pl -= 1) {
 				if (is_error)
 					return 0;
 
@@ -48,7 +48,7 @@ loop:
 	presorted = 1;
 
 	for (pm = a + 1; pm < a + n; pm += 1) {
-		if (cmp_adapter(pm - 1, pm, cmp_x, user, &is_error) > 0) {
+		if (cmp_adapter(pm - 1, pm, cmp, user, &is_error) > 0) {
 			if (is_error)
 				return 0;
 
@@ -68,15 +68,15 @@ loop:
 
 		if (n > 40) {
 			d = (n / 8);
-			pl = med3(pl, pl + d, pl + 2 * d, cmp_x, user);
-			pm = med3(pm - d, pm, pm + d, cmp_x, user);
-			pn = med3(pn - 2 * d, pn - d, pn, cmp_x, user);
+			pl = med3(pl, pl + d, pl + 2 * d, cmp, user);
+			pm = med3(pm - d, pm, pm + d, cmp, user);
+			pn = med3(pn - 2 * d, pn - d, pn, cmp, user);
 
 			if (pl == -1 || pm == -1 || pn == -1)
 				return 0;
 		}
 
-		pm = med3(pl, pm, pn, cmp_x, user);
+		pm = med3(pl, pm, pn, cmp, user);
 
 		if (pm == -1)
 			return 0;
@@ -88,7 +88,7 @@ loop:
 	pc = pd = a + (n - 1);
 
 	for (;;) {
-		while (pb <= pc && (r = cmp_adapter(pb, a, cmp_x, user, &is_error)) <= 0) {
+		while (pb <= pc && (r = cmp_adapter(pb, a, cmp, user, &is_error)) <= 0) {
 			if (is_error)
 				return 0;
 
@@ -100,7 +100,7 @@ loop:
 			pb += 1;
 		}
 
-		while (pb <= pc && (r = cmp_adapter(pc, a, cmp_x, user, &is_error)) >= 0) {
+		while (pb <= pc && (r = cmp_adapter(pc, a, cmp, user, &is_error)) >= 0) {
 			if (is_error)
 				return 0;
 
@@ -134,7 +134,7 @@ loop:
 		(*swap)(pb + i, pn - r + i, user);
 
 	if ((r = pb - pa) > 1) {
-		if (!bentley_qsort_priv(a, r, cmp_x, swap, user))
+		if (!bentley_qsort_priv(a, r, cmp, swap, user))
 			return 0;
 	}
 

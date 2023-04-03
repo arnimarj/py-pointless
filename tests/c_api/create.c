@@ -1,13 +1,12 @@
 #include "test.h"
 
-void create_wrapper(const char* fname, create_begin_cb begin_cb, create_cb cb)
+void create_wrapper(const char* fname, create_cb cb)
 {
 	pointless_create_t c;
 	const char* error = 0;
 
 	clock_t t_0 = clock();
-
-	begin_cb(&c);
+	pointless_create_begin_64(&c);
 
 	(*cb)(&c);
 

@@ -11,18 +11,14 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 	p->header = (pointless_header_t*)buf;
 
 	// check for version
-	p->is_32_offset = 0;
-	p->is_64_offset = 0;
-
 	switch (p->header->version) {
 		case POINTLESS_FF_VERSION_OFFSET_32_OLDHASH:
 			*error = "old-hash file version not supported";
 			return 0;
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
-			p->is_32_offset = 1;
+			*error = "32-bit offset files no longer supported";
 			break;
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
-			p->is_64_offset = 1;
 			break;
 		default:
 			*error = "file version not supported";
@@ -32,19 +28,11 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 	// right, we need some number of bytes for the offset vectors
 	uint64_t mandatory_size = sizeof(pointless_header_t);
 
-	if (p->is_32_offset) {
-		mandatory_size += p->header->n_string_unicode * sizeof(uint32_t);
-		mandatory_size += p->header->n_vector * sizeof(uint32_t);
-		mandatory_size += p->header->n_bitvector * sizeof(uint32_t);
-		mandatory_size += p->header->n_set * sizeof(uint32_t);
-		mandatory_size += p->header->n_map * sizeof(uint32_t);
-	} else {
-		mandatory_size += p->header->n_string_unicode * sizeof(uint64_t);
-		mandatory_size += p->header->n_vector * sizeof(uint64_t);
-		mandatory_size += p->header->n_bitvector * sizeof(uint64_t);
-		mandatory_size += p->header->n_set * sizeof(uint64_t);
-		mandatory_size += p->header->n_map * sizeof(uint64_t);
-	}
+	mandatory_size += p->header->n_string_unicode * sizeof(uint64_t);
+	mandatory_size += p->header->n_vector * sizeof(uint64_t);
+	mandatory_size += p->header->n_bitvector * sizeof(uint64_t);
+	mandatory_size += p->header->n_set * sizeof(uint64_t);
+	mandatory_size += p->header->n_map * sizeof(uint64_t);
 
 	if (buflen < mandatory_size) {
 		*error = "file is too small to hold offset vectors";
@@ -52,12 +40,6 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 	}
 
 	// offset vectors
-	p->string_unicode_offsets_32   = (uint32_t*)(p->header + 1);
-	p->vector_offsets_32           = (uint32_t*)(p->string_unicode_offsets_32   + p->header->n_string_unicode);
-	p->bitvector_offsets_32        = (uint32_t*)(p->vector_offsets_32           + p->header->n_vector);
-	p->set_offsets_32              = (uint32_t*)(p->bitvector_offsets_32        + p->header->n_bitvector);
-	p->map_offsets_32              = (uint32_t*)(p->set_offsets_32              + p->header->n_set);
-
 	p->string_unicode_offsets_64   = (uint64_t*)(p->header + 1);
 	p->vector_offsets_64           = (uint64_t*)(p->string_unicode_offsets_64   + p->header->n_string_unicode);
 	p->bitvector_offsets_64        = (uint64_t*)(p->vector_offsets_64           + p->header->n_vector);
@@ -66,12 +48,7 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 
 	// our heap
 	p->heap_len = (buflen - mandatory_size);
-	p->heap_ptr = 0;
-
-	if (p->is_32_offset)
-		p->heap_ptr = (void*)(p->map_offsets_32 + p->header->n_map);
-	else
-		p->heap_ptr = (void*)(p->map_offsets_64 + p->header->n_map);
+	p->heap_ptr = (void*)(p->map_offsets_64 + p->header->n_map);
 
 	// let us validate the damn thing
 	pointless_validate_context_t context;

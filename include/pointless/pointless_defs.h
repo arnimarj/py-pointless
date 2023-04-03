@@ -108,8 +108,8 @@ extern "C" {
 #define POINTLESS_U64     28
 
 
-#define PC_HEAP_OFFSET(p, offsets, i) ((char*)((p)->heap_ptr) + ((p)->is_32_offset ? ((p)->offsets##_32[i]) : ((p)->offsets##_64[i])))
-#define PC_OFFSET(p, offsets, i)      (                         ((p)->is_32_offset ? ((p)->offsets##_32[i]) : ((p)->offsets##_64[i])))
+#define PC_HEAP_OFFSET(p, offsets, i) ((char*)((p)->heap_ptr) + ((p)->offsets##_64[i]))
+#define PC_OFFSET(p, offsets, i)      (                         ((p)->offsets##_64[i]))
 
 typedef union {
 	int32_t data_i32;
@@ -231,20 +231,11 @@ typedef struct {
 	pointless_header_t* header;
 
 	// offset vectors
-	uint32_t* string_unicode_offsets_32;
-	uint32_t* vector_offsets_32;
-	uint32_t* bitvector_offsets_32;
-	uint32_t* set_offsets_32;
-	uint32_t* map_offsets_32;
-
 	uint64_t* string_unicode_offsets_64;
 	uint64_t* vector_offsets_64;
 	uint64_t* bitvector_offsets_64;
 	uint64_t* set_offsets_64;
 	uint64_t* map_offsets_64;
-
-	int is_32_offset;
-	int is_64_offset;
 
 	// base heap pointer
 	void* heap_ptr;

@@ -5,8 +5,7 @@ test-command = [
     "pip install -r {package}/test-requirements.txt",
     "{package}/build_judy.sh",
     "(cd {package}/tests && ./compile.sh)",
-    "(cd {package}/tests && ./a.out --unit-test-32)",
-    "(cd {package}/tests && ./a.out --unit-test-64)",
+    "(cd {package}/tests && ./a.out --unit-test)",
     "(cd {package} && PYTHONPATH=$(pwd) python -m twisted.trial tests.python_api)",
 ]
 
@@ -35,7 +34,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pointless"
-version = "1.0.14"
+version = "1.0.15"
 description = "A read-only relocatable data structure for JSON like data, with C and Python APIs"
 authors = [{ name = "Arni Mar Jonsson", email = "arnimarj@gmail.com" }]
 requires-python = ">=3.7"

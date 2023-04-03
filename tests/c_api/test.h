@@ -15,11 +15,10 @@
 void validate_hash_semantics();
 
 // create/query test-cases
-typedef void (*create_begin_cb)(pointless_create_t* c);
 typedef void (*create_cb)(pointless_create_t* c);
 typedef void (*query_cb)(pointless_t* p);
 
-void create_wrapper(const char* fname, create_begin_cb begin_cb, create_cb cb);
+void create_wrapper(const char* fname, create_cb cb);
 void query_wrapper(const char* fname, query_cb cb);
 
 void create_tuple(pointless_create_t* c);
