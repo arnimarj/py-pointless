@@ -165,7 +165,7 @@ static int32_t pointless_validate_string_heap(pointless_validate_context_t* cont
 	}
 
 	if (s[i] != 0) {
-		*error = "missing end-of-string";	
+		*error = "missing end-of-string";
 		return 0;
 	}
 

@@ -172,7 +172,7 @@ void query_set(pointless_t* p)
 
 		if (kk == 0) {
 			fprintf(stderr, "set does not contain the expected value\n");
-			exit(EXIT_FAILURE);	
+			exit(EXIT_FAILURE);
 		}
 
 		// they must be equal

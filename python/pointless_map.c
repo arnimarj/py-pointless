@@ -8,7 +8,6 @@ static void PyPointlessMap_dealloc(PyPointlessMap* self)
 	}
 
 	self->pp = 0;
-	self->v = 0;
 	self->container_id = 0;
 	Py_TYPE(self)->tp_free(self);
 }
@@ -43,7 +42,6 @@ PyObject* PyPointlessMap_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 
 	if (self) {
 		self->pp = 0;
-		self->v = 0;
 		self->container_id = 0;
 	}
 
@@ -112,7 +110,7 @@ static int PyPointlessMapItemIter_init(PyPointlessMap* self, PyObject* args)
 
 static Py_ssize_t PyPointlessMap_length(PyPointlessSet* self)
 {
-	return (Py_ssize_t)pointless_reader_map_n_items(&self->pp->p, self->v);
+	return (Py_ssize_t)pointless_reader_map_n_items(&self->pp->p, &self->v);
 }
 
 static PyObject* PyPointlessMap_iter(PyObject* map)
@@ -144,7 +142,7 @@ static PyObject* PyPointlessMapKeyIter_iternext(PyPointlessMapKeyIter* iter)
 	pointless_value_t* k = 0;
 	pointless_value_t* v = 0;
 
-	if (pointless_reader_map_iter(&iter->map->pp->p, iter->map->v, &k, &v, &iter->iter_state))
+	if (pointless_reader_map_iter(&iter->map->pp->p, &iter->map->v, &k, &v, &iter->iter_state))
 		return pypointless_value(iter->map->pp, k);
 
 	Py_DECREF(iter->map);
@@ -161,7 +159,7 @@ static PyObject* PyPointlessMapValueIter_iternext(PyPointlessMapValueIter* iter)
 	pointless_value_t* k = 0;
 	pointless_value_t* v = 0;
 
-	if (pointless_reader_map_iter(&iter->map->pp->p, iter->map->v, &k, &v, &iter->iter_state))
+	if (pointless_reader_map_iter(&iter->map->pp->p, &iter->map->v, &k, &v, &iter->iter_state))
 		return pypointless_value(iter->map->pp, v);
 
 	Py_DECREF(iter->map);
@@ -178,7 +176,7 @@ static PyObject* PyPointlessMapItemIter_iternext(PyPointlessMapItemIter* iter)
 	pointless_value_t* k = 0;
 	pointless_value_t* v = 0;
 
-	if (pointless_reader_map_iter(&iter->map->pp->p, iter->map->v, &k, &v, &iter->iter_state)) {
+	if (pointless_reader_map_iter(&iter->map->pp->p, &iter->map->v, &k, &v, &iter->iter_state)) {
 		PyObject* kk = pypointless_value(iter->map->pp, k);
 		PyObject* vv = pypointless_value(iter->map->pp, v);
 
@@ -214,7 +212,7 @@ static int PyPointlessMap_contains_(PyPointlessMap* m, PyObject* key)
 	pointless_value_t* k = 0;
 	pointless_value_t* v = 0;
 
-	pointless_reader_map_lookup_ext(&m->pp->p, m->v, hash, PyPointlessMap_eq_cb, (void*)key, &k, &v, &error);
+	pointless_reader_map_lookup_ext(&m->pp->p, &m->v, hash, PyPointlessMap_eq_cb, (void*)key, &k, &v, &error);
 
 	if (error) {
 		PyErr_Format(PyExc_ValueError, "pointless map query error: %s", error);
@@ -294,7 +292,7 @@ static PyObject* PyPointlessMap_subscript(PyPointlessMap* m, PyObject* key)
 	pointless_value_t* k = 0;
 	pointless_value_t* v = 0;
 
-	pointless_reader_map_lookup_ext(&m->pp->p, m->v, hash, PyPointlessMap_eq_cb, (void*)key, &k, &v, &error);
+	pointless_reader_map_lookup_ext(&m->pp->p, &m->v, hash, PyPointlessMap_eq_cb, (void*)key, &k, &v, &error);
 
 	if (error) {
 		PyErr_Format(PyExc_ValueError, "pointless map query error: %s", error);
@@ -334,7 +332,7 @@ static PyObject* PyPointlessMap_get(PyPointlessMap* m, PyObject* args)
 	pointless_value_t* k = 0;
 	pointless_value_t* v = 0;
 
-	pointless_reader_map_lookup_ext(&m->pp->p, m->v, hash, PyPointlessMap_eq_cb, (void*)key, &k, &v, &error);
+	pointless_reader_map_lookup_ext(&m->pp->p, &m->v, hash, PyPointlessMap_eq_cb, (void*)key, &k, &v, &error);
 
 	if (error) {
 		PyErr_Format(PyExc_ValueError, "pointless map query error: %s", error);
@@ -545,7 +543,7 @@ PyPointlessMap* PyPointlessMap_New(PyPointless* pp, pointless_value_t* v)
 	Py_INCREF(pp);
 	pp->n_map_refs += 1;
 	pv->pp = pp;
-	pv->v = v;
+	pv->v = *v;
 
 	// the container ID is a unique between all non-empty vectors, maps and sets
 	pv->container_id = pointless_container_id(&pp->p, v);

@@ -189,7 +189,7 @@ static uint32_t pointless_recreate_convert_rec(pointless_recreate_state_t* state
 			if (handle == POINTLESS_CREATE_VALUE_FAIL)
 				*state->error = "out of memory";
 			return handle;
-	
+
 		case POINTLESS_BITVECTOR:
 			n_bits = pointless_reader_bitvector_n_bits(state->p, v);
 			bits = pointless_calloc(ICEIL(n_bits, 8), 1);

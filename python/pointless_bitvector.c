@@ -7,13 +7,12 @@ static int PyPointlessBitvector_extend_by(PyPointlessBitvector* self, uint32_t n
 
 static void PyPointlessBitvector_dealloc(PyPointlessBitvector* self)
 {
-	if (self->is_pointless && self->pointless_pp)
-		self->pointless_pp->n_bitvector_refs -= 1;
+	if (self->is_pointless && self->pp)
+		self->pp->n_bitvector_refs -= 1;
 
-	Py_XDECREF(self->pointless_pp);
+	Py_XDECREF(self->pp);
 	self->is_pointless = 0;
-	self->pointless_pp = 0;
-	self->pointless_v = 0;
+	self->pp = 0;
 	self->primitive_n_bits = 0;
 	pointless_free(self->primitive_bits);
 	self->primitive_bits = 0;
@@ -36,8 +35,7 @@ PyObject* PyPointlessBitvector_new(PyTypeObject* type, PyObject* args, PyObject*
 
 	if (self) {
 		self->is_pointless = 0;
-		self->pointless_pp = 0;
-		self->pointless_v = 0;
+		self->pp = 0;
 		self->primitive_n_bytes_alloc = 0;
 		self->primitive_n_bits = 0;
 		self->primitive_bits = 0;
@@ -65,13 +63,12 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 	self->is_pointless = 0;
 	self->allow_print = 1;
 
-	if (self->pointless_pp) {
-		self->pointless_pp->n_bitvector_refs -= 1;
-		Py_DECREF(self->pointless_pp);
+	if (self->pp) {
+		self->pp->n_bitvector_refs -= 1;
+		Py_DECREF(self->pp);
 	}
 
-	self->pointless_pp = 0;
-	self->pointless_v = 0;
+	self->pp = 0;
 
 	pointless_free(self->primitive_bits);
 	self->primitive_n_bits = 0;
@@ -207,7 +204,7 @@ static int PyPointlessBitvectorIter_init(PyPointlessBitvector* self, PyObject* a
 uint32_t PyPointlessBitvector_n_items(PyPointlessBitvector* self)
 {
 	if (self->is_pointless)
-		return pointless_reader_bitvector_n_bits(&self->pointless_pp->p, self->pointless_v);
+		return pointless_reader_bitvector_n_bits(&self->pp->p, &self->v);
 	else
 		return self->primitive_n_bits;
 }
@@ -246,20 +243,20 @@ static int PyPointlessBitvector_check_index(PyPointlessBitvector* self, PyObject
 
 uint32_t PyPointlessBitvector_is_set(PyPointlessBitvector* self, uint32_t i)
 {
-	if (self->is_pointless)																																																																																																																																																																																																																																																																																																																																																																																																																																							
-		i = pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, i);																																								
+	if (self->is_pointless)
+		i = pointless_reader_bitvector_is_set(&self->pp->p, &self->v, i);
 	else
 		i = (bm_is_set_(self->primitive_bits, i) != 0);
 
-	return i;																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																				
+	return i;
 }
-																																																																																																																																															
+
 static int PyPointlessBitvector_ass_subscript(PyPointlessBitvector* self, PyObject* item, PyObject* value)
-{																																																																																																																														
+{
 	if (self->is_pointless) {
 		PyErr_SetString(PyExc_ValueError, "this PyPointlessBitvector is read-only");
 		return -1;
-	}																											
+	}
 
 	// get the index
 	Py_ssize_t i;
@@ -426,10 +423,10 @@ static PyObject* PyPointlessBitvector_n_zero_prefix(PyPointlessBitvector* self)
 	size_t n_zero = 0, n;
 
 	if (self->is_pointless) {
-		n = pointless_reader_bitvector_n_bits(&self->pointless_pp->p, self->pointless_v);
+		n = pointless_reader_bitvector_n_bits(&self->pp->p, &self->v);
 
 		for (; n_zero < n; n_zero++) {
-			if (pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, n_zero))
+			if (pointless_reader_bitvector_is_set(&self->pp->p, &self->v, n_zero))
 				break;
 		}
 	} else {
@@ -450,10 +447,10 @@ static PyObject* PyPointlessBitvector_n_zero_postfix(PyPointlessBitvector* self)
 	size_t n_zero = 0, n;
 
 	if (self->is_pointless) {
-		n = pointless_reader_bitvector_n_bits(&self->pointless_pp->p, self->pointless_v);
+		n = pointless_reader_bitvector_n_bits(&self->pp->p, &self->v);
 
 		for (; n_zero < n; n_zero++) {
-			if (pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, n - 1 - n_zero))
+			if (pointless_reader_bitvector_is_set(&self->pp->p, &self->v, n - 1 - n_zero))
 				break;
 		}
 	} else {
@@ -474,10 +471,10 @@ static PyObject* PyPointlessBitvector_n_one_prefix(PyPointlessBitvector* self)
 	size_t n_one = 0, n;
 
 	if (self->is_pointless) {
-		n = pointless_reader_bitvector_n_bits(&self->pointless_pp->p, self->pointless_v);
+		n = pointless_reader_bitvector_n_bits(&self->pp->p, &self->v);
 
 		for (; n_one < n; n_one++) {
-			if (!pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, n_one))
+			if (!pointless_reader_bitvector_is_set(&self->pp->p, &self->v, n_one))
 				break;
 		}
 	} else {
@@ -498,10 +495,10 @@ static PyObject* PyPointlessBitvector_n_one_postfix(PyPointlessBitvector* self)
 	size_t n_one = 0, n;
 
 	if (self->is_pointless) {
-		n = pointless_reader_bitvector_n_bits(&self->pointless_pp->p, self->pointless_v);
+		n = pointless_reader_bitvector_n_bits(&self->pp->p, &self->v);
 
 		for (; n_one < n; n_one++) {
-			if (!pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, n - n_one - 1))
+			if (!pointless_reader_bitvector_is_set(&self->pp->p, &self->v, n - n_one - 1))
 				break;
 		}
 	} else {
@@ -528,10 +525,10 @@ static PyObject* PyPointlessBitvector_is_any_set(PyPointlessBitvector* self)
 
 	void* bits = 0;
 
-	if (self->pointless_v->type == POINTLESS_BITVECTOR)
-		bits = pointless_reader_bitvector_buffer(&self->pointless_pp->p, self->pointless_v);
+	if (self->v.type == POINTLESS_BITVECTOR)
+		bits = pointless_reader_bitvector_buffer(&self->pp->p, &self->v);
 
-	if (pointless_bitvector_is_any_set(self->pointless_v->type, &self->pointless_v->data, bits)) {
+	if (pointless_bitvector_is_any_set(self->v.type, &self->v.data, bits)) {
 		Py_RETURN_TRUE;
 	} else {
 		Py_RETURN_FALSE;
@@ -583,7 +580,7 @@ static int PyPointlessBitvector_extend_by(PyPointlessBitvector* self, uint32_t n
 		if (is_true) {
 			bm_set_(self->primitive_bits, self->primitive_n_bits + i);
 			self->primitive_n_one += 1;
-		} else { 
+		} else {
 			bm_reset_(self->primitive_bits, self->primitive_n_bits + i);
 		}
 	}
@@ -684,7 +681,7 @@ static PyObject* PyPointlessBitvector_copy(PyPointlessBitvector* self)
 	size_t n_bytes = 0;
 
 	if (self->is_pointless)
-		n_bits = pointless_reader_bitvector_n_bits(&self->pointless_pp->p, self->pointless_v);
+		n_bits = pointless_reader_bitvector_n_bits(&self->pp->p, &self->v);
 	else
 		n_bits = self->primitive_n_bits;
 
@@ -697,12 +694,12 @@ static PyObject* PyPointlessBitvector_copy(PyPointlessBitvector* self)
 	}
 
 	if (self->is_pointless) {
-		if (self->pointless_v->type == POINTLESS_BITVECTOR) {
-			void* source_bits = (void*)((uint32_t*)pointless_reader_bitvector_buffer(&self->pointless_pp->p, self->pointless_v) + 1);
+		if (self->v.type == POINTLESS_BITVECTOR) {
+			void* source_bits = (void*)((uint32_t*)pointless_reader_bitvector_buffer(&self->pp->p, &self->v) + 1);
 			memcpy(bits, source_bits, n_bytes);
 		} else {
 			for (i = 0; i < n_bits; i++) {
-				if (pointless_reader_bitvector_is_set(&self->pointless_pp->p, self->pointless_v, i))
+				if (pointless_reader_bitvector_is_set(&self->pp->p, &self->v, i))
 					bm_set_(bits, i);
 			}
 		}
@@ -718,8 +715,7 @@ static PyObject* PyPointlessBitvector_copy(PyPointlessBitvector* self)
 	}
 
 	pv->is_pointless = 0;
-	pv->pointless_pp = 0;
-	pv->pointless_v = 0;
+	pv->pp = 0;
 	pv->primitive_n_bytes_alloc = n_bytes;
 	pv->primitive_n_bits = n_bits;
 	pv->primitive_bits = bits;
@@ -770,10 +766,10 @@ static long PyPointlessBitVector_hash(PyPointlessBitvector* self)
 	if (self->is_pointless) {
 		void* buffer = 0;
 
-		if (self->pointless_v->type == POINTLESS_BITVECTOR)
-			buffer = pointless_reader_bitvector_buffer(&self->pointless_pp->p, self->pointless_v);
+		if (self->v.type == POINTLESS_BITVECTOR)
+			buffer = pointless_reader_bitvector_buffer(&self->pp->p, &self->v);
 
-		return (long)pointless_bitvector_hash_64(self->pointless_v->type, &self->pointless_v->data, buffer);
+		return (long)pointless_bitvector_hash_64(self->v.type, &self->v.data, buffer);
 	}
 
 	uint32_t n_bits = self->primitive_n_bits;
@@ -916,8 +912,8 @@ PyPointlessBitvector* PyPointlessBitvector_New(PyPointless* pp, pointless_value_
 	pp->n_bitvector_refs += 1;
 
 	pv->is_pointless = 1;
-	pv->pointless_pp = pp;
-	pv->pointless_v = v;
+	pv->pp = pp;
+	pv->v = *v;
 	pv->primitive_n_bits = 0;
 	pv->primitive_bits = 0;
 
@@ -929,10 +925,10 @@ uint32_t pointless_pybitvector_hash_32(PyPointlessBitvector* bitvector)
 	if (bitvector->is_pointless) {
 		void* buffer = 0;
 
-		if (bitvector->pointless_v->type == POINTLESS_BITVECTOR)
-			buffer = pointless_reader_bitvector_buffer(&bitvector->pointless_pp->p, bitvector->pointless_v);
+		if (bitvector->v.type == POINTLESS_BITVECTOR)
+			buffer = pointless_reader_bitvector_buffer(&bitvector->pp->p, &bitvector->v);
 
-		return pointless_bitvector_hash_32(bitvector->pointless_v->type, &bitvector->pointless_v->data, buffer);
+		return pointless_bitvector_hash_32(bitvector->v.type, &bitvector->v.data, buffer);
 	}
 
 	uint32_t n_bits = bitvector->primitive_n_bits;

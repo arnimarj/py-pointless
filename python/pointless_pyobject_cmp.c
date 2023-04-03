@@ -33,53 +33,6 @@ typedef struct {
 	float ff;
 } pypointless_cmp_int_float_bool_t;
 
-static const char* _type_name(uint32_t type)
-{
-	switch (type) {
-		case POINTLESS_VECTOR_VALUE:
-		case POINTLESS_VECTOR_VALUE_HASHABLE:
-		case POINTLESS_VECTOR_I8:
-		case POINTLESS_VECTOR_U8:
-		case POINTLESS_VECTOR_I16:
-		case POINTLESS_VECTOR_U16:
-		case POINTLESS_VECTOR_I32:
-		case POINTLESS_VECTOR_U32:
-		case POINTLESS_VECTOR_I64:
-		case POINTLESS_VECTOR_U64:
-		case POINTLESS_VECTOR_FLOAT:
-		case POINTLESS_VECTOR_EMPTY:
-			return "pointless.PyPointlessVector";
-		case POINTLESS_UNICODE_:
-			return "unicode";
-		case POINTLESS_STRING_:
-			return "str";
-		case POINTLESS_BITVECTOR:
-		case POINTLESS_BITVECTOR_0:
-		case POINTLESS_BITVECTOR_1:
-		case POINTLESS_BITVECTOR_01:
-		case POINTLESS_BITVECTOR_10:
-		case POINTLESS_BITVECTOR_PACKED:
-			return "pointless.PyPointlessBitvector";
-		case POINTLESS_SET_VALUE:
-			return "pointless.PyPointlessSet";
-		case POINTLESS_MAP_VALUE_VALUE:
-			return "pointless.PyPointlessMap";
-		case POINTLESS_I32:
-		case POINTLESS_U32:
-		case POINTLESS_FLOAT:
-			return "";
-		case POINTLESS_BOOLEAN:
-			return "bool";
-		case POINTLESS_NULL:
-			return "NoneType";
-		case POINTLESS_I64:
-		case POINTLESS_U64:
-			return "";
-	}
-
-	return "";
-}
-
 static void pypointless_cmp_value_init_pointless(pypointless_cmp_value_t* cv, pointless_t* p, pointless_complete_value_t* v)
 {
 	cv->is_pointless = 1;
@@ -103,21 +56,21 @@ static void pypointless_cmp_value_init_python(pypointless_cmp_value_t* v, PyObje
 	if (PyPointlessVector_Check(py_object)) {
 		v->is_pointless = 1;
 		v->value.pointless.p = &(((PyPointlessVector*)py_object)->pp->p);
-		v->value.pointless.v = pointless_value_to_complete((((PyPointlessVector*)py_object)->v));
+		v->value.pointless.v = pointless_value_to_complete(&(((PyPointlessVector*)py_object)->v));
 		v->value.pointless.vector_slice_i = ((PyPointlessVector*)py_object)->slice_i;
 		v->value.pointless.vector_slice_n = ((PyPointlessVector*)py_object)->slice_n;
 	} else if (PyPointlessBitvector_Check(py_object) && ((PyPointlessBitvector*)py_object)->is_pointless) {
 		v->is_pointless = 1;
-		v->value.pointless.p = &(((PyPointlessBitvector*)py_object)->pointless_pp->p);
-		v->value.pointless.v = pointless_value_to_complete((((PyPointlessBitvector*)py_object)->pointless_v));
+		v->value.pointless.p = &(((PyPointlessBitvector*)py_object)->pp->p);
+		v->value.pointless.v = pointless_value_to_complete(&(((PyPointlessBitvector*)py_object)->v));
 	} else if (PyPointlessSet_Check(py_object)) {
 		v->is_pointless = 1;
 		v->value.pointless.p = &(((PyPointlessSet*)py_object)->pp->p);
-		v->value.pointless.v = pointless_value_to_complete((((PyPointlessSet*)py_object)->v));
+		v->value.pointless.v = pointless_value_to_complete(&(((PyPointlessSet*)py_object)->v));
 	} else if (PyPointlessMap_Check(py_object)) {
 		v->is_pointless = 1;
 		v->value.pointless.p = &(((PyPointlessMap*)py_object)->pp->p);
-		v->value.pointless.v = pointless_value_to_complete((((PyPointlessMap*)py_object)->v));
+		v->value.pointless.v = pointless_value_to_complete(&(((PyPointlessMap*)py_object)->v));
 	} else {
 		v->is_pointless = 0;
 		v->value.py_object = py_object;
@@ -540,7 +493,7 @@ static uint32_t pypointless_cmp_bitvector_n_items(pypointless_cmp_value_t* v)
 	PyPointlessBitvector* bv = (PyPointlessBitvector*)v->value.py_object;
 
 	if (bv->is_pointless)
-		return pointless_reader_bitvector_n_bits(&bv->pointless_pp->p, bv->pointless_v);
+		return pointless_reader_bitvector_n_bits(&bv->pp->p, &bv->v);
 
 	return bv->primitive_n_bits;
 }
@@ -557,7 +510,7 @@ static uint32_t pypointless_cmp_bitvector_item_at(pypointless_cmp_value_t* v, ui
 	PyPointlessBitvector* bv = (PyPointlessBitvector*)v->value.py_object;
 
 	if (bv->is_pointless)
-		return pointless_reader_bitvector_is_set(&bv->pointless_pp->p, bv->pointless_v, i);
+		return pointless_reader_bitvector_is_set(&bv->pp->p, &bv->v, i);
 
 	return (bm_is_set_(bv->primitive_bits, i) != 0);
 }
