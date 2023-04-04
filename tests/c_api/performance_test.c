@@ -73,7 +73,7 @@ void query_1M_set(pointless_t* p)
 
 		if (kk == 0) {
 			fprintf(stderr, "query_1M_set(): set does not contain the expected value\n");
-			exit(EXIT_FAILURE);	
+			exit(EXIT_FAILURE);
 		}
 	}
 }

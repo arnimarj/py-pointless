@@ -75,7 +75,7 @@ class TestSetMap(unittest.TestCase):
 				1: 2,
 				2: 3,
 				4: 4,
-				'asdf': 123, 
+				'asdf': 123,
 				(1,2): [4,5,'hello world']
 			}
 		]
@@ -150,7 +150,7 @@ class TestSetMap(unittest.TestCase):
 				pointless.serialize(ii, fname_c)
 				root_c = pointless.Pointless(fname_c).GetRoot()
 
-				# element <- A, C <- A, B <- A, 
+				# element <- A, C <- A, B <- A,
 				self.assert_(ii in root_a)
 				self.assert_(root_c in root_a)
 				self.assert_(root_b in root_a)

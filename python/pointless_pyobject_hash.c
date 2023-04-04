@@ -217,18 +217,18 @@ static uint32_t pyobject_hash_rec_32(PyObject* py_object, pyobject_hash_state_t*
 
 	// pointless types
 	pointless_t* p = 0;
-	pointless_value_t* v = 0;
+	pointless_value_t v;
 
 	if (PyPointlessVector_Check(py_object)) {
 		p = &((PyPointlessVector*)py_object)->pp->p;
 		v = ((PyPointlessVector*)py_object)->v;
 
-		if (!pointless_is_hashable(v->type)) {
+		if (!pointless_is_hashable(v.type)) {
 			*state->error = "pointless type is not hashable";
 			return 0;
 		}
 
-		return pointless_hash_reader_vector_32(p, v, ((PyPointlessVector*)py_object)->slice_i, ((PyPointlessVector*)py_object)->slice_n);
+		return pointless_hash_reader_vector_32(p, &v, ((PyPointlessVector*)py_object)->slice_i, ((PyPointlessVector*)py_object)->slice_n);
 	}
 
 	if (PyPointlessBitvector_Check(py_object))
@@ -238,12 +238,12 @@ static uint32_t pyobject_hash_rec_32(PyObject* py_object, pyobject_hash_state_t*
 		p = &((PyPointlessSet*)py_object)->pp->p;
 		v = ((PyPointlessSet*)py_object)->v;
 
-		if (!pointless_is_hashable(v->type)) {
+		if (!pointless_is_hashable(v.type)) {
 			*state->error = "pointless type is not hashable";
 			return 0;
 		}
 
-		return pointless_hash_reader_32(p, v);
+		return pointless_hash_reader_32(p, &v);
 	}
 
 	// prim-vector

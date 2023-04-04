@@ -450,14 +450,14 @@ PyObject* PyPointless_str(PyObject* py_object)
 
 	// the pointless handle and pointless value
 	PyPointless* pp = 0;
-	pointless_value_t* v = 0;
+	pointless_value_t v;
 	uint32_t vector_slice_i = 0;
 	uint32_t vector_slice_n = 0;
 
 	if (PyPointlessBitvector_Check(py_object)) {
 		PyPointlessBitvector* b = (PyPointlessBitvector*)py_object;
-		pp = b->pointless_pp;
-		v = b->pointless_v;
+		pp = b->pp;
+		v = b->v;
 	} else if (PyPointlessVector_Check(py_object)) {
 		PyPointlessVector* vector = (PyPointlessVector*)py_object;
 		pp = vector->pp;
@@ -483,7 +483,7 @@ PyObject* PyPointless_str(PyObject* py_object)
 		return PyUnicode_FromFormat("<%s object at %p>", Py_TYPE(py_object)->tp_name, (void*)py_object);
 	}
 
-	pointless_complete_value_t _v = pointless_value_to_complete(v);
+	pointless_complete_value_t _v = pointless_value_to_complete(&v);
 	int i = _pypointless_str_rec(&pp->p, &_v, &state, vector_slice_i, vector_slice_n, 0);
 	PyObject* s = 0;
 

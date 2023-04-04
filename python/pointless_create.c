@@ -144,10 +144,10 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		PyPointlessVector* v = (PyPointlessVector*)py_object;
 		const char* error = 0;
 
-		switch(v->v->type) {
+		switch(v->v.type) {
 			case POINTLESS_VECTOR_VALUE:
 			case POINTLESS_VECTOR_VALUE_HASHABLE:
-				handle = pointless_recreate_value(&v->pp->p, v->v, &state->c, &error);
+				handle = pointless_recreate_value(&v->pp->p, &v->v, &state->c, &error);
 
 				if (handle == POINTLESS_CREATE_VALUE_FAIL) {
 					state->is_error = 1;
@@ -158,31 +158,31 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 
 				break;
 			case POINTLESS_VECTOR_I8:
-				handle = pointless_create_vector_i8_owner(&state->c, pointless_reader_vector_i8(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				handle = pointless_create_vector_i8_owner(&state->c, pointless_reader_vector_i8(&v->pp->p, &v->v) + v->slice_i, v->slice_n);
 				break;
 			case POINTLESS_VECTOR_U8:
-				handle = pointless_create_vector_u8_owner(&state->c, pointless_reader_vector_u8(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				handle = pointless_create_vector_u8_owner(&state->c, pointless_reader_vector_u8(&v->pp->p, &v->v) + v->slice_i, v->slice_n);
 				break;
 			case POINTLESS_VECTOR_I16:
-				handle = pointless_create_vector_i16_owner(&state->c, pointless_reader_vector_i16(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				handle = pointless_create_vector_i16_owner(&state->c, pointless_reader_vector_i16(&v->pp->p, &v->v) + v->slice_i, v->slice_n);
 				break;
 			case POINTLESS_VECTOR_U16:
-				handle = pointless_create_vector_u16_owner(&state->c, pointless_reader_vector_u16(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				handle = pointless_create_vector_u16_owner(&state->c, pointless_reader_vector_u16(&v->pp->p, &v->v) + v->slice_i, v->slice_n);
 				break;
 			case POINTLESS_VECTOR_I32:
-				handle = pointless_create_vector_i32_owner(&state->c, pointless_reader_vector_i32(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				handle = pointless_create_vector_i32_owner(&state->c, pointless_reader_vector_i32(&v->pp->p, &v->v) + v->slice_i, v->slice_n);
 				break;
 			case POINTLESS_VECTOR_U32:
-				handle = pointless_create_vector_u32_owner(&state->c, pointless_reader_vector_u32(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				handle = pointless_create_vector_u32_owner(&state->c, pointless_reader_vector_u32(&v->pp->p, &v->v) + v->slice_i, v->slice_n);
 				break;
 			case POINTLESS_VECTOR_I64:
-				handle = pointless_create_vector_i64_owner(&state->c, pointless_reader_vector_i64(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				handle = pointless_create_vector_i64_owner(&state->c, pointless_reader_vector_i64(&v->pp->p, &v->v) + v->slice_i, v->slice_n);
 				break;
 			case POINTLESS_VECTOR_U64:
-				handle = pointless_create_vector_u64_owner(&state->c, pointless_reader_vector_u64(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				handle = pointless_create_vector_u64_owner(&state->c, pointless_reader_vector_u64(&v->pp->p, &v->v) + v->slice_i, v->slice_n);
 				break;
 			case POINTLESS_VECTOR_FLOAT:
-				handle = pointless_create_vector_float_owner(&state->c, pointless_reader_vector_float(&v->pp->p, v->v) + v->slice_i, v->slice_n);
+				handle = pointless_create_vector_float_owner(&state->c, pointless_reader_vector_float(&v->pp->p, &v->v) + v->slice_i, v->slice_n);
 				break;
 			case POINTLESS_VECTOR_EMPTY:
 				handle = pointless_create_vector_value(&state->c);
@@ -415,7 +415,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		PyPointlessBitvector* bitvector = (PyPointlessBitvector*)py_object;
 
 		if (bitvector->is_pointless) {
-			uint32_t i, n_bits = pointless_reader_bitvector_n_bits(&bitvector->pointless_pp->p, bitvector->pointless_v);
+			uint32_t i, n_bits = pointless_reader_bitvector_n_bits(&bitvector->pp->p, &bitvector->v);
 			void* bits = pointless_calloc(ICEIL(n_bits, 8), 1);
 
 			if (bits == 0) {
@@ -423,7 +423,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			}
 
 			for (i = 0; i < n_bits; i++) {
-				if (pointless_reader_bitvector_is_set(&bitvector->pointless_pp->p, bitvector->pointless_v, i))
+				if (pointless_reader_bitvector_is_set(&bitvector->pp->p, &bitvector->v, i))
 					bm_set_(bits, i);
 			}
 
@@ -450,7 +450,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 	} else if (PyPointlessSet_Check(py_object)) {
 		PyPointlessSet* set = (PyPointlessSet*)py_object;
 		const char* error = 0;
-		handle = pointless_recreate_value(&set->pp->p, set->v, &state->c, &error);
+		handle = pointless_recreate_value(&set->pp->p, &set->v, &state->c, &error);
 
 		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
 			state->is_error = 1;
@@ -466,7 +466,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 	} else if (PyPointlessMap_Check(py_object)) {
 		PyPointlessMap* map = (PyPointlessMap*)py_object;
 		const char* error = 0;
-		handle = pointless_recreate_value(&map->pp->p, map->v, &state->c, &error);
+		handle = pointless_recreate_value(&map->pp->p, &map->v, &state->c, &error);
 
 		if (handle == POINTLESS_CREATE_VALUE_FAIL) {
 			state->is_error = 1;

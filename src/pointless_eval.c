@@ -96,7 +96,7 @@ static const char* pointless_eval_get_single(pointless_t* p, pointless_value_t* 
 			break;
 		// placeholder value
 		case '%':
-			// %u64, %u32, %i64, %i32, 
+			// %u64, %u32, %i64, %i32,
 			e += 1;
 			if (*e == 'u') {
 				is_unsigned = 1;

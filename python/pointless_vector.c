@@ -3,8 +3,6 @@
 
 static void PyPointlessVector_dealloc(PyPointlessVector* self)
 {
-	PyTypeObject* tp = Py_TYPE(self);
-
 	if (self->pp) {
 		self->pp->n_vector_refs -= 1;
 		Py_DECREF(self->pp);
@@ -32,7 +30,6 @@ static PyObject* PyPointlessVector_new(PyTypeObject* type, PyObject* args, PyObj
 
 	if (self) {
 		self->pp = 0;
-		self->v = 0;
 		self->container_id = 0;
 		self->is_hashable = 0;
 		self->slice_i = 0;
@@ -104,28 +101,28 @@ static PyObject* PyPointlessVector_subscript_priv(PyPointlessVector* self, uint3
 {
 	i += self->slice_i;
 
-	switch (self->v->type) {
+	switch (self->v.type) {
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
-			return pypointless_value(self->pp, pointless_reader_vector_value(&self->pp->p, self->v) + i);
+			return pypointless_value(self->pp, pointless_reader_vector_value(&self->pp->p, &self->v) + i);
 		case POINTLESS_VECTOR_I8:
-			return pypointless_i32(self->pp, (int32_t)pointless_reader_vector_i8(&self->pp->p, self->v)[i]);
+			return pypointless_i32(self->pp, (int32_t)pointless_reader_vector_i8(&self->pp->p, &self->v)[i]);
 		case POINTLESS_VECTOR_U8:
-			return pypointless_u32(self->pp, (uint32_t)pointless_reader_vector_u8(&self->pp->p, self->v)[i]);
+			return pypointless_u32(self->pp, (uint32_t)pointless_reader_vector_u8(&self->pp->p, &self->v)[i]);
 		case POINTLESS_VECTOR_I16:
-			return pypointless_i32(self->pp, (int32_t)pointless_reader_vector_i16(&self->pp->p, self->v)[i]);
+			return pypointless_i32(self->pp, (int32_t)pointless_reader_vector_i16(&self->pp->p, &self->v)[i]);
 		case POINTLESS_VECTOR_U16:
-			return pypointless_u32(self->pp, (uint32_t)pointless_reader_vector_u16(&self->pp->p, self->v)[i]);
+			return pypointless_u32(self->pp, (uint32_t)pointless_reader_vector_u16(&self->pp->p, &self->v)[i]);
 		case POINTLESS_VECTOR_I32:
-			return pypointless_i32(self->pp, pointless_reader_vector_i32(&self->pp->p, self->v)[i]);
+			return pypointless_i32(self->pp, pointless_reader_vector_i32(&self->pp->p, &self->v)[i]);
 		case POINTLESS_VECTOR_U32:
-			return pypointless_u32(self->pp, pointless_reader_vector_u32(&self->pp->p, self->v)[i]);
+			return pypointless_u32(self->pp, pointless_reader_vector_u32(&self->pp->p, &self->v)[i]);
 		case POINTLESS_VECTOR_I64:
-			return pypointless_i64(self->pp, pointless_reader_vector_i64(&self->pp->p, self->v)[i]);
+			return pypointless_i64(self->pp, pointless_reader_vector_i64(&self->pp->p, &self->v)[i]);
 		case POINTLESS_VECTOR_U64:
-			return pypointless_u64(self->pp, pointless_reader_vector_u64(&self->pp->p, self->v)[i]);
+			return pypointless_u64(self->pp, pointless_reader_vector_u64(&self->pp->p, &self->v)[i]);
 		case POINTLESS_VECTOR_FLOAT:
-			return pypointless_float(self->pp, pointless_reader_vector_float(&self->pp->p, self->v)[i]);
+			return pypointless_float(self->pp, pointless_reader_vector_float(&self->pp->p, &self->v)[i]);
 	}
 
 	PyErr_Format(PyExc_TypeError, "strange array type");
@@ -176,7 +173,7 @@ static int PyPointlessVector_contains(PyPointlessVector* self, PyObject* b)
 	const char* error = 0;
 
 	for (i = 0; i < self->slice_n; i++) {
-		v = pointless_reader_vector_value_case(&self->pp->p, self->v, i + self->slice_i);
+		v = pointless_reader_vector_value_case(&self->pp->p, &self->v, i + self->slice_i);
 		c = pypointless_cmp_eq(&self->pp->p, &v, b, &error);
 
 		if (error) {
@@ -209,7 +206,7 @@ static PyObject* PyPointlessVector_slice(PyPointlessVector* self, Py_ssize_t ilo
 	uint32_t slice_i = self->slice_i + (uint32_t)ilow;
 	uint32_t slice_n = (uint32_t)(ihigh - ilow);
 
-	return (PyObject*)PyPointlessVector_New(self->pp, self->v, slice_i, slice_n);
+	return (PyObject*)PyPointlessVector_New(self->pp, &self->v, slice_i, slice_n);
 }
 
 static PyObject* PyPointlessVector_iter(PyObject* vector)
@@ -385,7 +382,7 @@ static PyObject* PyPointlessVector_get_typecode(PyPointlessVector* a, void* clos
 	const char* s = 0;
 	const char* e = 0;
 
-	switch (a->v->type) {
+	switch (a->v.type) {
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
 			e = "this is a value-based vector";
@@ -442,7 +439,7 @@ static size_t pointless_vector_item_size(PyPointlessVector* self)
 {
 	size_t n_bytes = 0;
 
-	switch (self->v->type) {
+	switch (self->v.type) {
 		// no support for value vector
 		case POINTLESS_VECTOR_EMPTY: n_bytes = 0;                 break;
 		case POINTLESS_VECTOR_I8:    n_bytes = sizeof(int8_t);    break;
@@ -467,21 +464,21 @@ static size_t pointless_vector_n_bytes(PyPointlessVector* self)
 
 static void* pointless_prim_vector_base_ptr(PyPointlessVector* self)
 {
-	switch (self->v->type) {
+	switch (self->v.type) {
 		case POINTLESS_VECTOR_VALUE:
 		case POINTLESS_VECTOR_VALUE_HASHABLE:
 			assert(0);
 			return 0;
 		case POINTLESS_VECTOR_EMPTY: return 0;
-		case POINTLESS_VECTOR_I8:    return (void*)(pointless_reader_vector_i8(&self->pp->p, self->v) + self->slice_i);
-		case POINTLESS_VECTOR_U8:    return (void*)(pointless_reader_vector_u8(&self->pp->p, self->v) + self->slice_i);
-		case POINTLESS_VECTOR_I16:   return (void*)(pointless_reader_vector_i16(&self->pp->p, self->v) + self->slice_i);
-		case POINTLESS_VECTOR_U16:   return (void*)(pointless_reader_vector_u16(&self->pp->p, self->v) + self->slice_i);
-		case POINTLESS_VECTOR_I32:   return (void*)(pointless_reader_vector_i32(&self->pp->p, self->v) + self->slice_i);
-		case POINTLESS_VECTOR_U32:   return (void*)(pointless_reader_vector_u32(&self->pp->p, self->v) + self->slice_i);
-		case POINTLESS_VECTOR_I64:   return (void*)(pointless_reader_vector_i64(&self->pp->p, self->v) + self->slice_i);
-		case POINTLESS_VECTOR_U64:   return (void*)(pointless_reader_vector_u64(&self->pp->p, self->v) + self->slice_i);
-		case POINTLESS_VECTOR_FLOAT: return (void*)(pointless_reader_vector_float(&self->pp->p, self->v) + self->slice_i);
+		case POINTLESS_VECTOR_I8:    return (void*)(pointless_reader_vector_i8(&self->pp->p, &self->v) + self->slice_i);
+		case POINTLESS_VECTOR_U8:    return (void*)(pointless_reader_vector_u8(&self->pp->p, &self->v) + self->slice_i);
+		case POINTLESS_VECTOR_I16:   return (void*)(pointless_reader_vector_i16(&self->pp->p, &self->v) + self->slice_i);
+		case POINTLESS_VECTOR_U16:   return (void*)(pointless_reader_vector_u16(&self->pp->p, &self->v) + self->slice_i);
+		case POINTLESS_VECTOR_I32:   return (void*)(pointless_reader_vector_i32(&self->pp->p, &self->v) + self->slice_i);
+		case POINTLESS_VECTOR_U32:   return (void*)(pointless_reader_vector_u32(&self->pp->p, &self->v) + self->slice_i);
+		case POINTLESS_VECTOR_I64:   return (void*)(pointless_reader_vector_i64(&self->pp->p, &self->v) + self->slice_i);
+		case POINTLESS_VECTOR_U64:   return (void*)(pointless_reader_vector_u64(&self->pp->p, &self->v) + self->slice_i);
+		case POINTLESS_VECTOR_FLOAT: return (void*)(pointless_reader_vector_float(&self->pp->p, &self->v) + self->slice_i);
 	}
 
 	assert(0);
@@ -526,7 +523,7 @@ static PyObject* PyPointlessVector_sizeof(PyPointlessVector* self)
 
 static PyObject* PyPointlessVector_max(PyPointlessVector* self)
 {
-	if (!pointless_is_prim_vector(self->v)) {
+	if (!pointless_is_prim_vector(&self->v)) {
 		PyErr_SetString(PyExc_ValueError, "only primitive vectors support this operation");
 		return 0;
 	}
@@ -539,7 +536,7 @@ static PyObject* PyPointlessVector_max(PyPointlessVector* self)
 		return 0;
 	}
 
-	switch (self->v->type) {
+	switch (self->v.type) {
 		case POINTLESS_VECTOR_I8:
 			POINTLESS_VECTOR_MAX_LOOP(int8_t, base_ptr, n_items);
 			break;
@@ -577,7 +574,7 @@ static PyObject* PyPointlessVector_max(PyPointlessVector* self)
 
 static PyObject* PyPointlessVector_min(PyPointlessVector* self)
 {
-	if (!pointless_is_prim_vector(self->v)) {
+	if (!pointless_is_prim_vector(&self->v)) {
 		PyErr_SetString(PyExc_ValueError, "only primitive vectors support this operation");
 		return 0;
 	}
@@ -590,7 +587,7 @@ static PyObject* PyPointlessVector_min(PyPointlessVector* self)
 		return 0;
 	}
 
-	switch (self->v->type) {
+	switch (self->v.type) {
 		case POINTLESS_VECTOR_I8:
 			POINTLESS_VECTOR_MIN_LOOP(int8_t, base_ptr, n_items);
 			break;
@@ -677,7 +674,7 @@ static PyObject* PyPointlessVector_bisect_left(PyPointlessVector* self, PyObject
 		return 0;
 	}
 
-	if (self->v->type != POINTLESS_VECTOR_U64) {
+	if (self->v.type != POINTLESS_VECTOR_U64) {
 		PyErr_Format(PyExc_ValueError, "vector must be u64");
 		return 0;
 	}
@@ -685,7 +682,7 @@ static PyObject* PyPointlessVector_bisect_left(PyPointlessVector* self, PyObject
 	uint64_t* a = pointless_prim_vector_base_ptr(self);
 	int64_t i, j, mid;
 
-	i = 0, j = self->slice_n; 
+	i = 0, j = self->slice_n;
 
 	while (i < j) {
 		mid = (i + j) / 2;
@@ -749,12 +746,12 @@ PyTypeObject PyPointlessVectorIterType = {
 	.tp_name = "pointless.PyPointlessVectorIter",
 	.tp_basicsize = sizeof(PyPointlessVectorIter),
 	.tp_itemsize = 0,
-	.tp_dealloc = (destructor)PyPointlessVectorIter_dealloc, 
+	.tp_dealloc = (destructor)PyPointlessVectorIter_dealloc,
 	.tp_getattro = PyObject_GenericGetAttr,
 	.tp_flags = Py_TPFLAGS_DEFAULT,
-	.tp_iter = PyObject_SelfIter, 
-	.tp_iternext = (iternextfunc)PyPointlessVectorIter_iternext, 
-	.tp_new = PyPointlessVectorIter_new, 
+	.tp_iter = PyObject_SelfIter,
+	.tp_iternext = (iternextfunc)PyPointlessVectorIter_iternext,
+	.tp_new = PyPointlessVectorIter_new,
 	.tp_alloc = PyType_GenericAlloc,
 	.tp_free = PyObject_Del,
 };
@@ -824,7 +821,7 @@ PyPointlessVector* PyPointlessVector_New(
 	pp->n_vector_refs += 1;
 
 	pv->pp = pp;
-	pv->v = v;
+	pv->v = *v;
 
 	// the container ID is unique between all non-empty vectors, maps and sets
 	pv->container_id = (unsigned long)pointless_container_id(&pp->p, v);

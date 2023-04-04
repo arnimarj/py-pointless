@@ -31,7 +31,7 @@ typedef struct {
 typedef struct {
 	PyObject_HEAD
 	PyPointless* pp;
-	pointless_value_t* v;
+	pointless_value_t v;
 	unsigned long container_id;
 	int is_hashable;
 
@@ -58,8 +58,8 @@ typedef struct {
 	int allow_print;
 
 	// pointless stuff
-	PyPointless* pointless_pp;
-	pointless_value_t* pointless_v;
+	PyPointless* pp;
+	pointless_value_t v;
 
 	// other stuff
 	uint32_t primitive_n_bits;
@@ -77,7 +77,7 @@ typedef struct {
 typedef struct {
 	PyObject_HEAD
 	PyPointless* pp;
-	pointless_value_t* v;
+	pointless_value_t v;
 	unsigned long container_id;
 } PyPointlessSet;
 
@@ -90,7 +90,7 @@ typedef struct {
 typedef struct {
 	PyObject_HEAD
 	PyPointless* pp;
-	pointless_value_t* v;
+	pointless_value_t v;
 	unsigned long container_id;
 } PyPointlessMap;
 
@@ -193,8 +193,8 @@ extern PyTypeObject PyPointlessPrimVectorRevIterType;
 PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t* v, uint32_t t);
 PyPointlessPrimVector* PyPointlessPrimVector_from_buffer(void* buffer, size_t n_buffer);
 
-#define POINTLESS_API_MAGIC "pointless.pointless_CAPI 1.01"
-#define POINTLESS_MAGIC_CONTEXT 0x1ABEEFFF
+#define POINTLESS_API_MAGIC "pointless.pointless_CAPI 1.02"
+#define POINTLESS_MAGIC_CONTEXT 0x1ACEEFFF
 
 struct PyPointless_CAPI {
 	// version info
@@ -261,7 +261,7 @@ static struct PyPointless_CAPI* PyPointless_IMPORT_CAPI(void)
 
 		if (context != (void*)POINTLESS_MAGIC_CONTEXT) {
 			Py_DECREF(c);
-			PyErr_Format(PyExc_ImportError, "invalid capsule context, was %ld, expected %ld", (long)context, (long)POINTLESS_MAGIC_CONTEXT);
+			PyErr_Format(PyExc_ImportError, "invalid capsule context, was %x, expected %x", (int)context, (int)POINTLESS_MAGIC_CONTEXT);
 			return 0;
 		}
 
