@@ -10,7 +10,7 @@ test-command = [
 ]
 
 # temporarily dropping pypy until we can figure out the string unit-test failure
-build = [ "cp37-*", "cp38-*", "cp39-*", "cp310-*", "cp311-*" ]
+build = [ "cp38-*", "cp39-*", "cp310-*", "cp311-*" , "cp312-*" ]
 # build = [ "pp*" ]
 archs = [ "auto64"]
 build-verbosity = 1
@@ -47,11 +47,11 @@ classifiers = [
     "Programming Language :: C",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Database",
     "Topic :: Software Development :: Libraries"
 ]

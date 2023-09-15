@@ -103,9 +103,6 @@ static uint32_t pyobject_hash_unicode_32(PyObject* py_object, pyobject_hash_stat
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
 			switch (PyUnicode_KIND(py_object)) {
-				case PyUnicode_WCHAR_KIND:
-					hash = pointless_hash_unicode_ucs4_v1_32((uint32_t*)PyUnicode_AS_UNICODE(py_object));
-					break;
 				case PyUnicode_1BYTE_KIND:
 					hash = pointless_hash_string_v1_32((uint8_t*)PyUnicode_1BYTE_DATA(py_object));
 					break;
@@ -115,6 +112,7 @@ static uint32_t pyobject_hash_unicode_32(PyObject* py_object, pyobject_hash_stat
 				case PyUnicode_4BYTE_KIND:
 					hash = pointless_hash_unicode_ucs4_v1_32((uint32_t*)PyUnicode_4BYTE_DATA(py_object));
 					break;
+				// will happen for PyUnicode_WCHAR_KIND on python versions < 3.12
 				default:
 					state->error = "hash statement fallthrough";
 					break;
@@ -124,9 +122,6 @@ static uint32_t pyobject_hash_unicode_32(PyObject* py_object, pyobject_hash_stat
 		case POINTLESS_FF_VERSION_OFFSET_32_NEWHASH:
 		case POINTLESS_FF_VERSION_OFFSET_64_NEWHASH:
 			switch (PyUnicode_KIND(py_object)) {
-				case PyUnicode_WCHAR_KIND:
-					hash = pointless_hash_unicode_ucs2_v1_32((uint16_t*)PyUnicode_AS_UNICODE(py_object));
-					break;
 				case PyUnicode_1BYTE_KIND:
 					hash = pointless_hash_string_v1_32((uint8_t*)PyUnicode_1BYTE_DATA(py_object));
 					break;
@@ -136,6 +131,7 @@ static uint32_t pyobject_hash_unicode_32(PyObject* py_object, pyobject_hash_stat
 				case PyUnicode_4BYTE_KIND:
 					hash = pointless_hash_unicode_ucs4_v1_32((uint32_t*)PyUnicode_4BYTE_DATA(py_object));
 					break;
+				// will happen for PyUnicode_WCHAR_KIND on python versions < 3.12
 				default:
 					state->error = "hash statement fallthrough";
 					break;
