@@ -161,10 +161,6 @@ static int _pypointless_value_repr(pointless_t* p, PyObject* u_value, _pypointle
 	int i = 0;
 
 	switch (PyUnicode_KIND(s_value)) {
-		case PyUnicode_WCHAR_KIND:
-			PyErr_SetString(PyExc_ValueError, "wchar unicode unsupported");
-			i = 0;
-			break;
 		case PyUnicode_1BYTE_KIND:
 			i = _pypointless_print_append_ucs1_(state, (uint8_t*)data, len);
 			break;
@@ -174,9 +170,9 @@ static int _pypointless_value_repr(pointless_t* p, PyObject* u_value, _pypointle
 		case PyUnicode_4BYTE_KIND:
 			i = _pypointless_print_append_ucs4_(state, (uint32_t*)data, len);
 			break;
+		// will happen for PyUnicode_WCHAR_KIND on python versions < 3.12
 		default:
-			assert(0);
-			PyErr_SetString(PyExc_ValueError, "strange unicode");
+			PyErr_SetString(PyExc_ValueError, "wchar unicode unsupported");
 			i = 0;
 			break;
 	}
