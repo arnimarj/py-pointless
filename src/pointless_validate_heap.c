@@ -125,11 +125,6 @@ static int32_t pointless_validate_unicode_heap(pointless_validate_context_t* con
 		return 0;
 	}
 
-	if (context->force_ucs2 && !pointless_is_ucs4_ucs2(s)) {
-		*error = "there are strings which don't fit in 16-bits";
-		return 0;
-	}
-
 	return 1;
 }
 
