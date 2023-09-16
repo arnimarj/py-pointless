@@ -24,7 +24,6 @@ size_t pointless_ucs4_len(uint32_t* s);
 size_t pointless_ucs2_len(uint16_t* s);
 size_t pointless_ascii_len(uint8_t* s);
 size_t pointless_ucs1_len(uint8_t* s);
-size_t pointless_wchar_len(wchar_t* s);
 
 // strcpy()
 void pointless_ucs4_cpy(uint32_t* dst, const uint32_t* src);

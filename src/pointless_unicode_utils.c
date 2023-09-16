@@ -17,8 +17,6 @@ size_t pointless_ascii_len(uint8_t* s)
 	{ POINTLESS_STRING_LEN(s); }
 size_t pointless_ucs1_len(uint8_t* s)
 	{ POINTLESS_STRING_LEN(s); }
-size_t pointless_wchar_len(wchar_t* s)
-	{ POINTLESS_STRING_LEN(s); }
 
 void pointless_ucs4_cpy(uint32_t* dst, const uint32_t* src)
 	{ POINTLESS_STRING_CPY(dst, src); }
