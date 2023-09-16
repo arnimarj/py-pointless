@@ -207,23 +207,6 @@ uint32_t* pointless_reader_unicode_value_ucs4(pointless_t* p, pointless_value_t*
 	return pointless_reader_unicode_value(p, v);
 }
 
-#ifdef POINTLESS_WCHAR_T_IS_4_BYTES
-wchar_t* pointless_reader_unicode_value_wchar(pointless_t* p, pointless_value_t* v)
-{
-	return (wchar_t*)pointless_reader_unicode_value_ucs4(p, v);
-}
-#endif
-
-uint16_t* pointless_reader_unicode_value_ucs2_alloc(pointless_t* p, pointless_value_t* v, const char** error)
-{
-	uint16_t* s = pointless_ucs4_to_ucs2(pointless_reader_unicode_value_ucs4(p, v));
-
-	if (s == 0)
-		*error = "out of memory";
-
-	return s;
-}
-
 uint32_t pointless_reader_string_len(pointless_t* p, pointless_value_t* v)
 {
 	assert(v->data.data_u32 < p->header->n_string_unicode);

@@ -5,7 +5,7 @@ static void print_map(const char* fname)
 	pointless_t p;
 	const char* error = 0;
 
-	if (!pointless_open_f(&p, fname, 0, &error)) {
+	if (!pointless_open_f(&p, fname, &error)) {
 		fprintf(stderr, "pointless_open_f() failure: %s\n", error);
 		exit(EXIT_FAILURE);
 	}
@@ -25,7 +25,7 @@ static void measure_load_time(const char* fname)
 
 	clock_t t_0 = clock();
 
-	if (!pointless_open_f(&p, fname, 0, &error)) {
+	if (!pointless_open_f(&p, fname, &error)) {
 		fprintf(stderr, "pointless_open_f() failure: %s\n", error);
 		exit(EXIT_FAILURE);
 	}

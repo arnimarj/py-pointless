@@ -15,11 +15,6 @@ static int32_t pointless_cmp_create_rec_priv(pointless_create_t* c, pointless_co
 	if (n_ == (n_b))           return 1;       \
 	return SIMPLE_CMP(*(a), *(b));
 
-#ifdef POINTLESS_WCHAR_T_IS_4_BYTES
-int32_t pointless_cmp_wchar_wchar(wchar_t* a, wchar_t* b)
-	{ POINTLESS_CMP_STRING(a, b); }
-#endif
-
 int32_t pointless_cmp_string_8_8(uint8_t* a, uint8_t* b)
 	{ POINTLESS_CMP_STRING(a, b); }
 int32_t pointless_cmp_string_8_16(uint8_t* a, uint16_t* b)
