@@ -1,6 +1,6 @@
 #include <pointless/pointless_reader.h>
 
-static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_ucs2, int do_validate, const char** error)
+static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int do_validate, const char** error)
 {
 	// our header
 	if (buflen < sizeof(pointless_header_t)) {
@@ -53,7 +53,6 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 	// let us validate the damn thing
 	pointless_validate_context_t context;
 	context.p = p;
-	context.force_ucs2 = force_ucs2;
 
 	if (do_validate)
 		return pointless_validate(&context, error);
@@ -61,7 +60,7 @@ static int pointless_init(pointless_t* p, void* buf, uint64_t buflen, int force_
 		return 1;
 }
 
-static int _pointless_open_f(pointless_t* p, const char* fname, int force_ucs2, int do_validate, const char** error)
+static int _pointless_open_f(pointless_t* p, const char* fname, int do_validate, const char** error)
 {
 	p->fd = 0;
 	p->fd_len = 0;
@@ -120,7 +119,7 @@ static int _pointless_open_f(pointless_t* p, const char* fname, int force_ucs2, 
 		return 0;
 	}
 
-	if (!pointless_init(p, p->fd_ptr, p->fd_len, force_ucs2, do_validate, error)) {
+	if (!pointless_init(p, p->fd_ptr, p->fd_len, do_validate, error)) {
 		pointless_close(p);
 		return 0;
 	}
@@ -128,14 +127,14 @@ static int _pointless_open_f(pointless_t* p, const char* fname, int force_ucs2, 
 	return 1;
 }
 
-int pointless_open_f(pointless_t* p, const char* fname, int force_ucs2, const char** error)
+int pointless_open_f(pointless_t* p, const char* fname, const char** error)
 {
-	return _pointless_open_f(p, fname, force_ucs2, 1, error);
+	return _pointless_open_f(p, fname, 1, error);
 }
 
-int pointless_open_f_skip_validate(pointless_t* p, const char* fname, int force_ucs2, const char** error)
+int pointless_open_f_skip_validate(pointless_t* p, const char* fname, const char** error)
 {
-	return _pointless_open_f(p, fname, force_ucs2, 0, error);
+	return _pointless_open_f(p, fname, 0, error);
 }
 
 void pointless_close(pointless_t* p)
@@ -149,7 +148,7 @@ void pointless_close(pointless_t* p)
 	pointless_free(p->buf);
 }
 
-static int _pointless_open_b(pointless_t* p, const void* buffer, size_t n_buffer, int force_ucs2, int do_validate, const char** error)
+static int _pointless_open_b(pointless_t* p, const void* buffer, size_t n_buffer, int do_validate, const char** error)
 {
 	p->fd = 0;
 	p->fd_len = 0;
@@ -165,7 +164,7 @@ static int _pointless_open_b(pointless_t* p, const void* buffer, size_t n_buffer
 
 	memcpy(p->buf, buffer, n_buffer);
 
-	if (!pointless_init(p, p->buf, p->buflen, force_ucs2, do_validate, error)) {
+	if (!pointless_init(p, p->buf, p->buflen, do_validate, error)) {
 		pointless_close(p);
 		return 0;
 	}
@@ -173,14 +172,14 @@ static int _pointless_open_b(pointless_t* p, const void* buffer, size_t n_buffer
 	return 1;
 }
 
-int pointless_open_b(pointless_t* p, const void* buffer, size_t n_buffer, int force_ucs2, const char** error)
+int pointless_open_b(pointless_t* p, const void* buffer, size_t n_buffer, const char** error)
 {
-	return _pointless_open_b(p, buffer, n_buffer, force_ucs2, 1, error);
+	return _pointless_open_b(p, buffer, n_buffer, 1, error);
 }
 
-int pointless_open_b_skip_validate(pointless_t* p, const void* buffer, size_t n_buffer, int force_ucs2, const char** error)
+int pointless_open_b_skip_validate(pointless_t* p, const void* buffer, size_t n_buffer, const char** error)
 {
-	return _pointless_open_b(p, buffer, n_buffer, force_ucs2, 0, error);
+	return _pointless_open_b(p, buffer, n_buffer, 0, error);
 }
 
 pointless_value_t* pointless_root(pointless_t* p)
@@ -206,23 +205,6 @@ uint32_t* pointless_reader_unicode_value_ucs4(pointless_t* p, pointless_value_t*
 {
 	assert(((size_t)pointless_reader_unicode_value(p, v) % 4) == 0);
 	return pointless_reader_unicode_value(p, v);
-}
-
-#ifdef POINTLESS_WCHAR_T_IS_4_BYTES
-wchar_t* pointless_reader_unicode_value_wchar(pointless_t* p, pointless_value_t* v)
-{
-	return (wchar_t*)pointless_reader_unicode_value_ucs4(p, v);
-}
-#endif
-
-uint16_t* pointless_reader_unicode_value_ucs2_alloc(pointless_t* p, pointless_value_t* v, const char** error)
-{
-	uint16_t* s = pointless_ucs4_to_ucs2(pointless_reader_unicode_value_ucs4(p, v));
-
-	if (s == 0)
-		*error = "out of memory";
-
-	return s;
 }
 
 uint32_t pointless_reader_string_len(pointless_t* p, pointless_value_t* v)

@@ -14,13 +14,6 @@ uint32_t* pointless_reader_unicode_value_ucs4(pointless_t* p, pointless_value_t*
 uint32_t pointless_reader_string_len(pointless_t* p, pointless_value_t* v);
 uint8_t* pointless_reader_string_value_ascii(pointless_t* p, pointless_value_t* v);
 
-#ifdef POINTLESS_WCHAR_T_IS_4_BYTES
-wchar_t* pointless_reader_unicode_value_wchar(pointless_t* p, pointless_value_t* v);
-#endif
-
-// note: caller must free() the returned buffers
-uint16_t* pointless_reader_unicode_value_ucs2_alloc(pointless_t* p, pointless_value_t* v, const char** error);
-
 // vectors
 uint32_t pointless_reader_vector_n_items(pointless_t* p, pointless_value_t* v);
 pointless_value_t* pointless_reader_vector_value(pointless_t* p, pointless_value_t* v);

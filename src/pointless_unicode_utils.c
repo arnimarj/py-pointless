@@ -6,8 +6,6 @@
 
 int pointless_is_ucs4_ascii(uint32_t* s)
 	{ POINTLESS_BELOW_RANGE(s, UINT8_MAX); }
-int pointless_is_ucs4_ucs2(uint32_t* s)
-	{ POINTLESS_BELOW_RANGE(s, UINT16_MAX); }
 int pointless_is_ucs2_ascii(uint16_t* s)
 	{ POINTLESS_BELOW_RANGE(s, UINT8_MAX); }
 
@@ -18,8 +16,6 @@ size_t pointless_ucs2_len(uint16_t* s)
 size_t pointless_ascii_len(uint8_t* s)
 	{ POINTLESS_STRING_LEN(s); }
 size_t pointless_ucs1_len(uint8_t* s)
-	{ POINTLESS_STRING_LEN(s); }
-size_t pointless_wchar_len(wchar_t* s)
 	{ POINTLESS_STRING_LEN(s); }
 
 void pointless_ucs4_cpy(uint32_t* dst, const uint32_t* src)
@@ -33,23 +29,6 @@ void pointless_ascii_cpy(uint8_t* dst, const uint8_t* src)
 #undef POINTLESS_STRING_LEN
 #undef POINTLESS_STRING_CPY
 
-uint16_t* pointless_ucs4_to_ucs2(uint32_t* ucs4)
-{
-	assert(pointless_is_ucs4_ucs2(ucs4));
-	size_t n = pointless_ucs4_len(ucs4);
-	uint16_t* ucs2_ = (uint16_t*)pointless_malloc(sizeof(uint16_t) * (n + 1));
-
-	if (ucs2_ == 0)
-		return 0;
-
-	uint16_t* ucs2 = ucs2_;
-
-	while (*ucs4)
-		*ucs2++ = (uint16_t)*ucs4++;
-
-	*ucs2 = 0;
-	return ucs2_;
-}
 
 uint8_t* pointless_ucs4_to_ascii(uint32_t* ucs4)
 {

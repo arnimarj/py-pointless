@@ -273,12 +273,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		Py_ssize_t s_len_pointless = 0;
 
 		switch (PyUnicode_KIND(py_object)) {
-			case PyUnicode_WCHAR_KIND:
-				PyErr_SetString(PyExc_ValueError, "wchar kind unsupported");
-				state->error_line = __LINE__;
-				state->is_error = 1;
-				return POINTLESS_CREATE_VALUE_FAIL;
-				break;
 			case PyUnicode_1BYTE_KIND:
 				s_len_pointless = pointless_ucs1_len((uint8_t*)PyUnicode_DATA(py_object));
 				break;
@@ -288,6 +282,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			case PyUnicode_4BYTE_KIND:
 				s_len_pointless = pointless_ucs4_len((uint32_t*)PyUnicode_DATA(py_object));
 				break;
+			// will happen for PyUnicode_WCHAR_KIND on python versions < 3.12
 			default:
 				PyErr_SetString(PyExc_ValueError, "unsupported unicode width");
 				state->error_line = __LINE__;
@@ -305,11 +300,6 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		void* python_buffer = (void*)PyUnicode_DATA(py_object);
 
 		switch (PyUnicode_KIND(py_object)) {
-			case PyUnicode_WCHAR_KIND:
-				PyErr_SetString(PyExc_ValueError, "wchar based unicode strings not supported");
-				state->error_line = __LINE__;
-				state->is_error = 1;
-				return POINTLESS_CREATE_VALUE_FAIL;
 			case PyUnicode_1BYTE_KIND:
 				handle = pointless_create_string_ascii(&state->c, (uint8_t*)python_buffer);
 				break;
@@ -325,9 +315,12 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 				else
 					handle = pointless_create_string_ucs4(&state->c, (uint32_t*)python_buffer);
 				break;
-			// should not happen
+			// will happen for PyUnicode_WCHAR_KIND on python versions < 3.12
 			default:
-				break;
+				PyErr_SetString(PyExc_ValueError, "unsupported unicode width");
+				state->error_line = __LINE__;
+				state->is_error = 1;
+				return POINTLESS_CREATE_VALUE_FAIL;
 		}
 
 		RETURN_OOM_IF_FAIL(handle, state);

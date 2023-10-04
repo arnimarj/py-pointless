@@ -48,11 +48,6 @@ extern "C" {
     enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
 #endif
 
-// POINTLESS_WCHAR_T_IS_4_BYTES
-#if 2147483647 <= WCHAR_MAX && WCHAR_MAX <= 4294967295
-#define POINTLESS_WCHAR_T_IS_4_BYTES
-#endif
-
 // we use 32-bits for unicodes, and 8-bits for those who can
 #define pointless_string_char_t uint8_t
 #define pointless_unicode_char_t uint32_t
@@ -403,10 +398,6 @@ uint32_t pointless_hash_reader_vector_32(pointless_t* p, pointless_value_t* v, u
 uint32_t pointless_hash_create_32(pointless_create_t* c, pointless_create_value_t* v);
 
 // comparison functions
-#ifdef POINTLESS_WCHAR_T_IS_4_BYTES
-int32_t pointless_cmp_wchar_wchar(wchar_t* a, wchar_t* b);
-#endif
-
 int32_t pointless_cmp_string_8_8(uint8_t* a, uint8_t* b);
 int32_t pointless_cmp_string_8_16(uint8_t* a, uint16_t* b);
 int32_t pointless_cmp_string_8_32(uint8_t* a, uint32_t* b);

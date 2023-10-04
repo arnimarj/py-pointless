@@ -29,7 +29,7 @@ def build_judy() -> None:
 
 	# adding last two flags because of compiler and/or code bugs
 	# see http://sourceforge.net/p/judy/mailman/message/32417284/
-	assert(sys.maxsize in (2**63 - 1, 2**31 - 1))
+	assert sys.maxsize in (2**63 - 1, 2**31 - 1)
 
 	if is_clang or is_gcc_46:
 		CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -Wall -D_REENTRANT -D_GNU_SOURCE  -g'

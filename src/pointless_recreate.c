@@ -334,7 +334,7 @@ int pointless_recreate_64(const char* fname_in, const char* fname_out, const cha
 	// open source
 	pointless_t p;
 
-	if (!pointless_open_f(&p, fname_in, 0, error))
+	if (!pointless_open_f(&p, fname_in, error))
 		return 0;
 
 	// create destination

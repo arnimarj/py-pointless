@@ -242,15 +242,23 @@ static _var_string_t pypointless_cmp_extract_string(pypointless_cmp_value_t* v, 
 	} else {
 		assert(PyUnicode_Check(v->value.py_object));
 
-		{
-
-#ifdef Py_UNICODE_WIDE
-			s.n_bits = 32;
-			s.string.string_32 = (uint32_t*)PyUnicode_AS_UNICODE(v->value.py_object);
-#else
-			s.n_bits = 16;
-			s.string.string_16 = (uint16_t*)PyUnicode_AS_UNICODE(v->value.py_object);
-#endif
+		switch (PyUnicode_KIND(v->value.py_object)) {
+			case PyUnicode_1BYTE_KIND:
+				s.n_bits = 8;
+				s.string.string_8 = (uint8_t*)PyUnicode_1BYTE_DATA(v->value.py_object);
+				break;
+			case PyUnicode_2BYTE_KIND:
+				s.n_bits = 16;
+				s.string.string_16 = (uint16_t*)PyUnicode_2BYTE_DATA(v->value.py_object);
+				break;
+			case PyUnicode_4BYTE_KIND:
+				s.n_bits = 32;
+				s.string.string_32 = (uint32_t*)PyUnicode_4BYTE_DATA(v->value.py_object);
+				break;
+			// will happen for PyUnicode_WCHAR_KIND on python versions < 3.12
+			default:
+				state->error = "hash statement fallthrough";
+				break;
 		}
 	}
 

@@ -47,7 +47,6 @@ Checking all this is pretty expensive, and is done after the first set of tests.
 
 typedef struct {
 	pointless_t* p;
-	int force_ucs2;
 } pointless_validate_context_t;
 
 int32_t pointless_validate(pointless_validate_context_t* context, const char** error);

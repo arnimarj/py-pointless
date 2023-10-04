@@ -172,12 +172,6 @@ static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 
 	int do_validate = (validate == Py_True);
 
-#ifdef Py_UNICODE_WIDE
-	int force_ucs2 = 0;
-#else
-	int force_ucs2 = 1;
-#endif
-
 	if (PyUnicode_Check(fname_or_buffer)) {
 		string_of_unicode = PyUnicode_AsLatin1String(fname_or_buffer);
 
@@ -208,14 +202,14 @@ static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 
 	if (do_validate) {
 		if (fname_)
-			i = pointless_open_f(&self->p, fname_, force_ucs2, &error);
+			i = pointless_open_f(&self->p, fname_, &error);
 		else
-			i = pointless_open_b(&self->p, buf, buflen, force_ucs2, &error);
+			i = pointless_open_b(&self->p, buf, buflen, &error);
 	} else {
 		if (fname_)
-			i = pointless_open_f_skip_validate(&self->p, fname_, force_ucs2, &error);
+			i = pointless_open_f_skip_validate(&self->p, fname_, &error);
 		else
-			i = pointless_open_b_skip_validate(&self->p, buf, buflen, force_ucs2, &error);
+			i = pointless_open_b_skip_validate(&self->p, buf, buflen, &error);
 	}
 
 	Py_END_ALLOW_THREADS
