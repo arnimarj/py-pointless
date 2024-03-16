@@ -74,7 +74,7 @@ static uint64_t _reader_pointless_child_at(void* user_, uint64_t v_, uint32_t i)
 			children = pointless_reader_vector_value(user->p, v);
 			return (uint64_t)(children + i);
 		case POINTLESS_SET_VALUE:
-			assert(0 <= i && i <= 1);
+			assert(i <= 1);
 
 			if (i == 0)
 				return (uint64_t)pointless_set_hash_vector(user->p, v);
@@ -83,7 +83,7 @@ static uint64_t _reader_pointless_child_at(void* user_, uint64_t v_, uint32_t i)
 
 			break;
 		case POINTLESS_MAP_VALUE_VALUE:
-			assert(0 <= i && i <= 2);
+			assert(i <= 2);
 
 			if (i == 0)
 				return (uint64_t)pointless_map_hash_vector(user->p, v);
