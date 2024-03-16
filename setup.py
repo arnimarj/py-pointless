@@ -32,9 +32,9 @@ def build_judy() -> None:
 	assert sys.maxsize in (2**63 - 1, 2**31 - 1)
 
 	if is_clang or is_gcc_46:
-		CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -Wall -D_REENTRANT -D_GNU_SOURCE  -g'
+		CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -Wextra -Werror  -D_REENTRANT -D_GNU_SOURCE  -g'
 	else:
-		CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -fno-aggressive-loop-optimizations'
+		CFLAGS = '-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -Wextra -Werror  -D_REENTRANT -D_GNU_SOURCE  -g -fno-aggressive-loop-optimizations'
 
 	exitcode, output = subprocess.getstatusoutput('(cd judy-1.0.5/src; CC=\'%s\' COPT=\'%s\' sh ./sh_build)' % (CC, CFLAGS))
 
@@ -102,8 +102,14 @@ setup(
 			extra_compile_args=[
 				'-I./include',
 				'-I./judy-1.0.5/src',
-				'-Wall',
+				'-Wextra',
+				'-Werror',
 				'-Wno-strict-prototypes',
+				'-Wno-unused-parameter',
+				'-Wno-missing-field-initializers',
+				'-Wno-unused-function',
+				'-Wno-cast-function-type',
+				'-Wno-incompatible-pointer-types',
 				'-g',
 				'-D_GNU_SOURCE',
 				'-O2',

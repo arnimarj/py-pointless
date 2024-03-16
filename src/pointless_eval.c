@@ -62,10 +62,12 @@ static const char* pointless_eval_get_single(pointless_t* p, pointless_value_t* 
 		// integer
 		case '-':
 			is_neg = 1;
+			break;
 		case '+':
 			e += 1;
 			if (!('0' <= *e && *e  <= '9'))
 				return 0;
+			break;
 		case '0':
 		case '1':
 		case '2':
