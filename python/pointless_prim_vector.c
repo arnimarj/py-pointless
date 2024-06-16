@@ -1853,29 +1853,25 @@ static PyObject* PyPointlessPrimVector_from_remap(PyTypeObject* type, PyObject* 
 	return (PyObject*)PyPointlessPrimVector_from_T_vector(&a_, r_->type);
 }
 
-#define POINTLESS_PRIMVECTOR_MAX_LOOP(T, v, n) \
+#define POINTLESS_PRIMVECTOR_MIN_MAX_LOOP(T, v, n) \
 	{\
-		m_i = 0;\
+		min_i = 0;\
+		max_i = 0;\
 		for (i = 1; i < (n); i++) {\
-			if (((T*)(v))[i] > ((T*)(v))[m_i])\
-				m_i = i;\
+			if (((T*)(v))[i] > ((T*)(v))[max_i])\
+				max_i = i;\
+			if (((T*)(v))[i] < ((T*)(v))[min_i])\
+				min_i = i;\
 		}\
 	}\
 
-#define POINTLESS_PRIMVECTOR_MIN_LOOP(T, v, n) \
-	{\
-		m_i = 0;\
-		for (i = 1; i < (n); i++) {\
-			if (((T*)(v))[i] < ((T*)(v))[m_i])\
-				m_i = i;\
-		}\
-	}\
 
-static PyObject* PyPointlessPrimVector_max(PyPointlessPrimVector* self)
+static int PyPointlessPrimVector_min_max(PyPointlessPrimVector* self, size_t* min_i_out, size_t* max_i_out)
 {
-	size_t i, m_i, n_items;
-	n_items = pointless_dynarray_n_items(&self->array);
+	size_t i, n_items, min_i, max_i;
+
 	void* base_ptr = pointless_dynarray_buffer(&self->array);
+	n_items = pointless_dynarray_n_items(&self->array);
 
 	if (n_items == 0) {
 		PyErr_SetString(PyExc_ValueError, "vector is empty");
@@ -1884,85 +1880,79 @@ static PyObject* PyPointlessPrimVector_max(PyPointlessPrimVector* self)
 
 	switch (self->type) {
 		case POINTLESS_PRIM_VECTOR_TYPE_I8:
-			POINTLESS_PRIMVECTOR_MAX_LOOP(int8_t, base_ptr, n_items);
+			POINTLESS_PRIMVECTOR_MIN_MAX_LOOP(int8_t, base_ptr, n_items);
 			break;
 		case POINTLESS_PRIM_VECTOR_TYPE_U8:
-			POINTLESS_PRIMVECTOR_MAX_LOOP(uint8_t, base_ptr, n_items);
+			POINTLESS_PRIMVECTOR_MIN_MAX_LOOP(uint8_t, base_ptr, n_items);
 			break;
 		case POINTLESS_PRIM_VECTOR_TYPE_I16:
-			POINTLESS_PRIMVECTOR_MAX_LOOP(int16_t, base_ptr, n_items);
+			POINTLESS_PRIMVECTOR_MIN_MAX_LOOP(int16_t, base_ptr, n_items);
 			break;
 		case POINTLESS_PRIM_VECTOR_TYPE_U16:
-			POINTLESS_PRIMVECTOR_MAX_LOOP(uint16_t, base_ptr, n_items);
+			POINTLESS_PRIMVECTOR_MIN_MAX_LOOP(uint16_t, base_ptr, n_items);
 			break;
 		case POINTLESS_PRIM_VECTOR_TYPE_I32:
-			POINTLESS_PRIMVECTOR_MAX_LOOP(int32_t, base_ptr, n_items);
+			POINTLESS_PRIMVECTOR_MIN_MAX_LOOP(int32_t, base_ptr, n_items);
 			break;
 		case POINTLESS_PRIM_VECTOR_TYPE_U32:
-			POINTLESS_PRIMVECTOR_MAX_LOOP(uint32_t, base_ptr, n_items);
+			POINTLESS_PRIMVECTOR_MIN_MAX_LOOP(uint32_t, base_ptr, n_items);
 			break;
 		case POINTLESS_PRIM_VECTOR_TYPE_I64:
-			POINTLESS_PRIMVECTOR_MAX_LOOP(int64_t, base_ptr, n_items);
+			POINTLESS_PRIMVECTOR_MIN_MAX_LOOP(int64_t, base_ptr, n_items);
 			break;
 		case POINTLESS_PRIM_VECTOR_TYPE_U64:
-			POINTLESS_PRIMVECTOR_MAX_LOOP(uint64_t, base_ptr, n_items);
+			POINTLESS_PRIMVECTOR_MIN_MAX_LOOP(uint64_t, base_ptr, n_items);
 			break;
 		case POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
-			POINTLESS_PRIMVECTOR_MAX_LOOP(float, base_ptr, n_items);
+			POINTLESS_PRIMVECTOR_MIN_MAX_LOOP(float, base_ptr, n_items);
 			break;
 		default:
 			PyErr_BadInternalCall();
 			return 0;
 	}
 
-	return PyPointlessPrimVector_subscript_priv(self, m_i);
+	return 1;
+}
+
+
+static PyObject* PyPointlessPrimVector_max(PyPointlessPrimVector* self)
+{
+	size_t _, max_i;
+
+	if (!PyPointlessPrimVector_min_max(self, &_, &max_i))
+		return 0;
+
+	return PyPointlessPrimVector_subscript_priv(self, max_i);
 }
 
 static PyObject* PyPointlessPrimVector_min(PyPointlessPrimVector* self)
 {
-	size_t i, m_i, n_items;
-	n_items = pointless_dynarray_n_items(&self->array);
-	void* base_ptr = pointless_dynarray_buffer(&self->array);
+	size_t min_i, _;
 
-	if (n_items == 0) {
-		PyErr_SetString(PyExc_ValueError, "vector is empty");
+	if (!PyPointlessPrimVector_min_max(self, &min_i, &_))
+		return 0;
+
+	return PyPointlessPrimVector_subscript_priv(self, min_i);
+}
+
+
+static PyObject* PyPointlessPrimVector_range(PyPointlessPrimVector* self)
+{
+	size_t min_i, max_i;
+
+	if (!PyPointlessPrimVector_min_max(self, &min_i, &max_i))
+		return 0;
+
+	PyObject* lower = PyPointlessPrimVector_subscript_priv(self, min_i);
+	PyObject* upper = PyPointlessPrimVector_subscript_priv(self, max_i);
+
+	if (lower == 0 || upper == 0) {
+		Py_XDECREF(lower);
+		Py_XDECREF(upper);
 		return 0;
 	}
 
-	switch (self->type) {
-		case POINTLESS_PRIM_VECTOR_TYPE_I8:
-			POINTLESS_PRIMVECTOR_MIN_LOOP(int8_t, base_ptr, n_items);
-			break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U8:
-			POINTLESS_PRIMVECTOR_MIN_LOOP(uint8_t, base_ptr, n_items);
-			break;
-		case POINTLESS_PRIM_VECTOR_TYPE_I16:
-			POINTLESS_PRIMVECTOR_MIN_LOOP(int16_t, base_ptr, n_items);
-			break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U16:
-			POINTLESS_PRIMVECTOR_MIN_LOOP(uint16_t, base_ptr, n_items);
-			break;
-		case POINTLESS_PRIM_VECTOR_TYPE_I32:
-			POINTLESS_PRIMVECTOR_MIN_LOOP(int32_t, base_ptr, n_items);
-			break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U32:
-			POINTLESS_PRIMVECTOR_MIN_LOOP(uint32_t, base_ptr, n_items);
-			break;
-		case POINTLESS_PRIM_VECTOR_TYPE_I64:
-			POINTLESS_PRIMVECTOR_MIN_LOOP(int64_t, base_ptr, n_items);
-			break;
-		case POINTLESS_PRIM_VECTOR_TYPE_U64:
-			POINTLESS_PRIMVECTOR_MIN_LOOP(uint64_t, base_ptr, n_items);
-			break;
-		case POINTLESS_PRIM_VECTOR_TYPE_FLOAT:
-			POINTLESS_PRIMVECTOR_MIN_LOOP(float, base_ptr, n_items);
-			break;
-		default:
-			PyErr_BadInternalCall();
-			return 0;
-	}
-
-	return PyPointlessPrimVector_subscript_priv(self, m_i);
+	return Py_BuildValue("(NN)", lower, upper);
 }
 
 
@@ -1988,6 +1978,7 @@ static PyMethodDef PyPointlessPrimVector_methods[] = {
 	{"FromRemap",   (PyCFunction)PyPointlessPrimVector_from_remap,    METH_VARARGS | METH_CLASS, ""},
 	{"max",         (PyCFunction)PyPointlessPrimVector_max,           METH_NOARGS, ""},
 	{"min",         (PyCFunction)PyPointlessPrimVector_min,           METH_NOARGS, ""},
+	{"range",       (PyCFunction)PyPointlessPrimVector_range,           METH_NOARGS, ""},
 	{NULL, NULL}
 };
 

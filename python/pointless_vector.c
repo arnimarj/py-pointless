@@ -503,25 +503,21 @@ static PyObject* PyPointlessVector_sizeof(PyPointlessVector* self)
 	return PyLong_FromSize_t(sizeof(PyPointlessVector));
 }
 
-#define POINTLESS_VECTOR_MAX_LOOP(T, v, n) \
+
+#define POINTLESS_VECTOR_MIN_MAX_LOOP(T, v, n) \
 	{\
-		m_i = 0;\
+		min_i = 0;\
+		max_i = 0;\
 		for (i = 1; i < (n); i++) {\
-			if (((T*)(v))[i] > ((T*)(v))[m_i])\
-				m_i = i;\
+			if (((T*)(v))[i] > ((T*)(v))[max_i])\
+				max_i = i;\
+			if (((T*)(v))[i] < ((T*)(v))[min_i])\
+				min_i = i;\
 		}\
 	}\
 
-#define POINTLESS_VECTOR_MIN_LOOP(T, v, n) \
-	{\
-		m_i = 0;\
-		for (i = 1; i < (n); i++) {\
-			if (((T*)(v))[i] < ((T*)(v))[m_i])\
-				m_i = i;\
-		}\
-	}\
 
-static PyObject* PyPointlessVector_max(PyPointlessVector* self)
+static int PyPointlessVector_min_max(PyPointlessVector* self, size_t* min_i_out, size_t* max_i_out)
 {
 	if (!pointless_is_prim_vector(&self->v)) {
 		PyErr_SetString(PyExc_ValueError, "only primitive vectors support this operation");
@@ -569,58 +565,47 @@ static PyObject* PyPointlessVector_max(PyPointlessVector* self)
 			return 0;
 	}
 
-	return PyPointlessVector_subscript_priv(self, m_i);
+	return 1;
 }
 
 static PyObject* PyPointlessVector_min(PyPointlessVector* self)
 {
-	if (!pointless_is_prim_vector(&self->v)) {
-		PyErr_SetString(PyExc_ValueError, "only primitive vectors support this operation");
+	size_t min_i, _;
+
+	if (!PyPointlessVector_min_max(self, &min_i, &_))
+		return 0;
+
+	return PyPointlessVector_subscript_priv(self, min_i);
+}
+
+static PyObject* PyPointlessVector_max(PyPointlessVector* self)
+{
+	size_t _, max_i;
+
+	if (!PyPointlessVector_min_max(self, &_, &max_i))
+		return 0;
+
+	return PyPointlessVector_subscript_priv(self, max_i);
+}
+
+static PyObject* PyPointlessVector_range(PyPointlessVector* self)
+{
+	size_t min_i, max_i;
+
+	if (!PyPointlessVector_min_max(self, &_, &max_i))
+		return 0;
+
+
+	PyObject* lower = PyPointlessPrimVector_subscript_priv(self, min_i);
+	PyObject* upper = PyPointlessPrimVector_subscript_priv(self, max_i);
+
+	if (lower == 0 || upper == 0) {
+		Py_XDECREF(lower);
+		Py_XDECREF(upper);
 		return 0;
 	}
 
-	size_t i, m_i, n_items = self->slice_n;
-	void* base_ptr = pointless_prim_vector_base_ptr(self);
-
-	if (n_items == 0) {
-		PyErr_SetString(PyExc_ValueError, "vector is empty");
-		return 0;
-	}
-
-	switch (self->v.type) {
-		case POINTLESS_VECTOR_I8:
-			POINTLESS_VECTOR_MIN_LOOP(int8_t, base_ptr, n_items);
-			break;
-		case POINTLESS_VECTOR_U8:
-			POINTLESS_VECTOR_MIN_LOOP(uint8_t, base_ptr, n_items);
-			break;
-		case POINTLESS_VECTOR_I16:
-			POINTLESS_VECTOR_MIN_LOOP(int16_t, base_ptr, n_items);
-			break;
-		case POINTLESS_VECTOR_U16:
-			POINTLESS_VECTOR_MIN_LOOP(uint16_t, base_ptr, n_items);
-			break;
-		case POINTLESS_VECTOR_I32:
-			POINTLESS_VECTOR_MIN_LOOP(int32_t, base_ptr, n_items);
-			break;
-		case POINTLESS_VECTOR_U32:
-			POINTLESS_VECTOR_MIN_LOOP(uint32_t, base_ptr, n_items);
-			break;
-		case POINTLESS_VECTOR_I64:
-			POINTLESS_VECTOR_MIN_LOOP(int64_t, base_ptr, n_items);
-			break;
-		case POINTLESS_VECTOR_U64:
-			POINTLESS_VECTOR_MIN_LOOP(uint64_t, base_ptr, n_items);
-			break;
-		case POINTLESS_VECTOR_FLOAT:
-			POINTLESS_VECTOR_MIN_LOOP(float, base_ptr, n_items);
-			break;
-		default:
-			PyErr_BadInternalCall();
-			return 0;
-	}
-
-	return PyPointlessVector_subscript_priv(self, m_i);
+	return Py_BuildValue("(NN)", lower, upper);
 }
 
 static int parse_pyobject_number(PyObject* v, int* is_signed, int64_t* i, uint64_t* u)
@@ -710,6 +695,7 @@ static PyMemberDef PyPointlessVector_memberlist[] = {
 static PyMethodDef PyPointlessVector_methods[] = {
 	{"max",          (PyCFunction)PyPointlessVector_max,          METH_NOARGS,  ""},
 	{"min",          (PyCFunction)PyPointlessVector_min,          METH_NOARGS,  ""},
+	{"range",        (PyCFunction)PyPointlessVector_range,          METH_NOARGS,  ""},
 	{"bisect_left",  (PyCFunction)PyPointlessVector_bisect_left,  METH_VARARGS, ""},
 	{"__reversed__", (PyCFunction)PyPointlessVector_rev_iter,     METH_NOARGS,  ""},
 	{"__sizeof__",   (PyCFunction)PyPointlessVector_sizeof,       METH_NOARGS,  ""},
