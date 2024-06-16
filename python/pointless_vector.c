@@ -596,8 +596,8 @@ static PyObject* PyPointlessVector_range(PyPointlessVector* self)
 		return 0;
 
 
-	PyObject* lower = PyPointlessPrimVector_subscript_priv(self, min_i);
-	PyObject* upper = PyPointlessPrimVector_subscript_priv(self, max_i);
+	PyObject* lower = PyPointlessVector_subscript_priv(self, min_i);
+	PyObject* upper = PyPointlessVector_subscript_priv(self, max_i);
 
 	if (lower == 0 || upper == 0) {
 		Py_XDECREF(lower);
