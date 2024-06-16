@@ -534,31 +534,31 @@ static int PyPointlessVector_min_max(PyPointlessVector* self, size_t* min_i_out,
 
 	switch (self->v.type) {
 		case POINTLESS_VECTOR_I8:
-			POINTLESS_VECTOR_MAX_LOOP(int8_t, base_ptr, n_items);
+			POINTLESS_VECTOR_MIN_MAX_LOOP(int8_t, base_ptr, n_items);
 			break;
 		case POINTLESS_VECTOR_U8:
-			POINTLESS_VECTOR_MAX_LOOP(uint8_t, base_ptr, n_items);
+			POINTLESS_VECTOR_MIN_MAX_LOOP(uint8_t, base_ptr, n_items);
 			break;
 		case POINTLESS_VECTOR_I16:
-			POINTLESS_VECTOR_MAX_LOOP(int16_t, base_ptr, n_items);
+			POINTLESS_VECTOR_MIN_MAX_LOOP(int16_t, base_ptr, n_items);
 			break;
 		case POINTLESS_VECTOR_U16:
-			POINTLESS_VECTOR_MAX_LOOP(uint16_t, base_ptr, n_items);
+			POINTLESS_VECTOR_MIN_MAX_LOOP(uint16_t, base_ptr, n_items);
 			break;
 		case POINTLESS_VECTOR_I32:
-			POINTLESS_VECTOR_MAX_LOOP(int32_t, base_ptr, n_items);
+			POINTLESS_VECTOR_MIN_MAX_LOOP(int32_t, base_ptr, n_items);
 			break;
 		case POINTLESS_VECTOR_U32:
-			POINTLESS_VECTOR_MAX_LOOP(uint32_t, base_ptr, n_items);
+			POINTLESS_VECTOR_MIN_MAX_LOOP(uint32_t, base_ptr, n_items);
 			break;
 		case POINTLESS_VECTOR_I64:
-			POINTLESS_VECTOR_MAX_LOOP(int64_t, base_ptr, n_items);
+			POINTLESS_VECTOR_MIN_MAX_LOOP(int64_t, base_ptr, n_items);
 			break;
 		case POINTLESS_VECTOR_U64:
-			POINTLESS_VECTOR_MAX_LOOP(uint64_t, base_ptr, n_items);
+			POINTLESS_VECTOR_MIN_MAX_LOOP(uint64_t, base_ptr, n_items);
 			break;
 		case POINTLESS_VECTOR_FLOAT:
-			POINTLESS_VECTOR_MAX_LOOP(float, base_ptr, n_items);
+			POINTLESS_VECTOR_MIN_MAX_LOOP(float, base_ptr, n_items);
 			break;
 		default:
 			PyErr_BadInternalCall();
