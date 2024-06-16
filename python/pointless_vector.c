@@ -524,7 +524,7 @@ static int PyPointlessVector_min_max(PyPointlessVector* self, size_t* min_i_out,
 		return 0;
 	}
 
-	size_t i, m_i, n_items = self->slice_n;
+	size_t i, min_i, max_i, n_items = self->slice_n;
 	void* base_ptr = pointless_prim_vector_base_ptr(self);
 
 	if (n_items == 0) {
@@ -570,7 +570,7 @@ static int PyPointlessVector_min_max(PyPointlessVector* self, size_t* min_i_out,
 
 static PyObject* PyPointlessVector_min(PyPointlessVector* self)
 {
-	size_t min_i, _;
+	size_t min_i = 0, _ = 0;
 
 	if (!PyPointlessVector_min_max(self, &min_i, &_))
 		return 0;
@@ -580,7 +580,7 @@ static PyObject* PyPointlessVector_min(PyPointlessVector* self)
 
 static PyObject* PyPointlessVector_max(PyPointlessVector* self)
 {
-	size_t _, max_i;
+	size_t _ = 0, max_i = 0;
 
 	if (!PyPointlessVector_min_max(self, &_, &max_i))
 		return 0;
@@ -590,9 +590,9 @@ static PyObject* PyPointlessVector_max(PyPointlessVector* self)
 
 static PyObject* PyPointlessVector_range(PyPointlessVector* self)
 {
-	size_t min_i, max_i;
+	size_t min_i = 0, max_i = 0;
 
-	if (!PyPointlessVector_min_max(self, &_, &max_i))
+	if (!PyPointlessVector_min_max(self, &min_i, &max_i))
 		return 0;
 
 

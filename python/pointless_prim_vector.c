@@ -1917,7 +1917,7 @@ static int PyPointlessPrimVector_min_max(PyPointlessPrimVector* self, size_t* mi
 
 static PyObject* PyPointlessPrimVector_max(PyPointlessPrimVector* self)
 {
-	size_t _, max_i;
+	size_t _ = 0, max_i = 0;
 
 	if (!PyPointlessPrimVector_min_max(self, &_, &max_i))
 		return 0;
@@ -1927,7 +1927,7 @@ static PyObject* PyPointlessPrimVector_max(PyPointlessPrimVector* self)
 
 static PyObject* PyPointlessPrimVector_min(PyPointlessPrimVector* self)
 {
-	size_t min_i, _;
+	size_t min_i = 0, _ = 0;
 
 	if (!PyPointlessPrimVector_min_max(self, &min_i, &_))
 		return 0;
@@ -1938,7 +1938,7 @@ static PyObject* PyPointlessPrimVector_min(PyPointlessPrimVector* self)
 
 static PyObject* PyPointlessPrimVector_range(PyPointlessPrimVector* self)
 {
-	size_t min_i, max_i;
+	size_t min_i = 0, max_i = 0;
 
 	if (!PyPointlessPrimVector_min_max(self, &min_i, &max_i))
 		return 0;
