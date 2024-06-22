@@ -260,6 +260,10 @@ static PyObject* PyPointlessVectorIter_iternext(PyPointlessVectorIter* iter)
 
 	if (iter->iter_state < n_items) {
 		PyObject* item = PyPointlessVector_subscript_priv(iter->vector, iter->iter_state);
+
+		if (item == 0)
+			return 0;
+
 		iter->iter_state += 1;
 		return item;
 	}
@@ -281,6 +285,10 @@ static PyObject* PyPointlessVectorRevIter_iternext(PyPointlessVectorIter* iter)
 
 	if (iter->iter_state < n_items) {
 		PyObject* item = PyPointlessVector_subscript_priv(iter->vector, n_items - iter->iter_state - 1);
+
+		if (item == 0)
+			return 0;
+
 		iter->iter_state += 1;
 		return item;
 	}
