@@ -631,6 +631,33 @@ static PyObject* PyPointlessBitvector_extend_false(PyPointlessBitvector* self, P
 	return PyPointlessBitvector_extend_(self, args, 0);
 }
 
+static PyObject* PyPointlessBitvector_append_bulk(PyPointlessBitvector* self, PyObject* args)
+{
+	PyPointlessBitvector* other = 0;
+
+	if (!PyArg_ParseTuple(args, "O!", &PyPointlessBitvectorType, &other))
+		return 0;
+
+	if (self->is_pointless) {
+		PyErr_SetString(PyExc_ValueError, "BitVector is pointless based, and thus read-only");
+		return 0;
+	}
+
+	size_t n_before = self->primitive_n_bits;
+
+	if (!PyPointlessBitvector_extend_by(self, other.primitive_n_bits, 0))
+		return 0;
+
+	for (size_t i = 0; i < other->primitive_n_bits; i++) {
+		if (bm_is_set_(other->primitive_bits, i))
+			bm_set_(self->primitive_bits, n_before + i);
+	}
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+
 static PyObject* PyPointlessBitvector_append(PyPointlessBitvector* self, PyObject* args)
 {
 	PyObject* v = 0;
@@ -746,6 +773,7 @@ static PyMethodDef PyPointlessBitvector_methods[] = {
 	{"NumOnePostfix", (PyCFunction)PyPointlessBitvector_n_one_postfix,  METH_NOARGS,  ""},
 	{"IsAnySet",      (PyCFunction)PyPointlessBitvector_is_any_set,     METH_NOARGS,  ""},
 	{"append",        (PyCFunction)PyPointlessBitvector_append,         METH_VARARGS, ""},
+	{"append_bulk",   (PyCFunction)PyPointlessBitvector_append_bulk,    METH_VARARGS, ""},
 	{"extend_false",  (PyCFunction)PyPointlessBitvector_extend_false,   METH_VARARGS, ""},
 	{"extend_true",   (PyCFunction)PyPointlessBitvector_extend_true,    METH_VARARGS, ""},
 	{"pop",           (PyCFunction)PyPointlessBitvector_pop,            METH_NOARGS,  ""},
