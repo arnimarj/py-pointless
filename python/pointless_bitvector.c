@@ -645,7 +645,7 @@ static PyObject* PyPointlessBitvector_append_bulk(PyPointlessBitvector* self, Py
 
 	size_t n_before = self->primitive_n_bits;
 
-	if (!PyPointlessBitvector_extend_by(self, other.primitive_n_bits, 0))
+	if (!PyPointlessBitvector_extend_by(self, other->primitive_n_bits, 0))
 		return 0;
 
 	for (size_t i = 0; i < other->primitive_n_bits; i++) {
