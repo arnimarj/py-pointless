@@ -848,6 +848,10 @@ static PyObject* PyPointlessBitvectorIter_iternext(PyPointlessBitvectorIter* ite
 
 	if (iter->iter_state < n_bits) {
 		PyObject* bit = PyPointlessBitvector_subscript_priv(iter->bitvector, iter->iter_state);
+
+		if (bit == 0)
+			return 0;
+
 		iter->iter_state += 1;
 		return bit;
 	}
