@@ -28,7 +28,7 @@ jobs:
           submodules: true
 
       - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.20.0
+        run: python -m pip install cibuildwheel==2.21.3 setuptools==75.2.0
 
       - name: Build wheels
         run: cibuildwheel --config-file pyproject.toml --output-dir wheelhouse
