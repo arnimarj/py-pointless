@@ -17,7 +17,7 @@ build-verbosity = 1
 find = {namespaces = false, exclude = [ "pointless.tests" ]}
 
 [tool.cibuildwheel.linux]
-archs = ["auto", "aarch64"]
+archs = ["auto64", "aarch64"]
 environment = "CC=gcc"
 
 [tool.cibuildwheel.macos]
