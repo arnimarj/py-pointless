@@ -22,7 +22,7 @@ environment = "CC=gcc"
 
 # since we run the aarch64 builds in QEMU, they are slow, so
 # we skip tests on all versions but 3.12
-skip = [
+test-skip = [
     "cp39-manylinux_aarch64",
     "cp39-musllinux_aarch64",
     "cp310-manylinux_aarch64",
