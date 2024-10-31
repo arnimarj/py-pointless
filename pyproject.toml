@@ -10,7 +10,7 @@ test-command = [
 ]
 
 # temporarily dropping pypy until we can figure out the string unit-test failure
-build = [ "cp38-*", "cp39-*", "cp310-*", "cp311-*" , "cp312-*" , "cp313-*"]
+build = [ "cp39-*", "cp310-*", "cp311-*" , "cp312-*" , "cp313-*"]
 build-verbosity = 1
 
 [tool.setuptools.packages]
