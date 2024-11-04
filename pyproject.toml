@@ -34,7 +34,7 @@ test-skip = [
 ]
 
 [tool.cibuildwheel.macos]
-archs = ["x86_64", "universal2", "arm64"]
+archs = ["x86_64", "arm64"]
 environment = "CC=clang"
 
 [[tool.cibuildwheel.overrides]]
