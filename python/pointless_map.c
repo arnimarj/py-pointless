@@ -349,12 +349,13 @@ static PyObject* PyPointlessMap_get(PyPointlessMap* m, PyObject* args)
 
 
 static PyMethodDef PyPointlessMap_methods[] = {
-	{"__contains__", (PyCFunction)PyPointlessMap_contains,    METH_O | METH_COEXIST, ""},
-	{"__getitem__",  (PyCFunction)PyPointlessMap_subscript,   METH_O | METH_COEXIST, ""},
-	{"get",          (PyCFunction)PyPointlessMap_get,         METH_VARARGS, ""},
-	{"keys",         (PyCFunction)PyPointlessMap_keys,        METH_NOARGS, ""},
-	{"values",       (PyCFunction)PyPointlessMap_values,      METH_NOARGS, ""},
-	{"items",        (PyCFunction)PyPointlessMap_items,       METH_NOARGS, ""},
+	{"__contains__",      (PyCFunction)PyPointlessMap_contains,  METH_O | METH_COEXIST, ""},
+	{"__getitem__",       (PyCFunction)PyPointlessMap_subscript, METH_O | METH_COEXIST, ""},
+	{"get",               (PyCFunction)PyPointlessMap_get,       METH_VARARGS, ""},
+	{"keys",              (PyCFunction)PyPointlessMap_keys,      METH_NOARGS, ""},
+	{"values",            (PyCFunction)PyPointlessMap_values,    METH_NOARGS, ""},
+	{"items",             (PyCFunction)PyPointlessMap_items,     METH_NOARGS, ""},
+	{"__class_getitem__", (PyCFunction)Py_GenericAlias,          METH_O|METH_CLASS, PyDoc_STR("See PEP 585")},
 	{NULL, NULL}
 };
 

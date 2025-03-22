@@ -701,12 +701,13 @@ static PyMemberDef PyPointlessVector_memberlist[] = {
 };
 
 static PyMethodDef PyPointlessVector_methods[] = {
-	{"max",          (PyCFunction)PyPointlessVector_max,          METH_NOARGS,  ""},
-	{"min",          (PyCFunction)PyPointlessVector_min,          METH_NOARGS,  ""},
-	{"range",        (PyCFunction)PyPointlessVector_range,          METH_NOARGS,  ""},
-	{"bisect_left",  (PyCFunction)PyPointlessVector_bisect_left,  METH_VARARGS, ""},
-	{"__reversed__", (PyCFunction)PyPointlessVector_rev_iter,     METH_NOARGS,  ""},
-	{"__sizeof__",   (PyCFunction)PyPointlessVector_sizeof,       METH_NOARGS,  ""},
+	{"max",               (PyCFunction)PyPointlessVector_max,          METH_NOARGS,  ""},
+	{"min",               (PyCFunction)PyPointlessVector_min,          METH_NOARGS,  ""},
+	{"range",             (PyCFunction)PyPointlessVector_range,        METH_NOARGS,  ""},
+	{"bisect_left",       (PyCFunction)PyPointlessVector_bisect_left,  METH_VARARGS, ""},
+	{"__reversed__",      (PyCFunction)PyPointlessVector_rev_iter,     METH_NOARGS,  ""},
+	{"__sizeof__",        (PyCFunction)PyPointlessVector_sizeof,       METH_NOARGS,  ""},
+	{"__class_getitem__", (PyCFunction)Py_GenericAlias,                METH_O|METH_CLASS, PyDoc_STR("See PEP 585")},
 	{NULL, NULL}
 };
 
