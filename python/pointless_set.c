@@ -174,6 +174,12 @@ PyTypeObject PyPointlessSetType = {
 	PyPointlessSet_new,                  /*tp_new */
 };
 
+
+static PyMethodDef PyPointlessSet_methods[] = {
+	{"__class_getitem__", (PyCFunction)Py_GenericAlias, METH_O|METH_CLASS, PyDoc_STR("See PEP 585")},
+	{NULL, NULL}
+};
+
 PyTypeObject PyPointlessSetIterType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
 	"pointless.PyPointlessSetIter",            /*tp_name*/
@@ -202,7 +208,7 @@ PyTypeObject PyPointlessSetIterType = {
 	0,                                         /*tp_weaklistoffset */
 	PyObject_SelfIter,                         /*tp_iter */
 	(iternextfunc)PyPointlessSetIter_iternext, /*tp_iternext */
-	0,                                         /*tp_methods */
+	PyPointlessSet_methods,                    /*tp_methods */
 	0,                                         /*tp_members */
 	0,                                         /*tp_getset */
 	0,                                         /*tp_base */
@@ -210,7 +216,7 @@ PyTypeObject PyPointlessSetIterType = {
 	0,                                         /*tp_descr_get */
 	0,                                         /*tp_descr_set */
 	0,                                         /*tp_dictoffset */
-	0,         /*tp_init */
+	0,                                         /*tp_init */
 	0,                                         /*tp_alloc */
 	PyPointlessSetIter_new,                    /*tp_new */
 };
