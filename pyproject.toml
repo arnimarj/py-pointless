@@ -17,7 +17,7 @@ build-verbosity = 1
 find = {namespaces = false, exclude = [ "pointless.tests" ]}
 
 [tool.cibuildwheel.linux]
-archs = ["auto64", "aarch64"]
+archs = ["auto64"]
 environment = "CC=gcc"
 
 [tool.cibuildwheel.macos]
@@ -34,7 +34,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pointless"
-version = "1.0.24"
+version = "1.0.25"
 description = "A read-only relocatable data structure for JSON like data, with C and Python APIs"
 authors = [{ name = "Arni Mar Jonsson", email = "arnimarj@gmail.com" }]
 requires-python = ">=3.9"
