@@ -1954,7 +1954,6 @@ static PyMethodDef PyPointlessPrimVector_methods[] = {
 	{"pop_bulk",          (PyCFunction)PyPointlessPrimVector_pop_bulk,      METH_VARARGS, ""},
 	{"index",             (PyCFunction)PyPointlessPrimVector_index,         METH_VARARGS,  ""},
 	{"remove",            (PyCFunction)PyPointlessPrimVector_remove,        METH_VARARGS,  ""},
-	{"fast_remove",       (PyCFunction)PyPointlessPrimVector_fast_remove,   METH_VARARGS,  ""},
 	{"serialize",         (PyCFunction)PyPointlessPrimVector_serialize,     METH_NOARGS,  ""},
 	{"sort",              (PyCFunction)PyPointlessPrimVector_sort,          METH_NOARGS,  ""},
 	{"sort_proj",         (PyCFunction)PyPointlessPrimVector_sort_proj,     METH_VARARGS, ""},
