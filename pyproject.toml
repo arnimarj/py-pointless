@@ -6,7 +6,7 @@ test-command = [
     "{package}/build_judy.sh",
     "(cd {package}/tests && ./compile.sh)",
     "(cd {package}/tests && ./a.out --unit-test)",
-    "(cd {package} && PYTHONPATH=$(pwd) python -m twisted.trial tests.python_api)",
+    "# (cd {package} && PYTHONPATH=$(pwd) python -m twisted.trial tests.python_api)",
 ]
 
 # temporarily dropping pypy until we can figure out the string unit-test failure

@@ -1123,24 +1123,6 @@ static PyObject* PyPointlessPrimVector_remove(PyPointlessPrimVector* self, PyObj
 	return Py_None;
 }
 
-static PyObject* PyPointlessPrimVector_fast_remove(PyPointlessPrimVector* self, PyObject* args)
-{
-	if (!PyPointlessPrimVector_can_resize(self))
-		return 0;
-
-	size_t i = PyPointlessPrimVector_index_(self, args, "fast_remove");
-
-	if (i == (SIZE_MAX-1))
-		return 0;
-
-	// swap with last item and remove last item
-	pointless_dynarray_swap(&self->array, i, pointless_dynarray_n_items(&self->array) - 1);
-	pointless_dynarray_pop(&self->array);
-
-	Py_INCREF(Py_None);
-	return Py_None;
-}
-
 static size_t PyPointlessPrimVector_type_size(PyPointlessPrimVector* self)
 {
 	size_t typesize = 0, i;
