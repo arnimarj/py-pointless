@@ -28,6 +28,9 @@ environment = "CC=clang"
 select = "*-musllinux*"
 environment = "CC=gcc"
 
+# Skip trying to test arm64 builds on Intel Macs
+test-skip = "*-macosx_universal2:arm64"
+
 [build-system]
 requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
