@@ -38,11 +38,11 @@ version = "1.0.25"
 description = "A read-only relocatable data structure for JSON like data, with C and Python APIs"
 authors = [{ name = "Arni Mar Jonsson", email = "arnimarj@gmail.com" }]
 requires-python = ">=3.9"
+license = "LGPL-2.0-only"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Other Environment",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
     "Operating System :: POSIX",
     "Programming Language :: C",
     "Programming Language :: Python",
