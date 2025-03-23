@@ -12,8 +12,10 @@ else
 	JUDYCC=gcc
 fi
 
+# adding the aliasing and loop-optimization flags cause of
+# http://sourceforge.net/p/judy/mailman/message/32417284/
 if [[ ! ${COPT} ]]; then
-	COPT="-DJU_64BIT -O0 -fPIC -fno-strict-aliasing"
+	COPT="-DJU_64BIT -O0 -fPIC -fno-strict-aliasing -Wall -D_REENTRANT -D_GNU_SOURCE"
 fi
 
 
