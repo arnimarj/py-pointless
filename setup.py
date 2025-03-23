@@ -108,6 +108,8 @@ setup(
 				'-O2',
 				'-DNDEBUG',
 				'-std=c99',
+				# we get warnings on "state->error = "hash statement fallthrough";"
+				'-Wno-incompatible-pointer-types',
 			],
 
 			extra_link_args=[
