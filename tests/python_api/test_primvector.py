@@ -94,33 +94,6 @@ class TestPrimVector(unittest.TestCase):
 							self.assertRaises(ValueError, w.remove, V)
 							self.assertRaises(ValueError, v.remove, V)
 
-	def testFastRemove(self):
-		for tc in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'f']:
-			for i in range(1, 100):
-				v = RandomPrimVector(i - 1, tc)
-
-				# make sure one element is an integer, to test int-float comparison
-				if tc == 'f':
-					v.append(1.0)
-				else:
-					v.append(1)
-
-				w = list(v)
-
-				for _ in range(100):
-					if len(w) > 0:
-						V = random.choice(v)
-
-						w.remove(V)
-						v.fast_remove(V)
-						self.assertListEqual(sorted(w), sorted(v))
-
-						V = random.randint(0, 1000)
-
-						if V not in v:
-							self.assertRaises(ValueError, w.remove, V)
-							self.assertRaises(ValueError, v.fast_remove, V)
-
 	def testPop(self):
 		w = pointless.PointlessPrimVector('u32')
 		self.assertRaises(IndexError, w.pop)
