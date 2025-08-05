@@ -199,7 +199,24 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		if (!pointless_export_set_seen(state, py_object, handle)) {
 			RETURN_OOM(state);
 		}
+	// python bytes
+	} else if (PyBytes_Check(py_object)) {
+		// create handle and hand over the memory
+		Py_ssize_t n_items = PyBytes_GET_SIZE(py_object);
 
+		if (n_items > UINT32_MAX) {
+			PyErr_SetString(PyExc_ValueError, "bytes object has too many bytes");
+			state->error_line = __LINE__;
+			state->is_error = 1;
+			return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
+		handle = pointless_create_vector_u8_owner(&state->c, (uint8_t*)PyBytes_AS_STRING(py_object), (uint32_t)n_items);
+		RETURN_OOM_IF_FAIL(handle, state);
+
+		if (!pointless_export_set_seen(state, py_object, handle)) {
+			RETURN_OOM(state);
+		}
 	// python bytearray
 	} else if (PyByteArray_Check(py_object)) {
 		// create handle and hand over the memory
@@ -609,8 +626,10 @@ static PyObject* pointless_write_object_to(int buffer_type, PyObject* self, PyOb
 
 	if (buffer_type == 0)
 		retval = (PyObject*)PyPointlessPrimVector_from_buffer(buf, buflen);
-	else
+	else if (buffer_type == 1)
 		retval = (PyObject*)PyByteArray_FromStringAndSize(buf, buflen);
+	else
+		retval = (PyObject*)PyBytes_FromStringAndSize(buf, buflen);
 
 cleanup:
 
@@ -630,4 +649,9 @@ PyObject* pointless_write_object_to_primvector(PyObject* self, PyObject* args, P
 PyObject* pointless_write_object_to_bytearray(PyObject* self, PyObject* args, PyObject* kwds)
 {
 	return pointless_write_object_to(1, self, args, kwds);
+}
+
+PyObject* pointless_write_object_to_bytes(PyObject* self, PyObject* args, PyObject* kwds)
+{
+	return pointless_write_object_to(2, self, args, kwds);
 }

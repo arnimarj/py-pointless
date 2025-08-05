@@ -44,6 +44,7 @@ extern const char pointless_write_object_doc[];
 
 PyObject* pointless_write_object_to_primvector(PyObject* self, PyObject* args, PyObject* kwds);
 PyObject* pointless_write_object_to_bytearray(PyObject* self, PyObject* args, PyObject* kwds);
+PyObject* pointless_write_object_to_bytes(PyObject* self, PyObject* args, PyObject* kwds);
 extern const char pointless_write_object_to_buffer_doc[];
 
 PyObject* pointless_pyobject_hash_32(PyObject* self, PyObject* args);
@@ -60,6 +61,7 @@ static PyMethodDef pointless_module_methods[] =
 	{"serialize",              (PyCFunction)pointless_write_object,               METH_VARARGS | METH_KEYWORDS, pointless_write_object_doc               },
 	{"serialize_to_buffer",    (PyCFunction)pointless_write_object_to_primvector, METH_VARARGS | METH_KEYWORDS, pointless_write_object_to_buffer_doc     },
 	{"serialize_to_bytearray", (PyCFunction)pointless_write_object_to_bytearray,  METH_VARARGS | METH_KEYWORDS, pointless_write_object_to_buffer_doc     },
+	{"serialize_to_bytes",     (PyCFunction)pointless_write_object_to_bytes,      METH_VARARGS | METH_KEYWORDS, pointless_write_object_to_buffer_doc     },
 	{"pyobject_hash",          (PyCFunction)pointless_pyobject_hash_32,           METH_VARARGS,                 pointless_pyobject_hash_32_doc           },
 	{"pyobject_hash_32",       (PyCFunction)pointless_pyobject_hash_32,           METH_VARARGS,                 pointless_pyobject_hash_32_doc           },
 	{"pointless_cmp",          (PyCFunction)pointless_cmp,                        METH_VARARGS,                 pointless_cmp_doc                        },
