@@ -512,7 +512,7 @@ static void pointless_export_py(pointless_export_state_t* state, PyObject* py_ob
 
 const char pointless_write_object_doc[] =
 "0\n"
-"pointless.serialize_to_file(object, fname)\n"
+"pointless.serialize(object, fname)\n"
 "\n"
 "Serializes the object to a file.\n"
 "\n"
@@ -573,16 +573,16 @@ cleanup:
 }
 
 
-const char pointless_write_object_to_buffer_doc[] =
+const char pointless_write_object_to_bytes_doc[] =
 "0\n"
-"pointless.serialize_to_buffer(object)\n"
+"pointless.serialize_to_bytes(object)\n"
 "\n"
-"Serializes the object to a buffer.\n"
+"Serializes the object as bytes.\n"
 "\n"
 "  object: the object\n"
 ;
 
-static PyObject* pointless_write_object_to(int buffer_type, PyObject* self, PyObject* args, PyObject* kwds)
+static PyObject* pointless_write_object_to_bytes(PyObject* self, PyObject* args, PyObject* kwds)
 {
 	PyObject* object = 0;
 	PyObject* retval = 0;
@@ -617,19 +617,15 @@ static PyObject* pointless_write_object_to(int buffer_type, PyObject* self, PyOb
 	if (state.is_error)
 		goto cleanup;
 
-	create_end = 0;
+	create_end = 1;
 
 	if (!pointless_create_output_and_end_b(&state.c, &buf, &buflen, &error)) {
 		PyErr_Format(PyExc_IOError, "pointless_create_output: %s", error);
 		goto cleanup;
 	}
 
-	if (buffer_type == 0)
-		retval = (PyObject*)PyPointlessPrimVector_from_buffer(buf, buflen);
-	else if (buffer_type == 1)
-		retval = (PyObject*)PyByteArray_FromStringAndSize(buf, buflen);
-	else
-		retval = (PyObject*)PyBytes_FromStringAndSize(buf, buflen);
+	create_end = 0;
+	retval = (PyObject*)PyBytes_FromStringAndSize(buf, buflen);
 
 cleanup:
 
@@ -639,19 +635,4 @@ cleanup:
 	JudyLFreeArray(&state.objects_used, 0);
 
 	return retval;
-}
-
-PyObject* pointless_write_object_to_primvector(PyObject* self, PyObject* args, PyObject* kwds)
-{
-	return pointless_write_object_to(0, self, args, kwds);
-}
-
-PyObject* pointless_write_object_to_bytearray(PyObject* self, PyObject* args, PyObject* kwds)
-{
-	return pointless_write_object_to(1, self, args, kwds);
-}
-
-PyObject* pointless_write_object_to_bytes(PyObject* self, PyObject* args, PyObject* kwds)
-{
-	return pointless_write_object_to(2, self, args, kwds);
 }
