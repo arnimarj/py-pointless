@@ -582,7 +582,7 @@ const char pointless_write_object_to_bytes_doc[] =
 "  object: the object\n"
 ;
 
-static PyObject* pointless_write_object_to_bytes(PyObject* self, PyObject* args, PyObject* kwds)
+PyObject* pointless_write_object_to_bytes(PyObject* self, PyObject* args, PyObject* kwds)
 {
 	PyObject* object = 0;
 	PyObject* retval = 0;
