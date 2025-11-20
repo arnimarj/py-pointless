@@ -1,35 +1,36 @@
 [tool.cibuildwheel]
+archs = "auto64"
+test-requires = "Twisted==25.5.0"
 test-command = [
     "python {package}/sanity-check.py",
-    "python -m pip install -U pip",
-    "pip install -r {package}/test-requirements.txt",
-    "{package}/build_judy.sh",
+    "(cd {package} && PYTHONPATH=$(pwd) python -m twisted.trial tests.python_api)",
+    "CC=clang {package}/build_judy.sh",
     "(cd {package}/tests && ./compile.sh)",
     "(cd {package}/tests && ./a.out --unit-test)",
-    "(cd {package} && PYTHONPATH=$(pwd) python -m twisted.trial tests.python_api)",
 ]
 
 # temporarily dropping pypy until we can figure out the string unit-test failure
-build = [ "cp39-*", "cp310-*", "cp311-*" , "cp312-*" , "cp313-*"]
+build = [ "cp39-*", "cp310-*", "cp311-*" , "cp312-*" , "cp313-*", "cp314-*"]
 build-verbosity = 1
+
+[tool.cibuildwheel.linux]
+before-build = [
+    "if command -v apt-get; then apt-get update && apt-get install -y clang; fi",
+    "if command -v yum; then yum install -y clang; fi",
+    "CC=clang ./build_judy.sh"
+]
+before-test = [
+    "if command -v apt-get; then apt-get update && apt-get install -y clang; fi",
+    "if command -v yum; then yum install -y clang; fi",
+]
+
+[tool.cibuildwheel.macos]
+before-build = [
+    "CC=clang ./build_judy.sh"
+]
 
 [tool.setuptools.packages]
 find = {namespaces = false, exclude = [ "pointless.tests" ]}
-
-[tool.cibuildwheel.linux]
-archs = ["auto64"]
-environment = "CC=gcc"
-
-[tool.cibuildwheel.macos]
-archs = ["x86_64", "arm64"]
-environment = "CC=clang"
-
-[[tool.cibuildwheel.overrides]]
-select = "*-musllinux*"
-environment = "CC=gcc"
-
-# Skip trying to test arm64 builds on Intel Macs
-test-skip = "*-macosx_universal2:arm64"
 
 [build-system]
 requires = ["setuptools", "setuptools-scm"]
@@ -37,10 +38,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pointless"
-version = "1.0.28"
+version = "1.0.29"
 description = "A read-only relocatable data structure for JSON like data, with C and Python APIs"
 authors = [{ name = "Arni Mar Jonsson", email = "arnimarj@gmail.com" }]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Other Environment",
@@ -55,6 +56,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Database",
     "Topic :: Software Development :: Libraries"
 ]
