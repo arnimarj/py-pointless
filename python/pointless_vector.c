@@ -72,12 +72,6 @@ static Py_ssize_t PyPointlessVector_length(PyPointlessVector* self)
 
 static int PyPointlessVector_check_index(PyPointlessVector* self, PyObject* item, Py_ssize_t* i)
 {
-	// if this is not an index: throw an exception
-	if (!PyIndex_Check(item)) {
-		PyErr_Format(PyExc_TypeError, "PointlessVector: integer indexes please, got <%s>\n", item->ob_type->tp_name);
-		return 0;
-	}
-
 	// if index value is not an integer: throw an exception
 	*i = PyNumber_AsSsize_t(item, PyExc_IndexError);
 
