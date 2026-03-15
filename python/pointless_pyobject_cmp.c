@@ -309,6 +309,7 @@ static pypointless_cmp_int_float_bool_t pypointless_cmp_int_float_bool_from_valu
 	r.is_signed = 0;
 	r.is_unsigned = 0;
 	r.is_float = 0;
+	r.uu = 0;
 	r.ii = 0;
 	r.ff = 0.0f;
 
