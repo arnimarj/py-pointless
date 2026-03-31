@@ -648,7 +648,7 @@ static PyObject* PyPointlessBitvector_append_bulk(PyPointlessBitvector* self, Py
 	if (!PyPointlessBitvector_extend_by(self, PyPointlessBitvector_length(other), 0))
 		return 0;
 
-	for (size_t i = 0; i < PyPointlessBitvector_length(other); i++) {
+	for (size_t i = 0; i < (uint32_t)PyPointlessBitvector_length(other); i++) {
 		if (PyPointlessBitvector_is_set(other, i))
 			bm_set_(self->primitive_bits, n_before + i);
 	}
@@ -700,6 +700,40 @@ static PyObject* PyPointlessBitvector_pop(PyPointlessBitvector* self)
 		Py_RETURN_FALSE;
 	}
 }
+
+
+static PyPointlessPrimVector* PyPointlessBitvector_bits_to_vector(PyPointlessBitvector* self)
+{
+	uint32_t n_bits = 0, i, is_set;
+	PyPointlessPrimVector* vector = 0;
+
+	pointless_dynarray_t array;
+	pointless_dynarray_init(&array, sizeof(uint32_t));
+
+	if (self->is_pointless)
+		n_bits = pointless_reader_bitvector_n_bits(&self->pp->p, &self->v);
+	else
+		n_bits = self->primitive_n_bits;
+
+	for (i = 0; i < n_bits; i++) {
+		if (self->is_pointless)
+			is_set = pointless_reader_bitvector_is_set(&self->pp->p, &self->v, i);
+		else
+			is_set = (bm_is_set_(self->primitive_bits, i) != 0);
+
+
+		if (is_set) {
+			if (!pointless_dynarray_push(&array, &i)) {
+				pointless_dynarray_destroy(&array);
+				PyErr_NoMemory();
+				return 0;
+			}
+		}
+	}
+
+	return PyPointlessPrimVector_from_T_vector(&array, sizeof(uint32_t));
+}
+
 
 static PyObject* PyPointlessBitvector_copy(PyPointlessBitvector* self)
 {
@@ -778,7 +812,8 @@ static PyMethodDef PyPointlessBitvector_methods[] = {
 	{"extend_true",   (PyCFunction)PyPointlessBitvector_extend_true,    METH_VARARGS, ""},
 	{"pop",           (PyCFunction)PyPointlessBitvector_pop,            METH_NOARGS,  ""},
 	{"copy",          (PyCFunction)PyPointlessBitvector_copy,           METH_NOARGS,  ""},
-	{"__sizeof__",    (PyCFunction)PyPointlessBitvector_sizeof,         METH_NOARGS,   ""},
+	{"bits_to_vector",(PyCFunction)PyPointlessBitvector_bits_to_vector, METH_NOARGS,  ""},
+	{"__sizeof__",    (PyCFunction)PyPointlessBitvector_sizeof,         METH_NOARGS,  ""},
 	{NULL, NULL}
 };
 
