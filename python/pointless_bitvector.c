@@ -648,7 +648,7 @@ static PyObject* PyPointlessBitvector_append_bulk(PyPointlessBitvector* self, Py
 	if (!PyPointlessBitvector_extend_by(self, PyPointlessBitvector_length(other), 0))
 		return 0;
 
-	for (size_t i = 0; i < PyPointlessBitvector_length(other); i++) {
+	for (size_t i = 0; i < (uint32_t)PyPointlessBitvector_length(other); i++) {
 		if (PyPointlessBitvector_is_set(other, i))
 			bm_set_(self->primitive_bits, n_before + i);
 	}
@@ -723,17 +723,15 @@ static PyPointlessPrimVector* PyPointlessBitvector_bits_to_vector(PyPointlessBit
 
 
 		if (is_set) {
-			if (!pointless_dynarray_push(&array, &i))
-				goto cleanup;
+			if (!pointless_dynarray_push(&array, &i)) {
+				pointless_dynarray_destroy(&array);
+				PyErr_NoMemory();
+				return 0;
+			}
 		}
 	}
 
-	vector = PyPointlessPrimVector_from_T_vector(&array, sizeof(uint32_t));
-
-cleanup:
-
-	pointless_dynarray_destroy(&array);
-	return vector;
+	return PyPointlessPrimVector_from_T_vector(&array, sizeof(uint32_t));
 }
 
 
