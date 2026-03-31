@@ -708,14 +708,14 @@ static PyPointlessPrimVector* PyPointlessBitvector_bits_to_vector(PyPointlessBit
 	PyPointlessPrimVector* vector = 0;
 
 	pointless_dynarray_t array;
-	pointless_dynarray_init(array, sizeof(uint32_t));
+	pointless_dynarray_init(&array, sizeof(uint32_t));
 
 	if (self->is_pointless)
 		n_bits = pointless_reader_bitvector_n_bits(&self->pp->p, &self->v);
 	else
 		n_bits = self->primitive_n_bits;
 
-	for (i = 0; i < n_bits) {
+	for (i = 0; i < n_bits; i++) {
 		if (self->is_pointless)
 			is_set = pointless_reader_bitvector_is_set(&self->pp->p, &self->v, i);
 		else
@@ -735,7 +735,6 @@ cleanup:
 	pointless_dynarray_destroy(&array);
 	return vector;
 }
-
 
 
 static PyObject* PyPointlessBitvector_copy(PyPointlessBitvector* self)
