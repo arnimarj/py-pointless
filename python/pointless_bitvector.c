@@ -731,7 +731,7 @@ static PyPointlessPrimVector* PyPointlessBitvector_bits_to_vector(PyPointlessBit
 		}
 	}
 
-	return PyPointlessPrimVector_from_T_vector(&array, sizeof(uint32_t));
+	return PyPointlessPrimVector_from_T_vector(&array, POINTLESS_PRIM_VECTOR_TYPE_U32);
 }
 
 
