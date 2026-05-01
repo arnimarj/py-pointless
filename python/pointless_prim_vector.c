@@ -490,12 +490,6 @@ static Py_ssize_t PyPointlessPrimVector_length(PyPointlessPrimVector* self)
 
 static int PyPointlessPrimVector_check_index(PyPointlessPrimVector* self, PyObject* item, Py_ssize_t* i)
 {
-	// if this is not an index: throw an exception
-	if (!PyIndex_Check(item)) {
-		PyErr_Format(PyExc_TypeError, "PrimVector: integer indexes please, got <%s>\n", item->ob_type->tp_name);
-		return 0;
-	}
-
 	// if index value is not an integer: throw an exception
 	*i = PyNumber_AsSsize_t(item, PyExc_IndexError);
 
@@ -606,20 +600,15 @@ static int PyPointlessPrimVector_ass_item(PyPointlessPrimVector* self, Py_ssize_
 
 static int PyPointlessPrimVector_ass_subscript(PyPointlessPrimVector* self, PyObject* item, PyObject* value)
 {
-	if (PyIndex_Check(item)) {
-		Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
+	Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
 
-		if (i == -1 && PyErr_Occurred())
-			return -1;
-
-		if (i < 0)
-			i += PyList_GET_SIZE(self);
-
-		return PyPointlessPrimVector_ass_item(self, i, value);
-	} else {
-		PyErr_Format(PyExc_TypeError, "indices must be integers %.200s", item->ob_type->tp_name);
+	if (i == -1 && PyErr_Occurred())
 		return -1;
-	}
+
+	if (i < 0)
+		i += PyList_GET_SIZE(self);
+
+	return PyPointlessPrimVector_ass_item(self, i, value);
 }
 
 

@@ -216,13 +216,7 @@ static Py_ssize_t PyPointlessBitvector_length(PyPointlessBitvector* self)
 
 static int PyPointlessBitvector_check_index(PyPointlessBitvector* self, PyObject* item, Py_ssize_t* i)
 {
-	// if this is not an index: throw an exception
-	if (!PyIndex_Check(item)) {
-		PyErr_Format(PyExc_TypeError, "BitVector: integer indexes please, got <%s>\n", item->ob_type->tp_name);
-		return 0;
-	}
-
-	// if index value is not an integer: throw an exception
+	// if index value is not an integer or too large of an integer: throw an exception
 	*i = PyNumber_AsSsize_t(item, PyExc_IndexError);
 
 	if (*i == -1 && PyErr_Occurred())
