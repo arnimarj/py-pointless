@@ -1,6 +1,6 @@
 [tool.cibuildwheel]
 archs = "auto64"
-test-requires = "Twisted==25.5.0"
+test-requires = "Twisted==26.4.0"
 test-command = [
     "python {package}/sanity-check.py",
     "(cd {package} && PYTHONPATH=$(pwd) python -m twisted.trial tests.python_api)",
@@ -37,7 +37,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pointless"
-version = "1.0.32"
+version = "1.0.33"
 description = "A read-only relocatable data structure for JSON like data, with C and Python APIs"
 authors = [{ name = "Arni Mar Jonsson", email = "arnimarj@gmail.com" }]
 requires-python = ">=3.10"
@@ -58,6 +58,10 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Database",
     "Topic :: Software Development :: Libraries"
+]
+dependencies=[
+    # first version supporting Python 3.14
+    "numpy>=2.4.0"
 ]
 
 [project.urls]

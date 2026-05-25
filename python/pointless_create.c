@@ -283,7 +283,18 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		if (!pointless_export_set_seen(state, py_object, handle)) {
 			RETURN_OOM(state);
 		}
+	// 1-dimensional numpy array
+	} else if (PyArray_Check(py_object)) {
+		// must be native/little-endian
+		if (PyDataType_BYTEORDER(py_object) != '=' && PyDataType_BYTEORDER != '<') {
+				PyErr_SetString(PyExc_ValueError, "only native/little endian numpy arrays supported");
+				state->error_line = __LINE__;
+				state->is_error = 1;
+				return POINTLESS_CREATE_VALUE_FAIL;
+		}
+		// and 1-dimensional
 
+		//!
 	// unicode object
 	} else if (PyUnicode_Check(py_object)) {
 		Py_ssize_t s_len_python = PyUnicode_GET_LENGTH(py_object);
@@ -521,6 +532,8 @@ const char pointless_write_object_doc[] =
 ;
 PyObject* pointless_write_object(PyObject* self, PyObject* args, PyObject* kwds)
 {
+	//! try to import numpy
+
 	const char* fname = 0;
 	PyObject* object = 0;
 	PyObject* retval = 0;

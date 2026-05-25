@@ -2,6 +2,7 @@
 #define __POINTLESS__MODULE__H__
 
 #include <Python.h>
+#include <numpy/arrayobject.h>
 
 #include "structmember.h"
 
