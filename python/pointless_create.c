@@ -294,7 +294,7 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 
 		PyArray_Descr* descr = PyArray_DESCR(py_object);
 
-		if (descr->byteorder != NPY_LITTLE || descr->byteorder != NPY_NATIVE) {
+		if (descr->byteorder != NPY_IGNORE && descr->byteorder != NPY_LITTLE && descr->byteorder != NPY_NATIVE) {
 			PyErr_SetString(PyExc_ValueError, "numpy array must be have native or little byteorder");
 			state->error_line = __LINE__;
 			state->is_error = 1;
