@@ -498,7 +498,8 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 					bm_set_(bits, i);
 			}
 
-			if (state->normalize_bitvector)
+			// we don't normalize really big bitvectors
+			if (state->normalize_bitvector && n_bits < 100000)
 				handle = pointless_create_bitvector(&state->c, bits, n_bits);
 			else
 				handle = pointless_create_bitvector_no_normalize(&state->c, bits, n_bits);
