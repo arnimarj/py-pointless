@@ -284,12 +284,15 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			RETURN_OOM(state);
 		}
 	// 1-dimensional numpy array
-	} else if (PyArray_Check(py_object) && PyArray_NDIM(py_object) == 1) {
-		PyArray_Descr* descr = PyArray_DESCR(py_object);
+	} else if (PyArray_Check(py_object)) {
+		if (PyArray_NDIM(py_object) != 1) {
+			PyErr_SetString(PyExc_ValueError, "numpy arrays must be 1-d");
+			state->error_line = __LINE__;
+			state->is_error = 1;
+			return POINTLESS_CREATE_VALUE_FAIL;
+		}
 
-		size_t n_items = (size_t)PyArray_Size(py_object);
-		npy_intp zero = 0;
-		void* data = PyArray_GetPtr(py_object, &zero);
+		PyArray_Descr* descr = PyArray_DESCR(py_object);
 
 		if (descr->byteorder != NPY_LITTLE || descr->byteorder != NPY_NATIVE) {
 			PyErr_SetString(PyExc_ValueError, "numpy array must be have native or little byteorder");
@@ -297,6 +300,10 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 			state->is_error = 1;
 			return POINTLESS_CREATE_VALUE_FAIL;
 		}
+
+		size_t n_items = (size_t)PyArray_Size(py_object);
+		npy_intp zero = 0;
+		void* data = PyArray_GetPtr(py_object, &zero);
 
 		switch (PyArray_TYPE(py_object)) {
 			case NPY_INT8:
@@ -575,7 +582,9 @@ const char pointless_write_object_doc[] =
 ;
 PyObject* pointless_write_object(PyObject* self, PyObject* args, PyObject* kwds)
 {
-	//! try to import numpy
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return NULL;
+    }
 
 	const char* fname = 0;
 	PyObject* object = 0;

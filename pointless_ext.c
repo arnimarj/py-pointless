@@ -89,9 +89,9 @@ static struct PyModuleDef moduledef = {
 
 PyMODINIT_FUNC PyInit_pointless(void)
 {
-	// import_array() (which tries to import the numpy packages) does
-	// its own "return null", so we try it first
-	import_array();
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return NULL;
+    }
 
 	if (sizeof(Word_t) != sizeof(void*)) {
 		PyErr_SetString(PyExc_ValueError, "word size mismatch");
