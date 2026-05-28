@@ -15,17 +15,17 @@ jobs:
     name: Build SDist
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: true
 
-    - name: Build SDist
+    - name: Build SDistuses
       run: ./build-sdist.sh
 
     - name: Check metadata
       run: pipx run twine check wheelhouse/*
 
-    - uses: actions/upload-artifact@v5
+    - uses: actions/upload-artifact@v7
       with:
         name: dist-sdist
         path: wheelhouse/*.tar.gz
@@ -40,7 +40,7 @@ jobs:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-15-intel, macos-26]
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: true
 
@@ -51,7 +51,7 @@ jobs:
       shell: bash
 
     - name: Upload wheels
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         path: wheelhouse/*.whl
         name: dist-${{ matrix.os }}
@@ -64,7 +64,7 @@ jobs:
 
     steps:
     - uses: actions/setup-python@v6
-    - uses: actions/download-artifact@v6
+    - uses: actions/download-artifact@v8
       with:
         path: dist
         pattern: dist-*
