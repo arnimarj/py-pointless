@@ -1,3 +1,4 @@
+import numpy
 from setuptools import Extension, setup
 
 
@@ -7,6 +8,7 @@ setup(
 			'pointless',
 			include_dirs=[
 				'./include',
+				numpy.get_include(),
 			],
 			sources=[
 				# python stuff

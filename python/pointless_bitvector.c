@@ -699,7 +699,6 @@ static PyObject* PyPointlessBitvector_pop(PyPointlessBitvector* self)
 static PyPointlessPrimVector* PyPointlessBitvector_bits_to_vector(PyPointlessBitvector* self)
 {
 	uint32_t n_bits = 0, i, is_set;
-	PyPointlessPrimVector* vector = 0;
 
 	pointless_dynarray_t array;
 	pointless_dynarray_init(&array, sizeof(uint32_t));

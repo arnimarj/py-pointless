@@ -1,6 +1,6 @@
 [tool.cibuildwheel]
 archs = "auto64"
-test-requires = "Twisted==25.5.0"
+test-requires = "Twisted==26.4.0"
 test-command = [
     "python {package}/sanity-check.py",
     "(cd {package} && PYTHONPATH=$(pwd) python -m twisted.trial tests.python_api)",
@@ -9,7 +9,7 @@ test-command = [
 ]
 
 # temporarily dropping pypy until we can figure out the string unit-test failure
-build = [ "cp310-*", "cp311-*" , "cp312-*" , "cp313-*", "cp314-*"]
+build = [ "cp311-*" , "cp312-*" , "cp313-*", "cp314-*"]
 build-verbosity = 1
 
 [tool.cibuildwheel.linux]
@@ -32,15 +32,15 @@ before-test = [
 find = {namespaces = false, exclude = [ "pointless.tests" ]}
 
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = ["setuptools", "setuptools-scm", "numpy>=2.4.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pointless"
-version = "1.0.32"
+version = "1.0.33"
 description = "A read-only relocatable data structure for JSON like data, with C and Python APIs"
 authors = [{ name = "Arni Mar Jonsson", email = "arnimarj@gmail.com" }]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Other Environment",
@@ -50,14 +50,16 @@ classifiers = [
     "Programming Language :: C",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Database",
     "Topic :: Software Development :: Libraries"
+]
+dependencies=[
+    # first version supporting Python 3.14
+    "numpy>=2.4.0"
 ]
 
 [project.urls]

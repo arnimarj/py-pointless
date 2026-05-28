@@ -87,22 +87,24 @@ static struct PyModuleDef moduledef = {
 	NULL
 };
 
-#define MODULEINITERROR return NULL
-PyMODINIT_FUNC
-
-PyInit_pointless(void)
+PyMODINIT_FUNC PyInit_pointless(void)
 {
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return NULL;
+    }
+
 	if (sizeof(Word_t) != sizeof(void*)) {
 		PyErr_SetString(PyExc_ValueError, "word size mismatch");
-		MODULEINITERROR;
+		return NULL;
 	}
+
 
 	PyObject* module_pointless = 0;
 
 	module_pointless = PyModule_Create(&moduledef);
 
 	if (module_pointless == 0) {
-		MODULEINITERROR;
+		return NULL;
 	}
 
 	struct {
@@ -131,14 +133,14 @@ PyInit_pointless(void)
 	for (i = 0; i < 15; i++) {
 		if (PyType_Ready(types[i].type) < 0) {
 			Py_DECREF(module_pointless);
-			MODULEINITERROR;
+			return NULL;
 		}
 
 		Py_INCREF((PyObject*)types[i].type);
 
 		if (PyModule_AddObject(module_pointless, types[i].name, (PyObject*)types[i].type) != 0) {
 			Py_DECREF(module_pointless);
-			MODULEINITERROR;
+			return NULL;
 		}
 	}
 
@@ -146,20 +148,18 @@ PyInit_pointless(void)
 
 	if (c_api == 0) {
 		Py_DECREF(module_pointless);
-		MODULEINITERROR;
+		return NULL;
 	}
 
 	if (PyCapsule_SetContext(c_api, (void*)POINTLESS_MAGIC_CONTEXT) != 0) {
 		Py_DECREF(module_pointless);
-		MODULEINITERROR;
+		return NULL;
 	}
 
 	if (PyModule_AddObject(module_pointless, "pointless_CAPI", c_api) != 0) {
 		Py_DECREF(module_pointless);
-		MODULEINITERROR;
+		return NULL;
 	}
 
     return module_pointless;
 }
-
-#undef MODULEINITERROR

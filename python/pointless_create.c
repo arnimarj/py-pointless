@@ -283,7 +283,68 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 		if (!pointless_export_set_seen(state, py_object, handle)) {
 			RETURN_OOM(state);
 		}
+	// 1-dimensional numpy array
+	} else if (PyArray_Check(py_object)) {
+		if (PyArray_NDIM(py_object) != 1) {
+			PyErr_SetString(PyExc_ValueError, "numpy arrays must be 1-d");
+			state->error_line = __LINE__;
+			state->is_error = 1;
+			return POINTLESS_CREATE_VALUE_FAIL;
+		}
 
+		PyArray_Descr* descr = PyArray_DESCR(py_object);
+
+		if (descr->byteorder != NPY_IGNORE && descr->byteorder != NPY_LITTLE && descr->byteorder != NPY_NATIVE) {
+			PyErr_SetString(PyExc_ValueError, "numpy array must be have native or little byteorder");
+			state->error_line = __LINE__;
+			state->is_error = 1;
+			return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
+		size_t n_items = (size_t)PyArray_Size(py_object);
+		npy_intp zero = 0;
+		void* data = PyArray_GetPtr(py_object, &zero);
+
+		switch (PyArray_TYPE(py_object)) {
+			case NPY_INT8:
+				handle = pointless_create_vector_i8_owner(&state->c, (int8_t*)data, n_items);
+				break;
+			case NPY_UINT8:
+				handle = pointless_create_vector_u8_owner(&state->c, (uint8_t*)data, n_items);
+				break;
+			case NPY_INT16:
+				handle = pointless_create_vector_i16_owner(&state->c, (int16_t*)data, n_items);
+				break;
+			case NPY_UINT16:
+				handle = pointless_create_vector_u16_owner(&state->c, (uint16_t*)data, n_items);
+				break;
+			case NPY_INT32:
+				handle = pointless_create_vector_i32_owner(&state->c, (int32_t*)data, n_items);
+				break;
+			case NPY_UINT32:
+				handle = pointless_create_vector_u32_owner(&state->c, (uint32_t*)data, n_items);
+				break;
+			case NPY_INT64:
+				handle = pointless_create_vector_i64_owner(&state->c, (int64_t*)data, n_items);
+				break;
+			case NPY_UINT64:
+				handle = pointless_create_vector_u64_owner(&state->c, (uint64_t*)data, n_items);
+				break;
+			case NPY_FLOAT32:
+				handle = pointless_create_vector_float_owner(&state->c, (float*)data, n_items);
+				break;
+			default:
+				PyErr_SetString(PyExc_ValueError, "unsupported dtype for numpy array");
+				state->error_line = __LINE__;
+				state->is_error = 1;
+				return POINTLESS_CREATE_VALUE_FAIL;
+		}
+
+		RETURN_OOM_IF_FAIL(handle, state);
+
+		if (!pointless_export_set_seen(state, py_object, handle)) {
+			RETURN_OOM(state);
+		}
 	// unicode object
 	} else if (PyUnicode_Check(py_object)) {
 		Py_ssize_t s_len_python = PyUnicode_GET_LENGTH(py_object);
@@ -437,7 +498,8 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 					bm_set_(bits, i);
 			}
 
-			if (state->normalize_bitvector)
+			// we don't normalize really big bitvectors
+			if (state->normalize_bitvector && n_bits < 100000)
 				handle = pointless_create_bitvector(&state->c, bits, n_bits);
 			else
 				handle = pointless_create_bitvector_no_normalize(&state->c, bits, n_bits);
@@ -521,6 +583,10 @@ const char pointless_write_object_doc[] =
 ;
 PyObject* pointless_write_object(PyObject* self, PyObject* args, PyObject* kwds)
 {
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return NULL;
+    }
+
 	const char* fname = 0;
 	PyObject* object = 0;
 	PyObject* retval = 0;
