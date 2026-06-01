@@ -650,6 +650,10 @@ const char pointless_write_object_to_bytes_doc[] =
 
 PyObject* pointless_write_object_to_bytes(PyObject* self, PyObject* args, PyObject* kwds)
 {
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return NULL;
+    }
+
 	PyObject* object = 0;
 	PyObject* retval = 0;
 	PyObject* normalize_bitvector = Py_True;
