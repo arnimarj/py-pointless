@@ -696,6 +696,47 @@ static PyObject* PyPointlessBitvector_pop(PyPointlessBitvector* self)
 }
 
 
+static PyPointlessPrimVector* PyPointlessBitvector_bits_to_buffer(PyPointlessBitvector* self)
+{
+	uint32_t n_bits, n_bytes, i, is_set;
+
+	if (self->is_pointless)
+		n_bits = pointless_reader_bitvector_n_bits(&self->pp->p, &self->v);
+	else
+		n_bits = self->primitive_n_bits;
+
+	n_bytes = n_bits / 8;
+
+	if (n_bits % 8 != 0)
+		n_bytes += 1;
+
+	pointless_dynarray_t array;
+	pointless_dynarray_init(&array, sizeof(uint8_t));
+
+	for (i = 0; i < n_bytes; i++) {
+		uint8_t zero = 0;
+
+		if (!pointless_dynarray_push(&array, &zero)) {
+			pointless_dynarray_destroy(&array);
+			PyErr_NoMemory();
+			return 0;
+		}
+	}
+
+	for (i = 0; i < n_bits; i++) {
+		if (self->is_pointless)
+			is_set = pointless_reader_bitvector_is_set(&self->pp->p, &self->v, i);
+		else
+			is_set = (bm_is_set_(self->primitive_bits, i) != 0);
+
+		if (is_set)
+			bm_set_(pointless_dynarray_buffer(&array), i);
+	}
+
+	return PyPointlessPrimVector_from_T_vector(&array, POINTLESS_PRIM_VECTOR_TYPE_U8);
+}
+
+
 static PyPointlessPrimVector* PyPointlessBitvector_bits_to_vector(PyPointlessBitvector* self)
 {
 	uint32_t n_bits = 0, i, is_set;
@@ -806,6 +847,7 @@ static PyMethodDef PyPointlessBitvector_methods[] = {
 	{"pop",           (PyCFunction)PyPointlessBitvector_pop,            METH_NOARGS,  ""},
 	{"copy",          (PyCFunction)PyPointlessBitvector_copy,           METH_NOARGS,  ""},
 	{"bits_to_vector",(PyCFunction)PyPointlessBitvector_bits_to_vector, METH_NOARGS,  ""},
+	{"bits_to_buffer",(PyCFunction)PyPointlessBitvector_bits_to_buffer, METH_NOARGS,  ""},
 	{"__sizeof__",    (PyCFunction)PyPointlessBitvector_sizeof,         METH_NOARGS,  ""},
 	{NULL, NULL}
 };
