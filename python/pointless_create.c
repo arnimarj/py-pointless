@@ -389,9 +389,9 @@ static uint32_t pointless_export_py_rec(pointless_export_state_t* state, PyObjec
 				break;
 			case PyUnicode_4BYTE_KIND:
 				if (state->unwiden_strings && pointless_is_ucs4_ascii((uint32_t*)python_buffer))
-					handle = pointless_create_unicode_ucs4(&state->c, (uint32_t*)python_buffer);
-				else
 					handle = pointless_create_string_ucs4(&state->c, (uint32_t*)python_buffer);
+				else
+					handle = pointless_create_unicode_ucs4(&state->c, (uint32_t*)python_buffer);
 				break;
 			// will happen for PyUnicode_WCHAR_KIND on python versions < 3.12
 			default:
