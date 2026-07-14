@@ -80,3 +80,23 @@ class TestSerialize(unittest.TestCase):
 		self.assertEqual(v[0], a)
 		self.assertEqual(v[1], b)
 		self.assertEqual(v[2], c)
+
+	def testWideString(self):
+		# strings holding code points above the BMP (which CPython stores with
+		# PyUnicode_4BYTE_KIND) must round-trip intact, whatever their position
+		# in the string, and regardless of unwiden_strings
+		fname = 'test_wide_string.map'
+
+		v = [
+			'\U0001f600smile',
+			'mid\U0001f600dle',
+			'trailing\U0001f600',
+			'\U00024176\U00023d13',
+			'ascii only',
+			chr(0xffff),
+		]
+
+		for unwiden_strings in (False, True):
+			pointless.serialize(v, fname, unwiden_strings = unwiden_strings)
+			root = pointless.Pointless(fname).GetRoot()
+			self.assertEqual(v, list(root))
