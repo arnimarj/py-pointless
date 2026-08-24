@@ -3,7 +3,6 @@
 static void PyPointlessSet_dealloc(PyPointlessSet* self)
 {
 	if (self->pp) {
-		self->pp->n_set_refs -= 1;
 		Py_DECREF(self->pp);
 	}
 
@@ -229,8 +228,6 @@ PyPointlessSet* PyPointlessSet_New(PyPointless* pp, pointless_value_t* v)
 		return 0;
 
 	Py_INCREF(pp);
-
-	pp->n_set_refs += 1;
 
 	pv->pp = pp;
 	pv->v = *v;

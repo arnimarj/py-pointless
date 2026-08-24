@@ -3,7 +3,6 @@
 static void PyPointlessMap_dealloc(PyPointlessMap* self)
 {
 	if (self->pp) {
-		self->pp->n_map_refs -= 1;
 		Py_DECREF(self->pp);
 	}
 
@@ -542,7 +541,6 @@ PyPointlessMap* PyPointlessMap_New(PyPointless* pp, pointless_value_t* v)
 		return 0;
 
 	Py_INCREF(pp);
-	pp->n_map_refs += 1;
 	pv->pp = pp;
 	pv->v = *v;
 
