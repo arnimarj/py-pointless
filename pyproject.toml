@@ -40,7 +40,7 @@ name = "pointless"
 version = "1.0.37"
 description = "A read-only relocatable data structure for JSON like data, with C and Python APIs"
 authors = [{ name = "Arni Mar Jonsson", email = "arnimarj@gmail.com" }]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Other Environment",
@@ -50,7 +50,6 @@ classifiers = [
     "Programming Language :: C",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
