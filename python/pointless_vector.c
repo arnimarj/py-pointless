@@ -4,7 +4,6 @@
 static void PyPointlessVector_dealloc(PyPointlessVector* self)
 {
 	if (self->pp) {
-		self->pp->n_vector_refs -= 1;
 		Py_DECREF(self->pp);
 	}
 
@@ -807,7 +806,6 @@ PyPointlessVector* PyPointlessVector_New(
 		return 0;
 
 	Py_INCREF(pp);
-	pp->n_vector_refs += 1;
 
 	pv->pp = pp;
 	pv->v = *v;

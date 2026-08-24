@@ -105,24 +105,6 @@ static int PyPointless_init(PyPointless* self, PyObject* args, PyObject* kwds)
 
 	self->allow_print = 1;
 
-	if (self->n_root_refs != 0 ||
-		self->n_vector_refs != 0 ||
-		self->n_bitvector_refs != 0 ||
-		self->n_map_refs != 0 ||
-		self->n_set_refs != 0) {
-		printf("_WTF A: %zu\n", self->n_root_refs);
-		printf("_WTF B: %zu\n", self->n_vector_refs);
-		printf("_WTF C: %zu\n", self->n_bitvector_refs);
-		printf("_WTF D: %zu\n", self->n_map_refs);
-		printf("_WTF E: %zu\n", self->n_set_refs);
-	}
-
-	self->n_root_refs = 0;
-	self->n_vector_refs = 0;
-	self->n_bitvector_refs = 0;
-	self->n_map_refs = 0;
-	self->n_set_refs = 0;
-
 	PyObject* allow_print = Py_True;
 	PyObject* validate = Py_True;
 	static char* kwargs[] = {"filename_or_buffer", "allow_print", "validate", 0};

@@ -7,9 +7,6 @@ static int PyPointlessBitvector_extend_by(PyPointlessBitvector* self, uint32_t n
 
 static void PyPointlessBitvector_dealloc(PyPointlessBitvector* self)
 {
-	if (self->is_pointless && self->pp)
-		self->pp->n_bitvector_refs -= 1;
-
 	Py_XDECREF(self->pp);
 	self->is_pointless = 0;
 	self->pp = 0;
@@ -64,7 +61,6 @@ static int PyPointlessBitvector_init(PyPointlessBitvector* self, PyObject* args,
 	self->allow_print = 1;
 
 	if (self->pp) {
-		self->pp->n_bitvector_refs -= 1;
 		Py_DECREF(self->pp);
 	}
 
@@ -1010,8 +1006,6 @@ PyPointlessBitvector* PyPointlessBitvector_New(PyPointless* pp, pointless_value_
 		return 0;
 
 	Py_INCREF(pp);
-
-	pp->n_bitvector_refs += 1;
 
 	pv->is_pointless = 1;
 	pv->pp = pp;
