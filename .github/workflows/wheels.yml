@@ -40,11 +40,11 @@ jobs:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-15-intel, macos-26]
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: true
 
-    - uses: pypa/cibuildwheel@v3.4
+    - uses: pypa/cibuildwheel@v4.2
 
     - name: Verify clean directory
       run: git diff --exit-code
@@ -63,7 +63,7 @@ jobs:
     if: github.ref == 'refs/heads/master'
 
     steps:
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@v7
     - uses: actions/download-artifact@v8
       with:
         path: dist

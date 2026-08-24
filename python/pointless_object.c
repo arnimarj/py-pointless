@@ -11,26 +11,6 @@ static void PyPointless_dealloc(PyPointless* self)
 
 	self->allow_print = 0;
 
-	if (self->n_root_refs != 0 ||
-		self->n_vector_refs != 0 ||
-		self->n_bitvector_refs != 0 ||
-		self->n_map_refs != 0 ||
-		self->n_set_refs != 0) {
-
-		printf("WTF A: %zu\n", self->n_root_refs);
-		printf("WTF B: %zu\n", self->n_vector_refs);
-		printf("WTF C: %zu\n", self->n_bitvector_refs);
-		printf("WTF D: %zu\n", self->n_map_refs);
-		printf("WTF E: %zu\n", self->n_set_refs);
-		printf("-------------------------------------\n");
-	}
-
-	self->n_root_refs = 0;
-	self->n_vector_refs = 0;
-	self->n_bitvector_refs = 0;
-	self->n_map_refs = 0;
-	self->n_set_refs = 0;
-
 	Py_TYPE(self)->tp_free(self);
 }
 
@@ -41,11 +21,6 @@ static PyObject* PyPointless_new(PyTypeObject* type, PyObject* args, PyObject* k
 	if (self) {
 		self->allow_print = 0;
 		self->is_open = 0;
-		self->n_root_refs = 0;
-		self->n_vector_refs = 0;
-		self->n_bitvector_refs = 0;
-		self->n_map_refs = 0;
-		self->n_set_refs = 0;
 	}
 
 	return (PyObject*)self;
@@ -94,17 +69,6 @@ static PyObject* PyPointless_GetFileNo(PyPointless* self)
 	return PyLong_FromUnsignedLong((unsigned long long)f);
 }
 
-static PyObject* PyPointless_GetRefs(PyPointless* self)
-{
-	return Py_BuildValue("{s:n,s:n,s:n,s:n,s:n}",
-		"n_root_refs", self->n_root_refs,
-		"n_vector_refs", self->n_vector_refs,
-		"n_bitvector_refs", self->n_bitvector_refs,
-		"n_map_refs", self->n_map_refs,
-		"n_set_refs", self->n_set_refs
-	);
-}
-
 static PyObject* PyPointless_sizeof(PyPointless* self)
 {
 	if (self->p.fd == 0)
@@ -118,7 +82,6 @@ static PyMethodDef PyPointless_methods[] = {
 	{"GetRoot",    (PyCFunction)PyPointless_GetRoot,   METH_NOARGS, "get pointless root object" },
 	{"GetINode",   (PyCFunction)PyPointless_GetINode,  METH_NOARGS, "get inode of file descriptor" },
 	{"GetFileNo",  (PyCFunction)PyPointless_GetFileNo, METH_NOARGS, "get file descriptor" },
-	{"GetRefs",    (PyCFunction)PyPointless_GetRefs,   METH_NOARGS, "get inside-reference count to base object" },
 	{NULL}
 };
 
