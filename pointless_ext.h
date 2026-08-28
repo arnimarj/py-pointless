@@ -189,8 +189,8 @@ extern PyTypeObject PyPointlessPrimVectorRevIterType;
 PyPointlessPrimVector* PyPointlessPrimVector_from_T_vector(pointless_dynarray_t* v, uint32_t t);
 PyPointlessPrimVector* PyPointlessPrimVector_from_buffer(void* buffer, size_t n_buffer);
 
-#define POINTLESS_API_MAGIC "pointless.pointless_CAPI 1.02"
-#define POINTLESS_MAGIC_CONTEXT 0x1ACEEFFF
+#define POINTLESS_API_MAGIC "pointless.pointless_CAPI 1.03"
+#define POINTLESS_MAGIC_CONTEXT 0x2ACEEFFF
 
 struct PyPointless_CAPI {
 	// version info
